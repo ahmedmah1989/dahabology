@@ -8,7 +8,7 @@ const { page, path = page + '/', title, description, heading, scripts = [], info
 const asset=p=>B+p+'?v='+ASSET_VERSION;
 const emblem = asset('assets/emblem.webp');
 const BAR = ['market', 'calculator', null, 'wallet'];   // null = home button in the middle
-const MORE = ['products', 'invoice', 'analysis', 'live', 'guide', 'about'];
+const MORE = ['products', 'invoice', 'analysis', 'live', 'guide', 'about', 'assistant'];
 const SHORT = { invoice: 'الفاتورة' };                  // shorter names inside the round buttons
 const label = k => SHORT[k] || find(k).t;
 const moreIcon = 'M5 12h.01M12 12h.01M19 12h.01';
@@ -36,7 +36,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
   {!informational && <p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p>}
   <div id={'panel-' + page} data-panel={page}><slot /></div>
 </main>
-<footer><div class="wrap"><span class="dhb-footer-brand">دهبولوجي.. افهم الدهب قبل ما تشتريه.</span>منصة معلوماتية وتحليلية؛ ليست جهة لبيع الذهب أو تقديم توصيات استثمارية شخصية. <a href={B + 'about/'}>حكايتنا</a> · <a href={B + 'guide/'}>الأسئلة وطريقة الحساب</a></div></footer>
+<footer><div class="wrap"><span class="dhb-footer-brand">دهبولوجي.. افهم الدهب قبل ما تشتريه.</span>منصة معلوماتية وتحليلية؛ ليست جهة لبيع الذهب أو تقديم توصيات استثمارية شخصية. <a href={B + 'assistant/'}>المساعد الذكي</a> · <a href={B + 'about/'}>حكايتنا</a> · <a href={B + 'guide/'}>الأسئلة وطريقة الحساب</a></div></footer>
 
 <div class="x-dock" role="navigation" aria-label="التنقل">
   {BAR.map(k => k === null

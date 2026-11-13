@@ -1,0 +1,64 @@
+---
+import Base from '../layouts/Base.astro';
+import { B, ASSET_VERSION } from '../lib/site.js';
+---
+<Base page="assistant" informational heading="المساعد الذكي" title="دهبولوجي المساعد الذكي" description="جهّز سؤالك مع دهبولوجي المساعد الذكي، ثم أكمل المحادثة في ChatGPT.">
+  <section class="dhb-assistant" aria-labelledby="assistant-title">
+    <header class="assistant-intro">
+      <img src={B+'assets/emblem.webp?v='+ASSET_VERSION} width="160" height="160" alt="توت عنخ آمون في شعار دهبولوجي" />
+      <span class="assistant-badge">بداية المعرفة… سؤال</span>
+      <h2 id="assistant-title">دهبولوجي المساعد الذكي</h2>
+      <p>اسأل، افهم، وخد خطوتك بوعي.</p>
+    </header>
+    <div class="assistant-note"><strong>المحادثة حاليًا في ChatGPT</strong><p>حضّر سؤالك هنا، انسخ الرسالة، وافتح ChatGPT والصقها هناك. الردود بتظهر في ChatGPT، وقد تحتاج تسجيل الدخول. دي محادثة جديدة، ومش مرتبطة بدردشاتك السابقة.</p></div>
+    <form id="assistantForm">
+      <label for="assistantQuestion">تحب تسأل عن إيه؟</label>
+      <textarea id="assistantQuestion" rows="4" maxlength="1800" required placeholder="مثلاً: إيه الفرق بين سعر الجرام وسعر السبيكة النهائي؟"></textarea>
+      <div class="assistant-suggestions" aria-label="أسئلة مقترحة">
+        <button type="button" data-question="إيه الفرق بين عيار 18 و21 و24؟">الفرق بين العيارات</button>
+        <button type="button" data-question="إزاي أقارن بين سبيكتين مختلفتين في الوزن والمصنعية؟">مقارنة السبائك</button>
+        <button type="button" data-question="إيه البنود اللي أراجعها في فاتورة شراء الذهب؟">فهم الفاتورة</button>
+        <button type="button" data-question="إزاي أستخدم أقسام دهبولوجي لمتابعة السوق والحساب والمقارنة؟">استخدام دهبولوجي</button>
+      </div>
+      <button class="assistant-primary" type="submit">جهّز سؤالي ←</button>
+    </form>
+    <section id="assistantPrepared" hidden aria-labelledby="prepared-title">
+      <h3 id="prepared-title">رسالتك جاهزة</h3>
+      <label for="assistantPrompt">انسخ الرسالة والصقها في ChatGPT</label>
+      <textarea id="assistantPrompt" rows="9" readonly dir="rtl"></textarea>
+      <div class="assistant-actions"><button id="assistantCopy" type="button" class="assistant-primary">١. انسخ الرسالة</button><a href="https://chatgpt.com/" target="_blank" rel="noopener noreferrer" class="assistant-secondary">٢. افتح ChatGPT ↗</a></div>
+      <p id="assistantStatus" role="status" aria-live="polite"></p>
+    </section>
+    <p class="assistant-footnote">الرسالة تشمل سؤالك وتعريفًا مختصرًا بالمنصة فقط. لا تنسخ بيانات شخصية أو مالية حساسة. للأسعار اللحظية استخدم شاشة السوق؛ الإجابات قد تخطئ، ولا تمثّل توصية استثمارية شخصية.</p>
+  </section>
+  <script>
+    const form = document.querySelector<HTMLFormElement>('#assistantForm')!;
+    const question = document.querySelector<HTMLTextAreaElement>('#assistantQuestion')!;
+    const prompt = document.querySelector<HTMLTextAreaElement>('#assistantPrompt')!;
+    const prepared = document.querySelector<HTMLElement>('#assistantPrepared')!;
+    const status = document.querySelector<HTMLElement>('#assistantStatus')!;
+    document.querySelectorAll<HTMLButtonElement>('[data-question]').forEach(button => button.addEventListener('click', () => {
+      question.value = button.dataset.question!;
+      question.setCustomValidity('');
+      prepared.hidden = true;
+      status.textContent = '';
+      question.focus();
+    }));
+    question.addEventListener('input', () => { prepared.hidden = true; status.textContent = ''; });
+    form.addEventListener('submit', event => {
+      event.preventDefault();
+      const text = question.value.trim();
+      if (!text) { question.setCustomValidity('اكتب سؤالك أولاً.'); question.reportValidity(); return; }
+      question.setCustomValidity('');
+      prompt.value = 'ساعدني بالعربية المصرية وبأسلوب واضح كمساعد تعليمي لمنصة دهبولوجي، وهي منصة لفهم سوق الذهب المصري، فيها السوق والمنتجات والحاسبة وفحص الفاتورة ودهبي والتحليل والرسم الحي والدليل وحكايتنا. اشرح خطوات استخدام المنصة فقط لو كنت متأكدًا، ولا تفترض وجود خصائص غير مذكورة. لا تملك اتصالاً ببيانات المنصة الحالية. لا تخترع أسعارًا لحظية أو تضمن ربحًا، وميّز المعلومات العامة عن التوصية الاستثمارية الشخصية. لو السؤال يحتاج أسعارًا حالية اطلب مني مراجعة شاشة السوق أو تقديم الأرقام.\n\nسؤالي:\n' + text;
+      prepared.hidden = false;
+      status.textContent = '';
+      prompt.focus();
+    });
+    question.addEventListener('input', () => question.setCustomValidity(''));
+    document.querySelector('#assistantCopy')!.addEventListener('click', async () => {
+      try { await navigator.clipboard.writeText(prompt.value); status.textContent = 'تم النسخ. افتح ChatGPT والصق الرسالة وأرسلها.'; }
+      catch { prompt.focus(); prompt.select(); status.textContent = 'حدّدنا الرسالة؛ انسخها يدويًا ثم الصقها في ChatGPT.'; }
+    });
+  </script>
+</Base>
