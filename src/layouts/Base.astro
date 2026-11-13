@@ -1,57 +1,46 @@
 ---
 import Head from '../components/Head.astro';
-import { B, DATA, PAGES, page as find } from '../lib/site.js';
+import { B, DATA, page as find } from '../lib/site.js';
 // page: nav key • path: address when it differs from "<page>/" • scripts: files from public/js
-const { page, path = page + '/', title, description, scripts = [] } = Astro.props;
-const badge = B + 'assets/logo-192.webp';
+const { page, path = page + '/', title, description, heading, scripts = [] } = Astro.props;
+const emblem = B + 'assets/emblem.webp';
 const BAR = ['market', 'calculator', null, 'wallet'];   // null = home button in the middle
 const MORE = ['products', 'invoice', 'analysis', 'live', 'sources', 'guide'];
 const moreIcon = 'M5 12h.01M12 12h.01M19 12h.01';
+const name = heading || find(page)?.t || 'دهبولوجي';
 ---
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<Head title={title} description={description} path={path} />
+<Head title={title} description={description} path={path} theme="#0a1628" />
 <link rel="stylesheet" href={B + 'design.css'}>
 <link rel="stylesheet" href={B + 'dark.css'}>
 <link rel="stylesheet" href={B + 'products.css'}>
 <link rel="stylesheet" href={B + 'site.css'}>
+<link rel="stylesheet" href={B + 'app.css'}>
 <slot name="head" />
 </head>
-<body>
-<div class="dahabology-viewport-watermark" aria-hidden="true"><img src={B + 'assets/logo-900.webp'} alt="" decoding="async"></div>
-<header><div class="wrap head"><div>
-  <div class="dahabology-identity"><a href={B} aria-label="دهبولوجي — الصفحة الرئيسية">
-    <span class="dahabology-logo-frame"><img src={badge} alt="شعار دهبولوجي" width="60" height="60"></span>
-    <h1>دهبولوجي</h1>
-  </a></div>
-  <p>الأسعار، الفجوة العالمية، والدولار الضمني في نظرة واحدة.</p>
-</div><div class="head-actions">
-  <div class="head-price"><span>عيار 21 الآن</span><b id="headPrice21">—</b></div>
-  <button id="refresh" type="button" aria-label="تحديث الأسعار">تحديث الأسعار ↻</button>
-</div></div></header>
-<nav aria-label="أقسام المنصة"><div class="wrap">
-  <a href={B}>الرئيسية</a>
-  {PAGES.map(p => p.k === page
-    ? <a href={B + p.k + '/'} aria-current="page" aria-selected="true">{p.t}</a>
-    : <a href={B + p.k + '/'}>{p.t}</a>)}
-</div></nav>
+<body style={`--x-logo:url(${B}assets/logo-900.webp)`}>
+<header class="x-top">
+  <a class="x-home" href={B} aria-label="دهبولوجي — الصفحة الرئيسية"><img src={emblem} alt="" width="48" height="48"></a>
+  <h1>{name}</h1>
+  <button id="refresh" class="x-refresh" type="button" aria-label="تحديث الأسعار">↻</button>
+</header>
 <main class="wrap">
-  <div class="status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span><span>توقيت العرض: القاهرة</span></div>
-  <slot name="before" />
+  <p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p>
   <div id={'panel-' + page} data-panel={page}><slot /></div>
 </main>
-<footer><div class="wrap">لوحة متابعة مستقلة للبيانات والمصادر؛ ليست متجرًا ولا توصية شراء. راجع السعر النهائي والمواصفات مع المتجر. <a href={B + 'sources/'}>المصادر</a> · <a href={B + 'guide/#faq'}>الأسئلة وحدود الخدمة</a> · <a href="https://github.com/ahmedmah1989/gold-board/issues/new" target="_blank" rel="noopener">الإبلاغ عن خطأ</a></div></footer>
+<footer><div class="wrap">لوحة متابعة مستقلة؛ ليست متجرًا ولا توصية شراء. <a href={B + 'sources/'}>المصادر</a> · <a href={B + 'guide/#faq'}>الأسئلة</a> · <a href="https://github.com/ahmedmah1989/gold-board/issues/new" target="_blank" rel="noopener">الإبلاغ عن خطأ</a></div></footer>
 
-<div class="tabbar" role="navigation" aria-label="التنقل السريع">
+<div class="x-dock" role="navigation" aria-label="التنقل">
   {BAR.map(k => k === null
-    ? <a class="tab-home" href={B}><img src={badge} alt="" width="52" height="52"><span>الرئيسية</span></a>
+    ? <a class="x-dock-home" href={B}><img src={emblem} alt="" width="58" height="58"><span>الرئيسية</span></a>
     : <a href={B + k + '/'} aria-current={k === page ? 'page' : undefined}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{find(k).t}</span>
       </a>)}
   <details class={MORE.includes(page) ? 'on' : undefined}>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d={moreIcon} stroke-width="3" /></svg><span>المزيد</span></summary>
-    <div class="more-menu">
+    <div class="x-more-menu">
       {MORE.map(k => <a href={B + k + '/'} aria-current={k === page ? 'page' : undefined}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{find(k).t}</span>
       </a>)}

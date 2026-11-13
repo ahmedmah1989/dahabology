@@ -34,9 +34,10 @@
   }
   if (typeof module !== 'undefined') module.exports = { pin, verdict, karat, change, compare };
   if (typeof document === 'undefined') return;
+  window.DHB_BOARD = { pin, verdict, karat, change, compare };
 
   const $ = id => document.getElementById(id);
-  const set = (id, text) => { const e = $(id); if (e) e.textContent = text; };
+  const set =(id, text) => { const e = $(id); if (e) e.textContent = text; };
   const nf = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('ar-EG-u-nu-latn', { maximumFractionDigits: d }) : '—';
   const egp = (v, d = 2) => Number.isFinite(v) ? nf(v, d) + ' جنيه' : '—';
   const signed = (v, d = 2) => (v > 0 ? '+' : v < 0 ? '−' : '') + nf(Math.abs(v), d);
