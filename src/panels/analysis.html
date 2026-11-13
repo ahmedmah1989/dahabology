@@ -1,76 +1,75 @@
-<section id="analysis" class="analytics"><div class="eyebrow" style="color:var(--gold)">تحليل السوق</div><h2>قراءة السوق في دقيقة</h2>
-  <div class="signal" id="signal" aria-live="polite">
-    <div class="head" id="sigHead">تجهيز القراءة…</div>
-    <p id="sigText"></p>
-    <ol class="plan" id="plan"></ol>
-  </div>
-  <ul class="checks">
-    <li><h3>السعر المحلي قريب من القيمة العالمية؟ <span class="tag none" id="t1">—</span></h3><p id="c1"></p>
-      <span class="ev">حساب مباشر من السعر العالمي والدولار؛ حدود 2% و4% تقديرية</span></li>
-    <li><h3>اتجاه السعر (متوسط 50 و200 يوم) <span class="tag none" id="t2">—</span></h3><p id="c2"></p>
-      <span class="ev">وصف للاتجاه من السلسلة المرجعية؛ ليس اختبارًا لاستراتيجية تداول</span></li>
-    <li><h3>توقعات المحللين لسنة 2027 <span class="tag none" id="t3">—</span></h3><p id="c3"></p>
-      <span class="ev">آراء بآجال مختلفة؛ الرقم غير الموثق لا يدخل الحساب</span></li>
-  </ul>
+<section id="analysis" class="analytics">
+<div class="x-reads" role="group" aria-label="قراءات السوق">
+<button type="button" class="x-read" data-open="read1"><span>السعر مقابل العالمي</span><span class="tag none" id="t1">—</span></button>
+<button type="button" class="x-read" data-open="read2"><span>اتجاه السعر</span><span class="tag none" id="t2">—</span></button>
+<button type="button" class="x-read" data-open="read3"><span>توقعات 2027</span><span class="tag none" id="t3">—</span></button>
+</div>
+<div class="signal" id="signal" aria-live="polite"><div class="head" id="sigHead">تجهيز القراءة…</div><p id="sigText"></p><ol class="plan" id="plan"></ol></div>
 <div hidden><input id="loc"><input id="bud"><b id="f21"></b><b id="diff"></b><b id="gramsLegacy"></b><input id="oz"><input id="usd"><span id="prog"></span></div>
 
-  <h2>سعر الأونصة خلال آخر 12 شهر</h2>
-  <p class="notice" id="historyQuality">فحص تغطية السلسلة اليومية…</p>
-  <div class="chart"><div id="chart">تحميل البيانات…</div>
-    <div class="legend"><span><i class="sw" style="border-color:var(--gold)"></i>السعر اليومي</span><span><i class="sw" style="border-color:var(--teal); border-top-style:dashed"></i>متوسط 200 يوم</span><span><i class="sw" style="border-color:var(--bad); border-top-style:dotted"></i>متوسط 50 يوم</span></div>
-  </div>
-  <ul class="ind">
-    <li><b id="iA50">—</b><span>متوسط آخر 50 قراءة يومية. السعر فوقه يعني الاتجاه القريب صاعد.</span></li>
-    <li><b id="iA200">—</b><span>متوسط آخر 200 قراءة يومية. السعر فوقه يعني الاتجاه الطويل صاعد.</span></li>
-    <li><b id="iHL">—</b><span>أقل وأعلى سعر يومي في آخر 12 شهر.</span></li>
-    <li><b id="iDD">—</b><span>هبوط آخر سعر يومي عن أعلى قراءة في 12 شهر.</span></li>
-    <li><b id="iMDD">—</b><span>أكبر هبوط من قمة إلى قاع خلال 12 شهر.</span></li>
-    <li><b id="iVol">—</b><span>التذبذب السنوي من آخر 60 قراءة. كلما زاد كانت الحركة أعنف.</span></li>
-  </ul>
-  <details><summary>من أين هذه الأرقام وما حدودها؟</summary><p>سلسلة أسعار مرجعية يومية، باستبعاد السبت والأحد فقط؛ لم يُطبّق تقويم مستقل لعطلات البورصات. القيم ليست إغلاقات رسمية موثقة، والقمم والقيعان قد تختلف عن مصادر أخرى. الرسم والمؤشرات بتاريخ آخر قراءة يومية، وليست أسعارًا لحظية.</p><p id="historyAuditStatus">تحميل سجل التدقيق…</p><a href="data/audit.json" target="_blank" rel="noopener">تفاصيل الحسابات والعينة وتواريخها ↗</a></details>
-
-  <h2>مقارنة الفترات</h2>
-  <div class="tblw"><table class="per">
-    <thead><tr><th>من</th><th>الأونصة وقتها</th><th>التغير</th><th>عيار 21 (قيمة عالمية) وقتها</th><th>التغير</th></tr></thead>
-    <tbody id="perBody"><tr><td colspan="5">تحميل البيانات…</td></tr></tbody>
-  </table></div>
-  <p class="muted-note" id="perNote"></p>
-
-  <h2>السعر ممكن يروح فين؟</h2>
-  <p>ثلاث طرق مستقلة، كل واحدة تجاوب على سؤال مختلف. التحويل لعيار 21 لا يشمل علاوة السوق أو رسوم المنتج.</p>
-  <ul class="rng" id="rngBox"><li>تحميل البيانات التاريخية…</li></ul>
-
-  <h2>قارن بسعر شرائك</h2>
-  <p>اكتب السعر الذي اشتريت به لتعرف وضعك لو بعت للتاجر الآن. البيانات تُحفظ على جهازك فقط.</p>
-  <div class="box"><div class="myref">
-    <label>العيار<select id="myrefKarat"><option value="21">عيار 21</option><option value="24">عيار 24</option><option value="18">عيار 18 (محسوب)</option></select></label>
-    <label>سعر شراء الجرام بالجنيه<input id="myrefPrice" inputmode="decimal" placeholder="مثال: 5800" autocomplete="off"></label>
-    <label>عدد الجرامات (اختياري)<input id="myrefGrams" inputmode="decimal" placeholder="مثال: 10" autocomplete="off"></label>
-  </div><div class="myref-out" id="myrefOut">
-    <div class="line"><span>التاجر يشتري الجرام منك الآن بـ</span><b id="myrefNow">—</b></div>
-    <div class="line"><span>الفرق عن سعر شرائك</span><b id="myrefDiff">—</b></div>
-    <div class="line"><span>الفرق على كل الكمية</span><b id="myrefTotal">—</b></div>
-  </div><p class="notice">المقارنة بسعر شراء التاجر للجرام من آخر قراءة آي صاغة. المصنعية التي دفعتها لا تُسترد عند البيع، فأضفها إلى سعر شرائك لو أردت حساب الخسارة الفعلية.</p></div>
-
-  <details class="fold"><summary>توقعات المحللين والبنوك</summary>
-  <p>آراء منسوبة لمصادرها بآجال مختلفة، وليست ضمانًا أو إجماعًا. حالة توثيق كل مصدر بجواره، والقائمة تُراجع يدويًا ولا تتحدث تلقائيًا.</p>
+<details class="x-more" id="read1" name="read"><summary>السعر المحلي قريب من القيمة العالمية؟</summary><p id="c1"></p><p class="x-note" style="text-align:start">حساب مباشر من السعر العالمي والدولار؛ حدود 2% و4% تقديرية.</p></details>
+<details class="x-more" id="read2" name="read"><summary>اتجاه السعر (متوسط 50 و200 يوم)</summary><p id="c2"></p><p class="x-note" style="text-align:start">وصف للاتجاه من السلسلة المرجعية؛ ليس اختبارًا لاستراتيجية تداول.</p></details>
+<details class="x-more" id="read3" name="read"><summary>توقعات المحللين والبنوك</summary><p id="c3"></p>
   <p class="muted-note" id="fcAge"></p>
-  <ul class="fc">
+  <ul class="fc" style="background:none;border:0;padding:0;box-shadow:none">
 <li><div class="who">UBS <span class="audit verified">تحقق جزئي من المصدر الرسمي</span></div>
       <div>المصدر الرسمي يؤكد مستهدف <b>5,400 دولار لسبتمبر 2027</b>، ويذكر مستوى 4,000 دولار في سياق إضافة انكشاف. بقية درجات التوقعات الواردة في النسخة القديمة (4,600 و5,000 و5,200) محفوظة للمراجعة ولم أجد توثيقها في الصفحة المفتوحة.</div>
       <div>تاريخ المقال: 20 أكتوبر 2026؛ مراجعة المصدر 11 نوفمبر 2026. <a href="https://www.ubs.com/global/en/wealthmanagement/insights/marketnews/article.3875359.html" target="_blank" rel="noopener">المصدر</a></div></li>
 <li><div class="who">Bank of America <span class="audit verified">تطابق مع تقرير Kitco المؤرخ — مصدر ثانوي</span></div>
       <div>متوسط الربع الأخير 2026: <b>4,000</b>. متوسط 2027: <b>4,813</b>.</div>
       <div>تقرير 12 أكتوبر 2026. <a href="https://www.kitco.com/news/article/2026-10-12/gold-price-needs-dovish-fed-or-renewed-debasement-fears-reverse-its" target="_blank" rel="noopener">المصدر</a></div></li>
-<li><details><summary>استطلاع رويترز (30 محلل وتاجر) — سجل قيد التحقق، غير معتمد للحساب</summary><div class="who">استطلاع رويترز (30 محلل وتاجر) <span class="audit pending">تعذر الوصول للمستند — قيد التحقق</span></div>
+<li><div class="who">استطلاع رويترز (30 محلل وتاجر) <span class="audit pending">تعذر الوصول للمستند — قيد التحقق، غير معتمد للحساب</span></div>
       <div>متوسط 2026: <b>4,495 دولار</b>. متوسط 2027: <b>4,650 دولار</b>.</div>
-      <div>منشور 27 أكتوبر 2026. <a href="https://www.reuters.com/world/china/strong-dollar-high-yields-drag-gold-outlook-central-bank-demand-lends-support-2026-10-27/" target="_blank" rel="noopener">المصدر</a></div></details></li>
-<li><details><summary>Goldman Sachs — سجل قيد التحقق، غير معتمد للحساب</summary><div class="who">Goldman Sachs <span class="audit pending">المصدر رفض الطلب — قيد التحقق</span></div>
+      <div>منشور 27 أكتوبر 2026. <a href="https://www.reuters.com/world/china/strong-dollar-high-yields-drag-gold-outlook-central-bank-demand-lends-support-2026-10-27/" target="_blank" rel="noopener">المصدر</a></div></li>
+<li><div class="who">Goldman Sachs <span class="audit pending">المصدر رفض الطلب — قيد التحقق، غير معتمد للحساب</span></div>
       <div>نهاية 2026: <b>4,150</b> (بدل 4,650). نهاية 2027: <b>4,800</b> (بدل 5,400). سيناريو أسوأ لو الفيدرالي رفع الفايدة تاني: حوالي <b>4,660</b> نهاية 2027.</div>
-      <div>تقرير 5 نوفمبر 2026. <a href="https://finance.yahoo.com/markets/commodities/articles/goldman-sachs-cuts-gold-price-145146563.html" target="_blank" rel="noopener">المصدر</a></div></details></li>
-</ul></details>
+      <div>تقرير 5 نوفمبر 2026. <a href="https://finance.yahoo.com/markets/commodities/articles/goldman-sachs-cuts-gold-price-145146563.html" target="_blank" rel="noopener">المصدر</a></div></li>
+</ul><p class="x-note" style="text-align:start">آراء منسوبة لمصادرها بآجال مختلفة، وليست ضمانًا أو إجماعًا. القائمة تُراجع يدويًا ولا تتحدث تلقائيًا.</p></details>
 
-  <details class="fold"><summary>راجع نفسك قبل قرار الشراء</summary>
+<div class="x-card"><h2>الأونصة في 12 شهر</h2>
+  <div class="chart"><div id="chart">تحميل البيانات…</div>
+    <div class="legend"><span><i class="sw" style="border-color:var(--gold)"></i>السعر اليومي</span><span><i class="sw" style="border-color:var(--teal); border-top-style:dashed"></i>متوسط 200 يوم</span><span><i class="sw" style="border-color:var(--bad); border-top-style:dotted"></i>متوسط 50 يوم</span></div>
+  </div>
+  <ul class="ind">
+    <li><b id="iA50">—</b><span>متوسط 50 يوم</span></li>
+    <li><b id="iA200">—</b><span>متوسط 200 يوم</span></li>
+    <li><b id="iHL">—</b><span>أقل وأعلى سعر في 12 شهر</span></li>
+    <li><b id="iDD">—</b><span>الهبوط عن أعلى قراءة</span></li>
+    <li><b id="iMDD">—</b><span>أكبر هبوط من قمة لقاع</span></li>
+    <li><b id="iVol">—</b><span>التذبذب السنوي</span></li>
+  </ul>
+</div>
+
+<details class="x-more"><summary>مقارنة الفترات</summary>
+  <div class="tblw" style="background:none;border:0;box-shadow:none"><table class="per">
+    <thead><tr><th>من</th><th>الأونصة وقتها</th><th>التغير</th><th>عيار 21 (قيمة عالمية) وقتها</th><th>التغير</th></tr></thead>
+    <tbody id="perBody"><tr><td colspan="5">تحميل البيانات…</td></tr></tbody>
+  </table></div>
+  <p class="muted-note" id="perNote"></p></details>
+
+<details class="x-more"><summary>السعر ممكن يروح فين؟</summary>
+  <p>ثلاث طرق مستقلة، كل واحدة تجاوب على سؤال مختلف. التحويل لعيار 21 لا يشمل علاوة السوق أو رسوم المنتج.</p>
+  <ul class="rng" id="rngBox"><li>تحميل البيانات التاريخية…</li></ul></details>
+
+<details class="x-more"><summary>قارن بسعر شرائك</summary>
+  <div class="x-karats" role="group" aria-label="اختر العيار" style="margin-top:6px">
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="21" aria-pressed="true"><span>عيار<b>21</b></span></button>
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="24" aria-pressed="false"><span>عيار<b>24</b></span></button>
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="18" aria-pressed="false"><span>عيار<b>18</b></span></button>
+  </div>
+  <select id="myrefKarat" hidden aria-hidden="true"><option value="21">21</option><option value="24">24</option><option value="18">18</option></select>
+  <div class="x-grid2">
+  <label class="x-field sm">سعر شراء الجرام<input id="myrefPrice" inputmode="decimal" placeholder="5800" autocomplete="off"></label>
+  <label class="x-field sm">عدد الجرامات (اختياري)<input id="myrefGrams" inputmode="decimal" placeholder="10" autocomplete="off"></label>
+  </div>
+  <div id="myrefOut" style="margin-top:12px">
+    <div class="line"><span>التاجر يشتري الجرام منك الآن بـ</span><b id="myrefNow">—</b></div>
+    <div class="line"><span>الفرق عن سعر شرائك</span><b id="myrefDiff">—</b></div>
+    <div class="line"><span>الفرق على كل الكمية</span><b id="myrefTotal">—</b></div>
+  </div>
+  <p class="x-note" style="text-align:start">المقارنة بسعر شراء التاجر من آخر قراءة آي صاغة. المصنعية التي دفعتها لا تُسترد، فأضفها إلى سعر شرائك لو أردت الخسارة الفعلية. البيانات على جهازك فقط.</p></details>
+
+<details class="x-more"><summary>راجع نفسك قبل قرار الشراء</summary>
   <ul class="plain">
     <li>الفلوس مطلوبة قريبًا لالتزام أساسي. الذهب قد يتراجع وقت احتياجك للبيع، واحتياج السيولة أهم من قراءة المؤشرات.</li>
     <li>الفلوس سلف أو دين.</li>
@@ -78,7 +77,11 @@
     <li>مشغولات للادخار. المصنعية لا تُسترد عند البيع، فالسبائك والجنيهات أنسب.</li>
   </ul></details>
 
-  <div class="note">
-    <p><strong>حدود اللوحة:</strong> كل ما هنا قواعد ثابتة مكتوبة أمامك ومصادر منشورة، وليس توقعًا مضمونًا ولا نصيحة استثمار شخصية. المؤشرات تصف ما حصل، والتوقعات آراء قد تخطئ. القرار النهائي لك. <a href="#method">طريقة الحساب وأساس كل قاعدة ←</a></p>
-  </div>
+<details class="x-more"><summary>من أين هذه الأرقام وما حدودها؟</summary>
+  <p id="historyQuality">فحص تغطية السلسلة اليومية…</p>
+  <p>سلسلة أسعار مرجعية يومية، باستبعاد السبت والأحد فقط؛ لم يُطبّق تقويم مستقل لعطلات البورصات. القيم ليست إغلاقات رسمية موثقة، والرسم والمؤشرات بتاريخ آخر قراءة يومية وليست أسعارًا لحظية.</p>
+  <p id="historyAuditStatus">تحميل سجل التدقيق…</p>
+  <p><a href="data/audit.json" target="_blank" rel="noopener">تفاصيل الحسابات والعينة وتواريخها ↗</a> · <a href="#method">طريقة الحساب وأساس كل قاعدة ←</a></p></details>
+
+<p class="x-note">قواعد ثابتة ومصادر منشورة، وليست توقعًا مضمونًا ولا نصيحة استثمار شخصية. القرار النهائي لك.</p>
 </section>

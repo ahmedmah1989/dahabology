@@ -1,17 +1,24 @@
-<section id="wallet"><div class="section-head"><div><span class="eyebrow">محفوظ على جهازك فقط</span><h2>دهبي</h2></div></div>
-<p>سجّل ما تملكه من ذهب لتعرف قيمته الآن لو بعته، ومكسبك أو خسارتك عن ما دفعت.</p>
-<div class="cards k3 wal-sum">
-<article class="card"><div class="label">قيمته الآن لو بعته</div><div class="number" id="walNow">—</div><div class="source-time">بسعر شراء التاجر للجرام من آخر قراءة آي صاغة</div></article>
-<article class="card"><div class="label">ما دفعته</div><div class="number" id="walPaid">—</div><div class="source-time" id="walGrams">—</div></article>
-<article class="card"><div class="label">المكسب أو الخسارة</div><div class="number"><span id="walDiff">—</span></div><div class="source-time">المصنعية التي دفعتها داخلة في ما دفعت، ولا تُسترد عند البيع</div></article>
+<section id="wallet">
+<div class="x-hero sm" style="margin-top:16px"><div class="x-rays"></div><div class="x-ring" aria-live="polite"><span class="lbl">قيمة ذهبك الآن</span><b class="val fit" id="walNow">—</b><span class="chg" id="walDiff"></span></div></div>
+<div class="x-pair"><div class="x-chip"><span>ما دفعته</span><b id="walPaid">—</b></div><div class="x-chip"><span>الوزن</span><b id="walWeight">—</b></div></div>
+<p class="x-note" id="walGrams"></p>
+
+<div id="walTable" hidden><div class="x-items" id="walRows"></div></div>
+<p class="x-note" id="walEmpty">لم تضف أي قطعة بعد. أضف أول قطعة من هنا.</p>
+
+<form class="x-card" id="walForm" style="margin-top:20px"><h2>أضف قطعة</h2>
+<div class="x-karats" role="group" aria-label="اختر العيار" style="margin-top:14px">
+<button type="button" class="x-karat" data-set="walKarat" data-value="21" aria-pressed="true"><span>عيار<b>21</b></span></button>
+<button type="button" class="x-karat" data-set="walKarat" data-value="24" aria-pressed="false"><span>عيار<b>24</b></span></button>
+<button type="button" class="x-karat" data-set="walKarat" data-value="18" aria-pressed="false"><span>عيار<b>18</b></span></button>
 </div>
-<form class="box" id="walForm" style="margin-top:18px"><h3>أضف قطعة</h3><div class="myref wal-form">
-<label>العيار<select id="walKarat"><option value="21">عيار 21</option><option value="24">عيار 24</option><option value="18">عيار 18 (محسوب)</option></select></label>
-<label>الوزن بالجرام<input id="walGramsIn" inputmode="decimal" placeholder="مثال: 8" autocomplete="off" required></label>
-<label>إجمالي ما دفعته بالجنيه<input id="walPaidIn" inputmode="decimal" placeholder="مثال: 49500" autocomplete="off" required></label>
-<label>وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="مثال: جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
-</div><button type="submit" style="margin-top:16px">أضف إلى دهبي</button><p class="notice" id="walMsg" role="status"></p></form>
-<p class="notice" id="walEmpty">لم تضف أي قطعة بعد.</p>
-<div class="box table-wrap" id="walTable" hidden><table><thead><tr><th>القطعة</th><th>الوزن</th><th>دفعت</th><th>قيمتها الآن</th><th>الفرق</th><th></th></tr></thead><tbody id="walRows"></tbody></table></div>
-<p class="notice">البيانات لا تغادر متصفحك ولا تُرسل لأي خادم. مسح بيانات المتصفح أو فتح الموقع من جهاز آخر يعني أن القائمة لن تظهر. القيمة محسوبة بسعر شراء التاجر للجرام، والسعر الفعلي عند البيع يحدده التاجر بعد فحص القطعة.</p>
+<select id="walKarat" hidden aria-hidden="true"><option value="21">21</option><option value="24">24</option><option value="18">18</option></select>
+<div class="x-grid2">
+<label class="x-field">الوزن بالجرام<input id="walGramsIn" inputmode="decimal" placeholder="8" autocomplete="off" required></label>
+<label class="x-field">إجمالي ما دفعته<input id="walPaidIn" inputmode="decimal" placeholder="49500" autocomplete="off" required></label>
+</div>
+<label class="x-field sm">وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
+<div class="x-actions"><button type="submit" class="x-btn">أضف إلى دهبي</button></div><p class="x-msg" id="walMsg" role="status"></p></form>
+
+<p class="x-note">القيمة بسعر شراء التاجر للجرام من آخر قراءة آي صاغة، والسعر الفعلي يحدده التاجر بعد فحص القطعة. المصنعية التي دفعتها لا تُسترد. البيانات محفوظة في متصفحك فقط ولا تُرسل لأي خادم.</p>
 </section>

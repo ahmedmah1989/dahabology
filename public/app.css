@@ -106,6 +106,84 @@ details.x-more>summary::after{content:' ▾'}
 details.x-more[open]>summary::after{content:' ▴'}
 details.x-more .line{font-size:16px}
 
+/* ---------- toggles, fields, lists ---------- */
+[hidden]{display:none!important}
+.x-seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;padding:6px;border-radius:18px;background:#0a1628;border:1px solid var(--x-line);max-width:420px;margin:16px auto 0}
+.x-seg button{background:none;border:0;color:var(--x-muted);padding:11px 8px;border-radius:13px;font-size:17px;font-weight:700}
+.x-seg button:hover{background:#ffffff12}
+.x-seg button[aria-pressed=true],.x-seg button[aria-pressed=true]:hover{background:linear-gradient(120deg,#eac674,#d4a44a);color:#14243c}
+.x-field{display:block;margin-top:16px;text-align:center;font-size:16px;font-weight:600;color:var(--x-muted)}
+.x-field input{display:block;width:100%;margin-top:8px;padding:14px;font-size:26px;font-weight:700;text-align:center;direction:ltr;
+  background:#0a1628;border:1px solid var(--x-line);border-radius:16px;color:var(--x-gold-hot)}
+.x-field input::placeholder{color:#5d6f8a;font-weight:500;font-size:18px}
+.x-field input:focus{border-color:var(--x-gold);box-shadow:0 0 0 3px #efc66c26;outline:none}
+.x-field.sm{font-size:14px}
+.x-field.sm input{font-size:19px;padding:11px}
+.x-grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.x-grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:520px){.x-grid3{grid-template-columns:1fr}}
+.x-card .retail-facts{margin:10px 0 0;text-align:start}
+.x-card .retail-facts>div{grid-template-columns:1fr auto;border-color:#ffffff14}
+.x-card .retail-facts>div:last-child{border-bottom:0}
+.x-card .retail-facts dd{text-align:end;font-variant-numeric:tabular-nums;font-weight:700}
+.x-card .retail-facts .total dt,.x-card .retail-facts .total dd{color:var(--x-gold-hot);font-size:19px}
+.x-card:has(>dl:empty){display:none}
+.x-hero.sm{width:min(74vw,290px)}
+.x-ring .val.fit{font-size:clamp(30px,9.5vw,44px)}
+.x-ring .chg{direction:ltr;unicode-bidi:isolate}
+.x-ring .up{color:var(--good)}.x-ring .dn{color:var(--bad)}
+.x-lead{margin:14px auto 0;max-width:520px;text-align:center;font-size:16px;line-height:1.8;color:var(--x-muted)}
+.x-verdict{margin:16px auto 0;max-width:520px;text-align:center;font-size:18px;font-weight:700;line-height:1.7;color:#fff}
+.x-verdict.warn{color:var(--bad)}
+.x-msg{min-height:22px;margin:8px 0 0;text-align:center;font-size:14px;color:var(--x-muted)}
+
+/* ---------- invoice donut ---------- */
+.x-donut{position:relative;width:min(70vw,270px);aspect-ratio:1;margin:18px auto 0}
+.x-donut svg{width:100%;height:100%;rotate:-90deg;filter:drop-shadow(0 0 16px #ffd84a44)}
+.x-donut circle{fill:none;stroke-width:4.2}
+.x-donut .gold{stroke:var(--x-gold)}
+.x-donut .extra{stroke:#f0a2aa;transition:stroke-dasharray .7s cubic-bezier(.2,.9,.3,1)}
+.x-donut-read{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center}
+.x-donut-read span{font-size:15px;font-weight:600;color:var(--x-muted)}
+.x-donut-read b{font-size:clamp(34px,10vw,46px);line-height:1.2;color:#fff;font-variant-numeric:tabular-nums;direction:ltr}
+.x-key{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:12px;font-size:14px;color:var(--x-muted)}
+.x-key i{display:inline-block;width:12px;height:12px;border-radius:50%;margin-inline-end:6px;vertical-align:middle}
+
+/* ---------- wallet items ---------- */
+.x-items{display:grid;gap:10px;margin-top:14px}
+.x-item{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;text-align:start;padding:14px 16px;border-radius:18px;background:var(--x-glass);border:1px solid var(--x-line)}
+.x-item b{font-size:17px;color:#fff}
+.x-item .w{font-size:15px;color:var(--x-muted);font-variant-numeric:tabular-nums}
+.x-item .v{font-size:19px;font-weight:700;color:var(--x-gold-hot);font-variant-numeric:tabular-nums;text-align:end}
+.x-item .d{font-size:15px;font-weight:700;text-align:end;direction:ltr;font-variant-numeric:tabular-nums}
+.x-item .d.up{color:var(--good)}.x-item .d.dn{color:var(--bad)}
+.x-item .p{font-size:14px;color:#93a4bd}
+.x-item .wal-del{justify-self:end;background:none;border:0;color:#93a4bd;font-size:13px;padding:2px 0;text-decoration:underline}
+.x-item .wal-del:hover{background:none;color:var(--bad)}
+
+/* ---------- analysis reading orbs ---------- */
+.x-reads{display:flex;justify-content:center;gap:12px;margin:20px 0 6px}
+.x-read{flex:0 1 150px;aspect-ratio:1;min-width:0;padding:8px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;
+  font:inherit;color:#fff;font-size:clamp(12px,3.4vw,15px);font-weight:700;line-height:1.3;cursor:pointer;border:2px solid #efc66c90;
+  background:radial-gradient(circle at 35% 25%,#2a466e,var(--x-navy2) 45%,var(--x-navy) 80%);box-shadow:0 0 18px #ffd84a33;-webkit-tap-highlight-color:transparent}
+.x-read:hover{background:radial-gradient(circle at 35% 25%,#2a466e,var(--x-navy2) 45%,var(--x-navy) 80%);border-color:var(--x-bolt);box-shadow:0 0 26px #ffd84a88}
+.x-read .tag{display:block;margin:0;padding:2px 8px;background:none!important;font-size:clamp(12px,3.3vw,15px);line-height:1.4}
+.x-read .tag.none{color:var(--x-muted)}
+.signal{background:none;border:0;box-shadow:none;backdrop-filter:none;padding:0;margin:8px auto 0;max-width:560px;text-align:center}
+.signal .head{font-size:15px;color:var(--x-muted);font-weight:600}
+.signal p{font-size:14px;color:#93a4bd}
+.signal .plan:empty{display:none}
+.analytics{border:0;padding-top:0}
+.analytics details.x-more{margin-top:12px;padding:6px 16px;background:var(--x-glass);border:1px solid var(--x-line);border-radius:18px}
+.analytics details.x-more>summary{text-align:start;font-size:18px;color:#fff;padding:12px 0}
+.analytics details.x-more p{font-size:16px;line-height:1.9;color:var(--x-muted)}
+.analytics .x-card{margin-top:22px}
+.analytics .chart{background:none;border:0;box-shadow:none;backdrop-filter:none;padding:6px 0 0}
+.analytics .ind{grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+.analytics .ind li{padding:12px;text-align:center;background:#ffffff08;box-shadow:none}
+.analytics .ind b{font-size:17px}
+.analytics .ind span{font-size:13px}
+
 /* ---------- market: karat orbs + glowing price ring ---------- */
 .x-karats{display:flex;justify-content:center;gap:16px;margin:18px 0 6px}
 .x-karat{

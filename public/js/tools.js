@@ -62,10 +62,12 @@
     const sell = num($('invPrice').value);
     const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: num($('invVat').value) });
     set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'سعر الجرام من آخر قراءة آي صاغة: ' + when(a.sourceTime) + '.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
+    const share = r && !r.belowGold ? Math.min(100, Math.max(0, r.extraPercent)) : 0, donut = $('invDonut');
+    if (donut) { donut.style.strokeDasharray = share + ' ' + (100 - share); set('invDonutPct', r && !r.belowGold ? nf(r.extraPercent, 1) + '%' : '—'); }
     const v = $('invVerdict');
-    if (!r) { v.textContent = 'اكتب الوزن والمبلغ لتظهر النتيجة'; v.className = 'inv-verdict'; ['invGold', 'invExtra', 'invPerGram', 'invMaking', 'invTax', 'invResale', 'invLoss'].forEach(id => set(id, '—')); return; }
-    if (r.belowGold) { v.textContent = 'المبلغ أقل من قيمة الذهب بهذا السعر. راجع الوزن أو العيار أو سعر الجرام.'; v.className = 'inv-verdict warn'; }
-    else { v.textContent = 'دفعت ' + egp(r.extra) + ' فوق قيمة الذهب، أي ' + nf(r.extraPercent, 1) + '% من الفاتورة'; v.className = 'inv-verdict ok'; }
+    if (!r) { v.textContent = 'اكتب الوزن والمبلغ لتظهر النتيجة'; v.className = 'x-verdict'; ['invGold', 'invExtra', 'invPerGram', 'invMaking', 'invTax', 'invResale', 'invLoss'].forEach(id => set(id, '—')); return; }
+    if (r.belowGold) { v.textContent = 'المبلغ أقل من قيمة الذهب بهذا السعر. راجع الوزن أو العيار أو سعر الجرام.'; v.className = 'x-verdict warn'; }
+    else { v.textContent = 'دفعت ' + egp(r.extra) + ' فوق قيمة الذهب'; v.className = 'x-verdict'; }
     set('invGold', egp(r.gold)); set('invExtra', egp(r.extra) + ' (' + nf(r.extraPercent, 1) + '%)'); set('invPerGram', egp(r.extraPerGram, 2));
     set('invMaking', r.belowGold ? '—' : egp(r.makingPerGram, 2)); set('invTax', r.belowGold ? '—' : egp(r.taxPerGram, 2));
     set('invResale', r.resale === null ? 'غير متاح' : egp(r.resale)); set('invLoss', r.loss === null ? '—' : egp(r.loss) + ' (' + nf(r.lossPercent, 1) + '%)');
@@ -80,24 +82,27 @@
   const KEY = 'dhb-wallet-v1';
   const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v.filter(i => PURITY[i.k] && i.g > 0 && i.paid >= 0) : []; } catch (_) { return []; } };
   const save = items => { try { localStorage.setItem(KEY, JSON.stringify(items)); return true; } catch (_) { return false; } };
-  function cell(tr, text, cls) { const td = document.createElement('td'); td.textContent = text; if (cls) td.className = cls; tr.append(td); return td; }
+  function piece(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; }
   function walletRender() {
     if (!$('walRows')) return;
     const items = load(), w = wallet(items, local()), body = $('walRows');
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
     w.rows.forEach(r => {
-      const tr = document.createElement('tr');
-      cell(tr, (r.note ? r.note + ' • ' : '') + 'عيار ' + r.k); cell(tr, nf(r.g, 3) + ' جم'); cell(tr, egp(r.paid)); cell(tr, r.now === null ? '—' : egp(r.now));
-      cell(tr, r.diff === null ? '—' : signed(r.diff) + ' (' + signed(r.percent, 1) + '%)', r.diff === null ? '' : r.diff >= 0 ? 'up' : 'dn');
+      const it = document.createElement('div'); it.className = 'x-item';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = 'حذف'; b.setAttribute('aria-label', 'حذف هذه القطعة');
       b.addEventListener('click', () => { if (confirm('حذف هذه القطعة من دهبي؟')) { save(load().filter(i => i.id !== r.id)); walletRender(); } });
-      cell(tr, '').append(b); body.append(tr);
+      it.append(
+        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k), piece('span', 'v', r.now === null ? '—' : egp(r.now)),
+        piece('span', 'w', nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)), piece('span', 'd' + (r.diff === null ? '' : r.diff >= 0 ? ' up' : ' dn'), r.diff === null ? '' : signed(r.diff) + ' (' + signed(r.percent, 1) + '%)'),
+        piece('span', 'p', ''), b);
+      body.append(it);
     });
-    set('walNow', items.length ? (w.now === null ? 'في انتظار السعر' : egp(w.now)) : '—');
+    set('walNow', items.length ? (w.now === null ? '—' : egp(w.now)) : '0 جنيه');
     set('walPaid', items.length ? egp(w.paid) : '—');
-    const d = $('walDiff'); d.textContent = w.diff === null ? '—' : signed(w.diff) + ' جنيه (' + signed(w.percent, 1) + '%)'; d.className = w.diff === null ? '' : w.diff >= 0 ? 'up' : 'dn';
-    set('walGrams', items.length ? nf(w.grams, 3) + ' جرام • يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '—');
+    set('walWeight', items.length ? nf(w.grams, 3) + ' جم' : '—');
+    const d = $('walDiff'); d.textContent = w.diff === null ? '' : signed(w.diff) + ' (' + signed(w.percent, 1) + '%)'; d.className = 'chg' + (w.diff === null ? '' : w.diff >= 0 ? ' up' : ' dn');
+    set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر من المصدر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
   }
   if ($('walRows')) {
     $('walForm').addEventListener('submit', e => {
