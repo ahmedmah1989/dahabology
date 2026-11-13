@@ -29,11 +29,12 @@
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
   const selectedRows=productRows(data,c.id).filter(o=>displayable(o)&&(!$('storeFilter').value||o.store===$('storeFilter').value)&&(!$('stockOnly').checked||o.inStock===true));
   $('offersStatus').textContent=selectedRows.length?'أسعار المنتج بالجنيه المصري • راجع شمول الرسوم قبل الشراء':'السعر غير متاح حاليًا لهذا المنتج';
+  renderRetailers(data);renderJewelry(data);
   const cards=$('productOfferCards');cards.replaceChildren();
   selectedRows.forEach((o,i)=>{
    const card=element('article','retail-card');
    card.append(element('div','source-type',o.brand==='El Galla'?'ذهب عيار '+c.karat:o.brand||'ذهب عيار '+c.karat),element('h3','',o.store||'محل ذهب'),element('p','retail-price',f(o.listedPrice)));
-   card.append(element('span','badge',o.inStock===false?'غير متوفر حاليًا':'سعر المنتج'));
+   card.append(element('span','badge',o.inStock===false?'غير متوفر حاليًا':o.priceKind==='indicative'?'سعر استرشادي • الإجمالي يراجع قبل الشراء':'سعر المنتج'));
    const facts=element('dl','retail-facts');
    const lines=[['الوزن والعيار',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+' • يُراجع شمولها والضريبة في السعر':'يُراجع شمولها قبل الشراء'],['الدمغة والشحن',o.stampIncluded===true?'الدمغة مشمولة • الشحن يُراجع عند الشراء':'يُراجع شمولها قبل الشراء']];
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
@@ -42,13 +43,30 @@
    const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+' • '+o.store+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
-  if(!selectedRows.length)cards.append(element('p','notice','لا توجد أسعار مطابقة للاختيار. جرّب كل المحلات أو ألغِ «المتاح فقط» أو اختر وزنًا آخر.'));
+  if(!selectedRows.length){const jewelry=(data.offers||[]).some(o=>o.kind==='jewelry'&&o.store===$('storeFilter').value&&displayable(o));cards.append(element('p','notice',jewelry?'عروض المحل المتاحة مشغولات ذهب؛ شوفها تحت في قسم المشغولات.':'لا يوجد سعر لهذا المنتج عند المحل المختار حاليًا. جرّب كل المحلات أو وزنًا آخر، أو ألغِ «المتاح فقط».'));}
 
+ }
+ function renderRetailers(data){
+  const host=$('retailerCoverage');host.replaceChildren();
+  (data.retailers||[]).forEach(r=>{
+   const n=(data.offers||[]).filter(o=>o.store===r.name&&displayable(o)).length;
+   const card=element('article','retailer-status'+(n?' available':''));card.append(element('h3','',r.name),element('p','',n?n+' منتجات بسعر معلن':'السعر غير متاح حاليًا'),element('span','x-note',r.name==='BTC'&&n?'أسعار استرشادية للوزن؛ راجع التصميم والإجمالي':n?'راجع وزن المنتج وعياره والرسوم':'لا نعرض رقمًا تقديريًا باسم المحل'));
+   host.append(card);
+  });
+ }
+ function renderJewelry(data){
+  const store=$('storeFilter').value,rows=(data.offers||[]).filter(o=>o.kind==='jewelry'&&displayable(o)&&(!store||o.store===store)&&(!$('stockOnly').checked||o.inStock===true));
+  $('jewelryOffers').hidden=!rows.length;const host=$('jewelryOfferCards');host.replaceChildren();
+  rows.forEach(o=>{
+   const card=element('article','retail-card');card.append(element('div','source-type',o.store),element('h3','',o.productTitle||o.name),element('p','retail-price',f(o.listedPrice)),element('span','badge',o.inStock===true?'متاح حسب العرض':o.inStock===false?'غير متوفر حاليًا':'التوافر يحتاج تأكيد'));
+   const dl=element('dl','retail-facts');[['وزن الذهب',o.weight+' جرام • عيار '+o.karat],['الموديل',o.sku],['المصنعية والضريبة والرسوم','راجع شمولها في إجمالي القطعة قبل الدفع']].forEach(([k,v])=>{const row=element('div');row.append(element('dt','',k),element('dd','',v));dl.append(row);});card.append(dl);
+   const b=element('button','x-btn ghost','قارن هذه القطعة');b.type='button';b.onclick=()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:(o.productTitle||o.name)+' • '+o.store,weight:o.weight,karat:o.karat,total:o.listedPrice,buyback:null,final:false}}));card.append(b);host.append(card);
+  });
  }
  function offers(data){
   if(data.schemaVersion!==2||!Array.isArray(data.catalog)||!data.catalog.length)throw Error('Missing product catalog');
   catalogData=data;
-  if(productPage){const select=$('storeFilter'),previous=select.value;select.replaceChildren();const all=element('option','','كل المحلات');all.value='';select.append(all);[...new Set(data.offers.filter(o=>displayable(o)).map(o=>o.store))].sort().forEach(name=>{const option=element('option','',name);option.value=name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:'';}
+  if(productPage){const select=$('storeFilter'),previous=select.value;select.replaceChildren();const all=element('option','','كل المحلات');all.value='';select.append(all);[...new Set([...data.offers.filter(o=>displayable(o)).map(o=>o.store),...(data.retailers||[]).map(r=>r.name)])].sort().forEach(name=>{const option=element('option','',name);option.value=name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:'';}
   const weights=$('barWeight');weights.replaceChildren();data.catalog.filter(c=>c.kind==='bars').forEach(c=>{const o=element('option','',c.weight+' جرام • عيار '+c.karat);o.value=c.id;weights.append(o);});
   weights.value='bar10';
   const summary=$('productSummary');summary.replaceChildren();

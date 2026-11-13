@@ -9,11 +9,13 @@
 </div>
 <label id="barWeightControl" class="x-field sm x-pick" hidden>وزن السبيكة<select id="barWeight" aria-label="وزن السبيكة"><option value="bar10">10 جرام</option></select></label>
 <div class="x-card" style="margin-top:16px"><h2 id="selectedProductName">جنيه ذهب</h2><p class="x-sub" id="selectedProductSpec">8 جرامات • عيار 21</p><p class="x-note" id="offersStatus" role="status">تحميل أسعار المنتجات…</p></div>
-<div class="store-toolbar"><label class="x-field">اختار المحل<select id="storeFilter"><option value="">كل المحلات</option></select></label><label class="compare-check"><input id="stockOnly" type="checkbox">المتاح فقط</label></div>
+<div class="store-toolbar"><label class="x-field">اختار المحل<select id="storeFilter" aria-label="اختار المحل"><option value="">كل المحلات</option></select></label><label class="compare-check"><input id="stockOnly" type="checkbox">المتاح فقط</label></div>
 <p class="x-note">المحل هو جهة العرض، والماركة هي الشركة المصنّعة. اختلاف السعر المعلن لا يكفي للحكم على الأقل تكلفة قبل مراجعة الرسوم.</p>
 <div id="productOfferCards" class="retail-offer-grid" aria-live="polite"></div>
 <a id="productPermalink" href="#products/pound" hidden>رابط مباشر</a>
 
+<section class="retailer-section" aria-labelledby="retailerTitle"><h2 id="retailerTitle">المحلات والماركات</h2><p class="x-note">كل اسم له حالة واضحة. السعر يظهر فقط لما يكون موجودًا لمنتج محدد، والمنتج غير المسعّر لا يدخل المقارنة.</p><div class="retailer-status-grid" id="retailerCoverage"></div></section>
+<section class="retailer-section" id="jewelryOffers" hidden aria-labelledby="jewelryTitle"><h2 id="jewelryTitle">مشغولات ذهب من المحلات</h2><p class="x-note">دي أسعار القطعة كاملة، مش سعر جرام خام ولا سعر سبيكة. الوزن والعيار والموديل مكتوبين لكل قطعة.</p><div class="retail-offer-grid" id="jewelryOfferCards"></div></section>
 <section class="x-card compare-tool" id="comparisonTool" aria-labelledby="compareTitle">
 <div class="compare-heading"><div><p class="x-sub">اختيار أوضح، على نفس أساس الحساب</p><h2 id="compareTitle">قارن قبل ما تختار</h2></div><span class="badge" id="compareCount">0 من 3 منتجات</span></div>
 <p class="x-note">أضف من بطاقات المنتجات، أو أدخل عرضًا معك. قارن حتى 3 منتجات حسب الوزن والنقاوة والإجمالي وإعادة البيع.</p>
