@@ -1,0 +1,9 @@
+---
+import Base from '../layouts/Base.astro';
+import html from '../panels/invoice.html?raw';
+---
+<Base page="invoice" scripts={['monitor', 'board', 'tools']}
+  title="افحص فاتورة الذهب: كم دفعت مصنعية؟ — دهبولوجي"
+  description="اكتب وزن القطعة وعيارها وإجمالي الفاتورة لتعرف قيمة الذهب نفسه، وما دفعته فوقها من مصنعية وضريبة، وكم تسترد لو بعتها الآن.">
+  <Fragment set:html={html} />
+</Base>

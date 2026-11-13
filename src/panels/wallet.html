@@ -1,0 +1,17 @@
+<section id="wallet"><div class="section-head"><div><span class="eyebrow">محفوظ على جهازك فقط</span><h2>دهبي</h2></div></div>
+<p>سجّل ما تملكه من ذهب لتعرف قيمته الآن لو بعته، ومكسبك أو خسارتك عن ما دفعت.</p>
+<div class="cards k3 wal-sum">
+<article class="card"><div class="label">قيمته الآن لو بعته</div><div class="number" id="walNow">—</div><div class="source-time">بسعر شراء التاجر للجرام من آخر قراءة آي صاغة</div></article>
+<article class="card"><div class="label">ما دفعته</div><div class="number" id="walPaid">—</div><div class="source-time" id="walGrams">—</div></article>
+<article class="card"><div class="label">المكسب أو الخسارة</div><div class="number"><span id="walDiff">—</span></div><div class="source-time">المصنعية التي دفعتها داخلة في ما دفعت، ولا تُسترد عند البيع</div></article>
+</div>
+<form class="box" id="walForm" style="margin-top:18px"><h3>أضف قطعة</h3><div class="myref wal-form">
+<label>العيار<select id="walKarat"><option value="21">عيار 21</option><option value="24">عيار 24</option><option value="18">عيار 18 (محسوب)</option></select></label>
+<label>الوزن بالجرام<input id="walGramsIn" inputmode="decimal" placeholder="مثال: 8" autocomplete="off" required></label>
+<label>إجمالي ما دفعته بالجنيه<input id="walPaidIn" inputmode="decimal" placeholder="مثال: 49500" autocomplete="off" required></label>
+<label>وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="مثال: جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
+</div><button type="submit" style="margin-top:16px">أضف إلى دهبي</button><p class="notice" id="walMsg" role="status"></p></form>
+<p class="notice" id="walEmpty">لم تضف أي قطعة بعد.</p>
+<div class="box table-wrap" id="walTable" hidden><table><thead><tr><th>القطعة</th><th>الوزن</th><th>دفعت</th><th>قيمتها الآن</th><th>الفرق</th><th></th></tr></thead><tbody id="walRows"></tbody></table></div>
+<p class="notice">البيانات لا تغادر متصفحك ولا تُرسل لأي خادم. مسح بيانات المتصفح أو فتح الموقع من جهاز آخر يعني أن القائمة لن تظهر. القيمة محسوبة بسعر شراء التاجر للجرام، والسعر الفعلي عند البيع يحدده التاجر بعد فحص القطعة.</p>
+</section>

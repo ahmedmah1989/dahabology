@@ -1,0 +1,14 @@
+{
+  "name": "dahabology",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "astro": "^7.4.11"
+  }
+}

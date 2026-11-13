@@ -1,0 +1,21 @@
+---
+// The products board, opened on one product. Used by /products/ and by /products/<id>/.
+import Base from '../layouts/Base.astro';
+import html from '../panels/products.html?raw';
+import { panel, productSpec } from '../lib/site.js';
+const { product, index = false } = Astro.props;
+const swap = (s, a, b) => { if (!s.includes(a)) throw new Error('products panel changed: ' + a); return s.replace(a, b); };
+let body = panel(html, 'products');
+body = swap(body, '<h3 id="selectedProductName">جنيه ذهب</h3>', `<h3 id="selectedProductName">${product.name}</h3>`);
+body = swap(body, '<p id="selectedProductSpec" class="notice">8 جرامات • عيار 21</p>', `<p id="selectedProductSpec" class="notice">${productSpec(product)}</p>`);
+const title = index
+  ? 'سعر الجنيه الذهب والسبائك والأونصة في مصر — دهبولوجي'
+  : `سعر ${product.name} اليوم في مصر (${productSpec(product)}) — دهبولوجي`;
+const description = index
+  ? 'أسعار ربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة الفعلية كما تنشرها المتاجر، مع المصنعية والضريبة والدمغة والتوافر ووقت الرصد.'
+  : `سعر ${product.name} كما تنشره المتاجر في مصر، مع المصنعية والضريبة والدمغة والتوافر، سعر إعادة الشراء، ووقت رصد كل عرض.`;
+---
+<Base page="products" path={index ? 'products/' : `products/${product.id}/`} scripts={['services', 'monitor', 'board']} title={title} description={description}>
+  <script slot="config" is:inline define:vars={{ id: product.id }}>window.DHB_PRODUCT = id;</script>
+  <Fragment set:html={body} />
+</Base>

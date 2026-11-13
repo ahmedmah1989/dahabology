@@ -1,0 +1,7 @@
+---
+import Product from '../../components/Product.astro';
+import { catalog } from '../../lib/site.js';
+const list = await catalog();
+const product = list.find(c => c.id === 'pound') || list[0];
+---
+<Product product={product} index />

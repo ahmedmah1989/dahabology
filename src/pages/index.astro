@@ -1,0 +1,313 @@
+---
+import Head from '../components/Head.astro';
+import { B, DATA } from '../lib/site.js';
+const logo = `url(${B}assets/logo-900.webp)`;
+const emblem = `url(${B}assets/emblem.webp)`;
+---
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<Head title="دهبولوجي | أسعار الذهب والسبائك والجنيه في مصر" description="تابع أسعار الذهب في مصر، وربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة، مع مصادر الأسعار والمصنعية وحالة التوثيق والتحديث." path="" theme="#0a1628" />
+<style is:global>
+:root{
+  --night:#0a1628; --navy:#10213b; --navy-2:#192f4e;
+  --gold:#efc66c; --gold-hot:#f5d58f; --gold-deep:#a87c25; --bolt:#ffd84a;
+  --ink:#ffffff; --muted:#cdd8e8;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--ink); overflow-x:hidden;
+  font:500 17px/1.7 'IBM Plex Sans Arabic',Tahoma,sans-serif;
+  -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+  background:
+    radial-gradient(ellipse 75% 55% at 50% 50%, #192f4e, transparent 72%),
+    radial-gradient(ellipse at 50% 112%, #a87c2540, transparent 55%),
+    radial-gradient(ellipse at 50% -12%, #efc66c1f, transparent 50%),
+    linear-gradient(180deg,var(--night),var(--navy) 50%,var(--night));
+  display:flex; flex-direction:column; align-items:center;
+  min-height:100dvh; padding:max(14px,env(safe-area-inset-top)) 16px max(14px,env(safe-area-inset-bottom));
+}
+/* gold dust */
+body::before{
+  content:""; position:fixed; inset:0; pointer-events:none; opacity:.55;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #efc66c 50%, transparent 51%),
+    radial-gradient(1px 1px at 82% 12%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 68% 82%, #efc66c 50%, transparent 51%),
+    radial-gradient(1px 1px at 24% 74%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 91% 55%, #efc66c 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 48%, #fff 50%, transparent 51%);
+  animation:twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes twinkle{to{opacity:.2}}
+/* full logo as a living backdrop: screen blend drops its navy, keeps a faint gold ghost */
+body::after{
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:var(--logo) center/min(150vw,125vh) no-repeat;
+  mix-blend-mode:screen; opacity:.11;
+  -webkit-mask:radial-gradient(ellipse 60% 60% at 50% 50%, #000 55%, transparent 100%); mask:radial-gradient(ellipse 60% 60% at 50% 50%, #000 55%, transparent 100%);
+  animation:ghost 9s ease-in-out infinite alternate;
+}
+@keyframes ghost{to{opacity:.07; scale:1.03}}
+
+.top{text-align:center; z-index:2}
+.top h1{margin:0; font-size:clamp(32px,8vw,46px); font-weight:700; line-height:1.35;
+  background:linear-gradient(180deg,#fff6d6,var(--gold) 50%,var(--gold-deep)); -webkit-background-clip:text; background-clip:text; color:transparent;
+  filter:drop-shadow(0 2px 10px #efc66c40)}
+.top p{margin:0; font-size:clamp(15px,4vw,18px); font-weight:500; color:var(--muted)}
+
+.hero-price{
+  z-index:2; margin-top:12px; text-align:center; padding:10px 26px; border-radius:18px;
+  border:1px solid #efc66c66; background:linear-gradient(180deg,#192f4ecc,#10213bcc); backdrop-filter:blur(6px);
+  box-shadow:0 8px 30px #0006, inset 0 1px 0 #ffffff14;
+}
+.hero-price .cap{font-size:clamp(14px,3.8vw,16px); font-weight:600; color:var(--muted); display:block; line-height:1.6}
+.hero-price b{font-size:clamp(40px,11vw,56px); font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1.2; text-shadow:0 0 24px #efc66c55}
+.hero-price b small{font-size:.4em; color:#fff; font-weight:600; margin-inline-start:8px}
+.hero-price .when{display:block; font-size:clamp(13px,3.4vw,14px); color:var(--muted); line-height:1.6}
+
+/* ---------- stage ---------- */
+.stage{
+  --s:clamp(330px, min(94vw, calc(100dvh - 330px)), 680px);
+  position:relative; width:var(--s); height:var(--s); max-width:94vw; max-height:94vw;
+  margin:14px auto; flex:none; container-type:size;
+}
+.rays,.rays::before,.halo{position:absolute; inset:0; border-radius:50%; pointer-events:none}
+.rays{
+  background:repeating-conic-gradient(from 0deg, #efc66c38 0 2.5deg, transparent 2.5deg 15deg);
+  -webkit-mask:radial-gradient(circle, #000 12%, transparent 60%); mask:radial-gradient(circle, #000 12%, transparent 60%);
+  animation:spin 70s linear infinite;
+}
+.rays::before{
+  content:""; background:repeating-conic-gradient(from 7deg, #ffe07a2a 0 1deg, transparent 1deg 22deg);
+  animation:spin 45s linear infinite reverse;
+}
+.halo{inset:18%; background:radial-gradient(circle,#ffd84a66,#efc66c22 45%,transparent 70%); animation:breathe 3.6s ease-in-out infinite}
+@keyframes spin{to{rotate:360deg}}
+@keyframes breathe{50%{scale:1.14; opacity:.7}}
+
+.bolts{position:absolute; inset:0; width:100%; height:100%; overflow:visible; pointer-events:none; filter:drop-shadow(0 0 5px #ffd84a)}
+.bolt{fill:none; stroke:var(--bolt); stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; opacity:.16; transition:opacity .5s}
+.bolt.strike{opacity:1; stroke:#fff6c9; stroke-width:3.2; transition:none}
+
+/* emblem: only the D + Tutankhamun, cut out of the logo and feathered into the glow */
+.core{
+  position:absolute; left:50%; top:50%; width:42%; height:42%; translate:-50% -50%; border-radius:50%; z-index:3;
+  background:var(--emblem) center/contain no-repeat;
+  filter:drop-shadow(0 0 18px #ffd84a66) saturate(1.08);
+}
+
+.orb{
+  position:absolute; width:20.5%; height:20.5%; translate:-50% -50%; border-radius:50%; z-index:4;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:.8cqw;
+  text-decoration:none; color:var(--ink);
+  background:radial-gradient(circle at 35% 25%, #2a466e, var(--navy-2) 45%, var(--navy) 80%);
+  border:2px solid var(--gold);
+  box-shadow:0 0 18px #ffd84a40, 0 6px 18px #0007, inset 0 0 16px #efc66c26;
+  transition:scale .2s, box-shadow .2s, border-color .2s; -webkit-tap-highlight-color:transparent;
+}
+.orb .ico{width:34%; height:34%; display:block}
+.orb .ico svg{width:100%; height:100%; fill:none; stroke:var(--gold); stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round}
+.orb .lbl{font-size:max(13px,3.4cqw); font-weight:700; line-height:1.25; white-space:nowrap; text-shadow:0 1px 4px #000a}
+.orb .zap{position:absolute; inset:-16%; width:132%; height:132%; overflow:visible; pointer-events:none; filter:drop-shadow(0 0 3px #ffd84a)}
+.orb .zap path{fill:none; stroke:var(--bolt); stroke-width:1.1; stroke-linejoin:round; stroke-linecap:round; opacity:.38; transition:opacity .45s}
+.orb .zap .spk{opacity:0}
+.orb.strike .zap path, .orb:hover .zap path, .orb:focus-visible .zap path{opacity:1; stroke:#fff3b0; stroke-width:1.6; transition:none}
+.orb:hover,.orb:focus-visible,.orb.strike{border-color:var(--gold-hot); box-shadow:0 0 30px #ffd84a99, inset 0 0 18px #efc66c44}
+.orb:hover,.orb:focus-visible{scale:1.09; outline:none}
+.orb:active{scale:.96}
+
+/* ---------- intro choreography ---------- */
+.play .core{animation:coreIn .7s cubic-bezier(.2,1.4,.4,1) both}
+.play .rays{animation:raysIn .9s .25s cubic-bezier(.2,.9,.3,1) both, spin 70s linear infinite}
+.play .halo{animation:raysIn .8s .2s both, breathe 3.6s 1s ease-in-out infinite}
+.play .bolt{animation:flash .55s both; animation-delay:calc(.75s + var(--i)*.13s)}
+.play .orb{animation:pop .5s cubic-bezier(.2,1.5,.4,1) both; animation-delay:calc(.85s + var(--i)*.13s)}
+.play .hero-price,.play .ticker{animation:rise .6s 1.7s both}
+.play .top{animation:rise .6s .1s both}
+@keyframes coreIn{from{scale:0; opacity:0; filter:brightness(3)}}
+@keyframes raysIn{from{scale:0; opacity:0}}
+@keyframes flash{0%{opacity:0}15%{opacity:1; stroke:#fff}35%{opacity:.25}55%{opacity:1}100%{opacity:.16}}
+@keyframes pop{from{scale:0; opacity:0; filter:brightness(2.5)}}
+@keyframes rise{from{opacity:0; transform:translateY(12px)}}
+
+/* ---------- ticker ---------- */
+.ticker{z-index:2; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; width:min(100%,620px); margin-top:auto}
+.chip{border:1px solid #efc66c40; background:linear-gradient(180deg,#192f4ecc,#10213bcc); border-radius:14px; padding:9px 8px; text-align:center}
+.chip span{display:block; font-size:clamp(13px,3.5vw,15px); font-weight:600; color:var(--muted); line-height:1.5}
+.chip b{font-size:clamp(19px,5.2vw,24px); font-variant-numeric:tabular-nums; font-weight:700; color:#fff}
+.replay{z-index:2; margin-top:10px; background:none; border:0; color:var(--muted); font:inherit; font-size:14px; cursor:pointer; text-decoration:underline; text-underline-offset:4px}
+.replay:hover{color:var(--gold)}
+.install{z-index:2; margin-top:12px; border:1px solid var(--gold); background:linear-gradient(120deg,#eac674,#d4a44a); color:#14243c; font:inherit; font-weight:700; font-size:16px; padding:11px 22px; border-radius:12px; cursor:pointer}
+.install[hidden]{display:none}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before{animation:none!important; transition:none!important}
+}
+</style>
+</head>
+<body style={`--logo:${logo};--emblem:${emblem}`}>
+<header class="top">
+  <h1>دهبولوجي</h1>
+  <p>الذهب في مصر… من الرقم إلى الصورة الكاملة</p>
+</header>
+
+<div class="hero-price" aria-live="polite">
+  <span class="cap">جرام عيار 21 الآن • بيع • بدون مصنعية</span>
+  <b><span id="p21">—</span><small>جنيه</small></b>
+  <span class="when" id="pWhen">تحميل السعر…</span>
+</div>
+
+<main class="stage" id="stage" aria-label="أقسام دهبولوجي">
+  <div class="rays"></div>
+  <div class="halo"></div>
+  <svg class="bolts" id="bolts" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
+  <div class="core" role="img" aria-label="شعار دهبولوجي"></div>
+</main>
+
+<div class="ticker">
+  <div class="chip"><span>عيار 24</span><b id="p24">—</b></div>
+  <div class="chip"><span>الدولار • بنك مصر</span><b id="pUsd">—</b></div>
+  <div class="chip"><span>الأونصة $</span><b id="pOz">—</b></div>
+</div>
+<a class="replay" href={B + "sources/"}>المصادر والتحديث</a>
+<button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
+<button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button>
+<script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
+<script is:inline>
+const SITE = window.DHB_BASE, DATA = window.DHB_DATA;
+const TABS = [
+  {k:'market',     t:'السوق',     d:'M3 12h4l2-6 4 12 2-6h6'},
+  {k:'products',   t:'المنتجات',  d:'M3 18l2-6h14l2 6zM8 12l1.2-5h5.6L16 12'},
+  {k:'calculator', t:'الحاسبة',   d:'M6 3h12v18H6zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01'},
+  {k:'invoice',    t:'الفاتورة',  d:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3'},
+  {k:'wallet',     t:'دهبي',      d:'M3 7a2 2 0 012-2h13v4M3 7v10a2 2 0 002 2h15V9H5a2 2 0 01-2-2zM16 14h.01'},
+  {k:'analysis',   t:'التحليل',   d:'M4 4v16h16M8 15l3-4 3 2 5-7'},
+  {k:'live',       t:'الرسم الحي', d:'M7 3v18M5 8h4v7H5zM17 3v18M15 6h4v8h-4z'},
+  {k:'guide',      t:'الدليل',    d:'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM8 8h7M8 12h5'}
+];
+const R = 385, R_CORE = 178, R_ORB = 108;         // in 1000-unit stage space
+const stage = document.getElementById('stage');
+const boltsSvg = document.getElementById('bolts');
+const rnd = (a,b) => a + Math.random()*(b-a);
+const reduced = matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* jagged lightning between two radii along one angle */
+function boltPath(ang){
+  const c = Math.cos(ang), s = Math.sin(ang), n = 7; let d = '';
+  for(let i=0;i<=n;i++){
+    const r = R_CORE + (R - R_ORB - R_CORE) * i/n;
+    const j = (i===0||i===n) ? 0 : rnd(-17,17);
+    d += (i?'L':'M') + (r*c - j*s).toFixed(1) + ' ' + (r*s + j*c).toFixed(1);
+  }
+  return d;
+}
+/* jagged ring + outward sparks around an orb (viewBox -60..60) */
+function ringPath(){
+  const n = 30; let d = '';
+  for(let i=0;i<n;i++){
+    const a = i/n*Math.PI*2, r = 47 + rnd(-2.6,2.6);
+    d += (i?'L':'M') + (r*Math.cos(a)).toFixed(1) + ' ' + (r*Math.sin(a)).toFixed(1);
+  }
+  return d + 'Z';
+}
+function sparkPath(){
+  let d = '';
+  for(let k=0;k<6;k++){
+    const a = rnd(0,Math.PI*2), m = a + rnd(-.12,.12);
+    d += `M${(48*Math.cos(a)).toFixed(1)} ${(48*Math.sin(a)).toFixed(1)}L${(54*Math.cos(m)).toFixed(1)} ${(54*Math.sin(m)).toFixed(1)}L${(60*Math.cos(a)).toFixed(1)} ${(60*Math.sin(a)).toFixed(1)}`;
+  }
+  return d;
+}
+
+const NS = 'http://www.w3.org/2000/svg';
+const items = TABS.map((tab,i) => {
+  const ang = (-90 + i*360/TABS.length) * Math.PI/180;
+  const bolt = document.createElementNS(NS,'path');
+  bolt.setAttribute('class','bolt'); bolt.style.setProperty('--i',i); bolt.setAttribute('d',boltPath(ang));
+  boltsSvg.appendChild(bolt);
+
+  const a = document.createElement('a');
+  a.className = 'orb'; a.href = SITE + tab.k + '/'; a.style.setProperty('--i',i);
+  a.style.left = (50 + R/10*Math.cos(ang)) + '%';
+  a.style.top  = (50 + R/10*Math.sin(ang)) + '%';
+  a.innerHTML =
+    `<svg class="zap" viewBox="-60 -60 120 120" aria-hidden="true"><path class="ring"/><path class="spk"/></svg>
+     <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="${tab.d}"/></svg></span>
+     <span class="lbl">${tab.t}</span>`;
+  stage.appendChild(a);
+  const ring = a.querySelector('.ring'), spk = a.querySelector('.spk');
+  ring.setAttribute('d',ringPath());
+  const it = {ang,bolt,a,ring,spk,timer:null};
+  const on = () => { if(it.timer||reduced) return; crackle(it); it.timer = setInterval(()=>crackle(it),85); };
+  const off = () => { clearInterval(it.timer); it.timer = null; };
+  a.addEventListener('pointerenter',on); a.addEventListener('focus',on);
+  a.addEventListener('pointerleave',off); a.addEventListener('blur',off); a.addEventListener('pointercancel',off);
+  return it;
+});
+
+function crackle(it){
+  it.ring.setAttribute('d',ringPath());
+  it.spk.setAttribute('d',sparkPath());
+  it.bolt.setAttribute('d',boltPath(it.ang));
+}
+/* a short strike: bolt from the logo hits one orb, its ring flickers */
+function strike(it){
+  let n = 0; it.a.classList.add('strike'); it.bolt.classList.add('strike');
+  const t = setInterval(() => {
+    crackle(it);
+    if(++n > 4){ clearInterval(t); it.a.classList.remove('strike'); it.bolt.classList.remove('strike'); }
+  },80);
+}
+let idle;
+function startIdle(){
+  clearInterval(idle);
+  if(reduced) return;
+  idle = setInterval(() => { if(!document.hidden) strike(items[Math.floor(Math.random()*items.length)]); }, 2300);
+}
+
+/* intro: once per session, replayable */
+function play(){
+  document.body.classList.remove('play'); void document.body.offsetWidth; document.body.classList.add('play');
+  clearInterval(idle); setTimeout(startIdle, 2400);
+}
+let seen = false; try{ seen = sessionStorage.getItem('dhb-intro') === '1'; sessionStorage.setItem('dhb-intro','1'); }catch(e){}
+if(seen || reduced) startIdle(); else play();
+document.getElementById('replay').addEventListener('click',play);
+
+/* install as an app: the button appears only when the browser offers it */
+let installEvent = null; const installBtn = document.getElementById('install');
+addEventListener('beforeinstallprompt', e => { e.preventDefault(); installEvent = e; installBtn.hidden = false; });
+installBtn.addEventListener('click', async () => { if(!installEvent) return; installEvent.prompt(); await installEvent.userChoice; installEvent = null; installBtn.hidden = true; });
+addEventListener('appinstalled', () => { installBtn.hidden = true; });
+
+/* live prices from the current published snapshot */
+const fmt = (v,dec=0) => Number(v).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+function countUp(el,to,dec=0){
+  if(reduced){ el.textContent = fmt(to,dec); return; }
+  const t0 = performance.now(), from = to*0.985;
+  (function step(t){
+    const p = Math.min(1,(t-t0)/900), e = 1-Math.pow(1-p,3);
+    el.textContent = fmt(from+(to-from)*e,dec);
+    if(p<1) requestAnimationFrame(step);
+  })(t0);
+}
+fetch(DATA + 'quotes.json',{cache:'no-store'}).then(r => r.json()).then(q => {
+  const s = q.sources || {}, g = s.isagha || {}, m = s.misr || {}, oz = s.gold || {};
+  if(g['21'] && g['21'].sell){
+    countUp(document.getElementById('p21'), g['21'].sell);
+    const t = new Date(g.sourceTime);
+    document.getElementById('pWhen').textContent = 'آي صاغة • ' + t.toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit',day:'numeric',month:'short'});
+  } else document.getElementById('pWhen').textContent = 'السعر غير متاح الآن';
+  if(g['24'] && g['24'].sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
+  if(m.sell) countUp(document.getElementById('pUsd'), m.sell, 2);
+}).catch(() => { document.getElementById('pWhen').textContent = 'تعذر تحميل السعر'; });
+/* the ounce comes straight from the provider, as on the main board */
+fetch('https://api.gold-api.com/price/XAU',{cache:'no-store'}).then(r => r.json()).then(g => {
+  if(g.symbol === 'XAU' && Number(g.price) > 0) countUp(document.getElementById('pOz'), Number(g.price), 2);
+  else throw 0;
+}).catch(() => { document.getElementById('pOz').textContent = 'غير متاح'; });
+</script>
+</body>
+</html>

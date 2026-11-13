@@ -1,0 +1,12 @@
+---
+import Base from '../layouts/Base.astro';
+import html from '../panels/owner.html?raw';
+import { panel } from '../lib/site.js';
+// Operational status for the site owner. Not linked from the navigation and kept out of search engines.
+---
+<Base page="owner" scripts={['services', 'monitor', 'board']}
+  title="حالة المراقبة الإدارية — دهبولوجي"
+  description="حالة قناة المراقبة الإدارية للمنصة.">
+  <meta slot="head" name="robots" content="noindex">
+  <Fragment set:html={panel(html, 'owner').replace('<details id="ownerMonitor">', '<details id="ownerMonitor" open>')} />
+</Base>

@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import html from '../panels/guide.html?raw';
+import { panel } from '../lib/site.js';
+---
+<Base page="guide" scripts={['monitor', 'board']}
+  title="دليل الذهب: أسئلة شائعة وطريقة الحساب — دهبولوجي"
+  description="إجابات مختصرة عن سعر الذهب، الدولار الضمني، المصنعية والدمغة، حداثة الأسعار، ومعادلات الحساب وحدود البيانات في دهبولوجي.">
+  <Fragment set:html={panel(html, 'guide')} />
+</Base>

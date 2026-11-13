@@ -1,0 +1,21 @@
+---
+import Base from '../layouts/Base.astro';
+import html from '../panels/live.html?raw';
+import { panel } from '../lib/site.js';
+---
+<Base page="live" scripts={['monitor', 'board']}
+  title="رسم الذهب العالمي المباشر XAUUSD — دهبولوجي"
+  description="رسم مباشر لسعر أونصة الذهب مقابل الدولار من TradingView، مع توضيح الفرق بينه وبين مصادر حسابات اللوحة.">
+  <Fragment set:html={panel(html, 'live')} />
+  <script slot="scripts" is:inline>
+  (function(){
+    var script=document.createElement('script');
+    script.src='https://s3.tradingview.com/external-embedding/embed-widget-advanced-chart.js';
+    script.async=true;
+    script.textContent=JSON.stringify({autosize:true,symbol:'OANDA:XAUUSD',interval:'5',timezone:'Africa/Cairo',theme:'dark',style:'1',locale:'ar',allow_symbol_change:false,calendar:false,hide_volume:true,hide_side_toolbar:false,withdateranges:true,backgroundColor:'#111f35',gridColor:'rgba(180,197,220,0.07)',support_host:'https://www.tradingview.com'});
+    script.onerror=function(){document.getElementById('liveChartStatus').textContent='تعذر تحميل الرسم المضمّن. افتح المصدر مباشرة بالرابط أدناه.';};
+    document.getElementById('liveChartEmbed').appendChild(script);
+    document.getElementById('liveChartStatus').textContent='رسم مضمّن من TradingView • الذهب مقابل الدولار OANDA:XAUUSD • الإطار الافتراضي 5 دقائق. حالة السوق وتأخر البيانات كما تظهر داخل الرسم.';
+  })();
+  </script>
+</Base>

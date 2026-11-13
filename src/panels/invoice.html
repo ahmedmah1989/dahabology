@@ -1,0 +1,25 @@
+<section id="invoice"><div class="section-head"><div><span class="eyebrow">قبل ما تدفع أو بعد ما اشتريت</span><h2>افحص الفاتورة</h2></div></div>
+<p>اكتب وزن القطعة وعيارها والمبلغ المطلوب منك، وهنفصل لك قيمة الذهب نفسه عن كل ما دُفع فوقه من مصنعية وضريبة ورسوم، وكم تسترد لو بعتها.</p>
+<div class="box calc">
+<div class="fields">
+<label>العيار<select id="invKarat"><option value="21">عيار 21</option><option value="24">عيار 24</option><option value="18">عيار 18 (محسوب)</option></select></label>
+<label>وزن القطعة بالجرام<input id="invGrams" inputmode="decimal" placeholder="مثال: 8" autocomplete="off"></label>
+<label>إجمالي الفاتورة بالجنيه<input id="invTotal" inputmode="decimal" placeholder="مثال: 49500" autocomplete="off"></label>
+<label>سعر الجرام يوم الشراء<input id="invPrice" inputmode="decimal" placeholder="انتظار السعر" autocomplete="off"></label>
+<label>ضريبة على المصنعية %<input id="invVat" inputmode="decimal" value="14" autocomplete="off"></label>
+</div>
+<div class="calc-out" id="invOut" aria-live="polite">
+<div class="inv-verdict" id="invVerdict">اكتب الوزن والمبلغ لتظهر النتيجة</div>
+<dl class="retail-facts">
+<div><dt>قيمة الذهب نفسه</dt><dd id="invGold">—</dd></div>
+<div class="total"><dt>المدفوع فوق قيمة الذهب</dt><dd id="invExtra">—</dd></div>
+<div><dt>الزيادة على كل جرام</dt><dd id="invPerGram">—</dd></div>
+<div><dt>منها مصنعية للجرام (تقديري)</dt><dd id="invMaking">—</dd></div>
+<div><dt>ومنها ضريبة للجرام (تقديري)</dt><dd id="invTax">—</dd></div>
+<div><dt>لو بعتها للتاجر الآن تستلم</dt><dd id="invResale">—</dd></div>
+<div><dt>الفرق بين ما دفعت وما تسترد</dt><dd id="invLoss">—</dd></div>
+</dl></div>
+</div>
+<p class="notice" id="invNote">في انتظار السعر…</p>
+<p class="notice">الحساب يقارن فاتورتك بسعر جرام واحد: آخر قراءة منشورة، أو السعر الذي تكتبه لو اشتريت في يوم آخر. تقسيم الزيادة إلى مصنعية وضريبة تقديري ويفترض عدم وجود دمغة أو رسوم أخرى؛ الفاتورة المفصلة من التاجر هي المرجع. الأداة لا تحكم بأن المصنعية مرتفعة أو مناسبة، لأنها تختلف حسب القطعة والمحل.</p>
+</section>

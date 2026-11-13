@@ -1,0 +1,29 @@
+---
+import { B } from '../lib/site.js';
+const { title, description, path = '', theme = '#0b1729' } = Astro.props;
+// SITE_URL is set only for the real address. Without it this is a trial build: keep it out of search engines.
+const published = !!process.env.SITE_URL;
+const url = new URL(B + path, Astro.site).href;
+const image = new URL(B + 'assets/gold-background.jpg', Astro.site).href;
+---
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>{title}</title>
+<meta name="description" content={description}>
+{published ? <link rel="canonical" href={url}> : <meta name="robots" content="noindex">}
+<meta property="og:title" content={title}>
+<meta property="og:description" content={description}>
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ar_EG">
+{published && <meta property="og:url" content={url}>}
+{published && <meta property="og:image" content={image}>}
+<meta name="theme-color" content={theme}>
+<link rel="icon" href={B + 'assets/icon-192.png'}>
+<link rel="apple-touch-icon" href={B + 'assets/icon-192.png'}>
+<link rel="manifest" href={B + 'manifest.webmanifest'}>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="دهبولوجي">
+<script is:inline define:vars={{ sw: B + 'sw.js' }}>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register(sw).catch(() => {}));</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">

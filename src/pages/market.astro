@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import html from '../panels/market.html?raw';
+import { B, panel } from '../lib/site.js';
+---
+<Base page="market" scripts={['services', 'alerts', 'monitor', 'board', 'tools']}
+  title="سعر الذهب اليوم في مصر | عيار 21 و24 و18 والدولار الضمني — دهبولوجي"
+  description="سعر بيع وشراء الذهب في مصر لعيار 21 و24 و18، سعر الدولار في بنك مصر، الأونصة العالمية، ومؤشر الفجوة بين السعر المحلي والعالمي مع وقت كل مصدر.">
+  <Fragment set:html={panel(html, 'market')} />
+  <div class="coverage-strip" style="margin-top:24px"><b>حالة التوثيق: جزئية</b><span>الحسابات مختبرة • مطابقة تاريخية بعينة محدودة • حالة كل مصدر ظاهرة</span><a href={B + 'guide/#coverage'}>ما المتاح وما الذي ينقص؟ ↗</a></div>
+</Base>

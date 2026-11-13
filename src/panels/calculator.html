@@ -1,0 +1,16 @@
+<section id="calculator"><div class="section-head"><h2>حاسبة الذهب</h2><span class="small" id="cPriceNote">في انتظار سعر آي صاغة…</span></div>
+<div class="calc-tabs" role="group" aria-label="نوع العملية"><button type="button" data-mode="buy" aria-pressed="true">أشتري</button><button type="button" data-mode="sell" aria-pressed="false">أبيع</button></div>
+<div class="box calc">
+<div class="fields">
+<label>العيار<select id="cKarat"><option value="21">عيار 21</option><option value="24">عيار 24</option><option value="18">عيار 18 (محسوب)</option></select></label>
+<label><span id="cPriceLabel">سعر بيع الجرام لك</span><input id="cPrice" inputmode="decimal" placeholder="انتظار السعر" autocomplete="off"></label>
+<label class="buy-only">أحسب بـ<select id="cBy"><option value="money">المبلغ الذي معي</option><option value="grams">الوزن الذي أريده</option></select></label>
+<label><span id="cAmountLabel">المبلغ الذي معك بالجنيه</span><input id="cAmount" inputmode="decimal" placeholder="مثال: 100000" autocomplete="off"></label>
+<label class="buy-only">مصنعية الجرام بالجنيه<input id="cMaking" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+<label class="buy-only">دمغة ورسوم أخرى للجرام<input id="cStamp" inputmode="decimal" placeholder="0" autocomplete="off"></label>
+<label class="buy-only">ضريبة على المصنعية %<input id="cVat" inputmode="decimal" value="14" autocomplete="off"></label>
+</div>
+<div class="calc-out" aria-live="polite"><div class="small" id="cResultLabel">تشتري تقريبًا</div><div class="result" id="cResult">—</div><dl class="retail-facts" id="cBreak"></dl></div>
+</div>
+<p class="notice">سعر الجرام يُملأ من آخر قراءة آي صاغة وتقدر تغيّره لسعر تاجرك. المصنعية والدمغة تختلف من محل لآخر ومن قطعة لأخرى، فاكتبها من عرض التاجر. نسبة الضريبة 14% قيمة مبدئية قابلة للتعديل؛ راجعها في فاتورتك. عند البيع، التاجر يدفع قيمة الذهب فقط ولا يرد المصنعية.</p>
+</section>

@@ -1,0 +1,10 @@
+---
+import Product from '../../components/Product.astro';
+import { catalog } from '../../lib/site.js';
+// One real page per product, e.g. /products/pound/ and /products/bar10/.
+export async function getStaticPaths() {
+  return (await catalog()).map(product => ({ params: { id: product.id }, props: { product } }));
+}
+const { product } = Astro.props;
+---
+<Product product={product} />
