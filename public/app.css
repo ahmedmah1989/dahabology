@@ -157,7 +157,7 @@ details.x-more .line{font-size:16px}
 .x-card .retail-facts>div:last-child{border-bottom:0}
 .x-card .retail-facts dd{text-align:end;font-variant-numeric:tabular-nums;font-weight:700}
 .x-card .retail-facts .total dt,.x-card .retail-facts .total dd{color:var(--x-gold-hot);font-size:19px}
-.x-card:has(>dl:empty){display:none}
+.x-card:has(>dl:empty):not(:has(.result-explain)){display:none}
 .x-hero.sm{width:min(74vw,290px)}
 .x-ring .val.fit{font-size:clamp(30px,9.5vw,44px)}
 .x-ring .chg{direction:ltr;unicode-bidi:isolate}
