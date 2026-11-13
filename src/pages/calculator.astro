@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import html from '../panels/calculator.html?raw';
 import { panel } from '../lib/site.js';
 ---
-<Base page="calculator" scripts={['calc', 'monitor', 'board', 'ui']}
+<Base page="calculator" scripts={['calc', 'monitor', 'ui']}
   title="حاسبة الذهب: شراء وبيع بالمصنعية لعيار 24 و21 و18 — دهبولوجي"
   description="احسب كم جرام يشتريه مبلغك أو تكلفة وزن معين لعيار 24 و21 و18، مع المصنعية والدمغة والضريبة، واحسب ما تستلمه عند البيع بآخر سعر منشور.">
   <Fragment set:html={panel(html, 'calculator')} />

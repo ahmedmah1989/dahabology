@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import html from '../panels/live.html?raw';
 import { panel } from '../lib/site.js';
 ---
-<Base page="live" scripts={['monitor', 'board', 'live-view']}
+<Base page="live" scripts={['monitor', 'live-view']}
   title="رسم الذهب العالمي المباشر XAUUSD — دهبولوجي"
   description="رسم مباشر لحركة سعر أونصة الذهب مقابل الدولار أثناء فتح الصفحة، مع سجل للقراءات اليومية.">
   <Fragment set:html={panel(html, 'live')} />

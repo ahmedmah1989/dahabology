@@ -338,3 +338,9 @@ main.wrap{width:100%;min-width:0}
 @media(max-width:540px){.compare-tool{padding:16px}.compare-grid{grid-template-columns:1fr}.compare-card .retail-facts>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.compare-card .retail-facts dd{text-align:end;font-size:14px}.compare-card .retail-facts dt{max-width:52%}}
 
 html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-motion="paused"] *::after{animation:none!important;transition:none!important}
+
+.today-brief{position:relative;overflow:hidden;border-color:#efc66c66;background:radial-gradient(ellipse at 95% 0%,#efc66c1c,transparent 65%),linear-gradient(145deg,#213958dd,#0a1628ee)}
+.today-brief h2{font-size:clamp(20px,5.5vw,28px)}.today-price{display:block;font-size:clamp(38px,10vw,56px);line-height:1.3;color:#f5d58f;font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate;margin-top:14px}
+.today-change{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;color:#cdd8e8;font-size:14px}.today-change b{direction:ltr;font-size:24px;color:#fff;font-variant-numeric:tabular-nums}
+.store-toolbar{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-top:18px}.store-toolbar .x-field{flex:1;min-width:160px;margin:0}.store-toolbar select{width:100%;min-height:48px;background:#0a1628;border:1px solid #efc66c55;border-radius:14px;color:#fff;padding:10px;font:inherit}.store-toolbar .compare-check{margin:28px 0 0}
+.liquidity-note{margin:12px 0;padding:12px;border:1px solid #efc66c33;border-radius:14px;background:#efc66c0b;font-size:14px;line-height:1.85;color:#f5d58f}

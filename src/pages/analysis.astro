@@ -3,8 +3,8 @@ import Base from '../layouts/Base.astro';
 import html from '../panels/analysis.html?raw';
 import { panel } from '../lib/site.js';
 ---
-<Base page="analysis" scripts={['services', 'analytics', 'monitor', 'board', 'ui']}
-  title="تحليل الذهب: الاتجاه والمتوسطات وتوقعات البنوك — دهبولوجي"
-  description="رسم سعر الأونصة خلال 12 شهرًا، متوسطا 50 و200 يوم، التذبذب والهبوط، سيناريوهات السعر، وتوقعات البنوك لسعر الذهب.">
+<Base page="analysis" scripts={['analytics', 'monitor', 'board', 'ui']}
+  title="تحليل الذهب: قراءة اليوم والاتجاه والمتوسطات — دهبولوجي"
+  description="رسم سعر الأونصة خلال 12 شهرًا، متوسطا 50 و200 يوم، التذبذب والهبوط، سيناريوهات السعر، وقراءة اليوم غير المكتملة.">
   <Fragment set:html={panel(html, 'analysis')} />
 </Base>

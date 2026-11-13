@@ -14,38 +14,41 @@
  function productRows(data,id){return (data.offers||[]).filter(o=>o.productId===id);}
  if(typeof module!=='undefined')module.exports={validOffer,displayable,productRows};
  if(typeof document==='undefined')return;
- let catalogData=null,selected='pound';
+ let catalogData=null,selected='pound',refreshBusy=false;
+ const productPage=!!document.getElementById('productOfferCards');
  const element=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;};
  const weight=c=>c.kind==='ounce'?'أونصة ترويسية ≈ 31.1035 جرام':c.weight+' جرام';
  async function load(path){const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{const r=await fetch(path+'?t='+Date.now(),{cache:'no-store',signal:c.signal});if(!r.ok)throw Error();return await r.json();}finally{clearTimeout(timer);}}
  function renderProduct(){
-  if(!catalogData)return;
+  if(!catalogData||!productPage)return;
   const data=catalogData,c=data.catalog.find(c=>c.id===selected)||data.catalog.find(c=>c.id==='pound');selected=c.id;
   $('selectedProductName').textContent=c.name;
   $('selectedProductSpec').textContent=weight(c)+' • عيار '+c.karat+(c.kind==='ounce'?' • سعر منتج فعلي بالجنيه، مستقل عن سعر الأونصة العالمي بالدولار':'');
   document.querySelectorAll('[data-product-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.productKind===c.kind)));
   $('barWeightControl').hidden=c.kind!=='bars';if(c.kind==='bars')$('barWeight').value=c.id;
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
-  const selectedRows=productRows(data,c.id).filter(o=>displayable(o));
+  const selectedRows=productRows(data,c.id).filter(o=>displayable(o)&&(!$('storeFilter').value||o.store===$('storeFilter').value)&&(!$('stockOnly').checked||o.inStock===true));
   $('offersStatus').textContent=selectedRows.length?'أسعار المنتج بالجنيه المصري • راجع شمول الرسوم قبل الشراء':'السعر غير متاح حاليًا لهذا المنتج';
   const cards=$('productOfferCards');cards.replaceChildren();
   selectedRows.forEach((o,i)=>{
    const card=element('article','retail-card');
-   card.append(element('div','source-type',o.brand==='El Galla'?'ذهب عيار '+c.karat:o.brand||'ذهب عيار '+c.karat),element('h3','',c.name),element('p','retail-price',f(o.listedPrice)));
+   card.append(element('div','source-type',o.brand==='El Galla'?'ذهب عيار '+c.karat:o.brand||'ذهب عيار '+c.karat),element('h3','',o.store||'محل ذهب'),element('p','retail-price',f(o.listedPrice)));
    card.append(element('span','badge',o.inStock===false?'غير متوفر حاليًا':'سعر المنتج'));
    const facts=element('dl','retail-facts');
    const lines=[['الوزن والعيار',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+' • يُراجع شمولها والضريبة في السعر':'يُراجع شمولها قبل الشراء'],['الدمغة والشحن',o.stampIncluded===true?'الدمغة مشمولة • الشحن يُراجع عند الشراء':'يُراجع شمولها قبل الشراء']];
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
    if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
-   const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
+   if(Number.isFinite(o.buybackPrice)&&o.buybackPrice>0){const diff=o.listedPrice-o.buybackPrice;card.append(element('div','liquidity-note','فرق التسييل: '+(diff>=0?'نقص ':'زيادة ')+f(Math.abs(diff))+' • الفرق بين السعرين المعلنين قبل أي رسوم إضافية.'));}
+   const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+' • '+o.store+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
-  if(!selectedRows.length)cards.append(element('p','notice','اختر وزنًا آخر أو جرّب لاحقًا. لا نعرض سعرًا غير متحقق منه.'));
+  if(!selectedRows.length)cards.append(element('p','notice','لا توجد أسعار مطابقة للاختيار. جرّب كل المحلات أو ألغِ «المتاح فقط» أو اختر وزنًا آخر.'));
 
  }
  function offers(data){
   if(data.schemaVersion!==2||!Array.isArray(data.catalog)||!data.catalog.length)throw Error('Missing product catalog');
   catalogData=data;
+  if(productPage){const select=$('storeFilter'),previous=select.value;select.replaceChildren();const all=element('option','','كل المحلات');all.value='';select.append(all);[...new Set(data.offers.filter(o=>displayable(o)).map(o=>o.store))].sort().forEach(name=>{const option=element('option','',name);option.value=name;select.append(option);});select.value=[...select.options].some(o=>o.value===previous)?previous:'';}
   const weights=$('barWeight');weights.replaceChildren();data.catalog.filter(c=>c.kind==='bars').forEach(c=>{const o=element('option','',c.weight+' جرام • عيار '+c.karat);o.value=c.id;weights.append(o);});
   weights.value='bar10';
   const summary=$('productSummary');summary.replaceChildren();
@@ -76,12 +79,15 @@
   else{$('offersStatus').textContent=message;$('productSummary').replaceChildren(element('p','notice',message));}
  }
  async function refresh(){
+  if(refreshBusy)return;refreshBusy=true;if(productPage){$('refresh').disabled=true;$('fetchStatus').textContent='تحميل أسعار المحلات…';}
   const D=window.DHB_DATA||'data/';
   try{offers(await load(D+'offers.json'));}catch(_){catalogError('تعذر تحميل أسعار المنتجات.');}
   if(document.getElementById('telegramStatus')){
    try{telegram(await load(D+'alert-state.json'));}catch(_){$('telegramStatus').textContent='حالة التنبيهات غير متاحة.';}
   }
 
+  refreshBusy=false;if(productPage){$('refresh').disabled=false;$('fetchStatus').textContent='';}
  }
+ if(productPage){$('storeFilter').addEventListener('change',renderProduct);$('stockOnly').addEventListener('change',renderProduct);$('refresh').addEventListener('click',refresh);}
  refresh();setInterval(refresh,60000);
 })();

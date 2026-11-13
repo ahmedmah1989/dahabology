@@ -1,21 +1,32 @@
 ﻿(function(){
   var OZ=31.1034768, K21=0.875, EVERY=5*60*1000, FC_REVIEWED="2026-11-11";
   var HBASE="https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@";
-  var SERIES=null, M=null;
+  var SERIES=null, M=null, HISTORY=null, liveSources=null, historyBusy=false;
 
   function $(i){return document.getElementById(i)||document.createElement('div')}
   function num(v){
     v=String(v==null?"":v).replace(/[٠-٩]/g,function(d){return "٠١٢٣٤٥٦٧٨٩".indexOf(d)}).replace(/٫/g,".").replace(/[٬,\s]/g,"");
     var n=parseFloat(v); return isFinite(n)?n:NaN;
   }
-  function fmt(n,d){return n.toLocaleString("en-US",{maximumFractionDigits:d||0,minimumFractionDigits:d||0})}
-  function sg(v,d){return (v>=0?"+":"−")+fmt(Math.abs(v),d==null?1:d)+"%"}
+  function fmt(n,d){return Number.isFinite(n)?n.toLocaleString("en-US",{maximumFractionDigits:d||0,minimumFractionDigits:d||0}):"—"}
+  function sg(v,d){if(!Number.isFinite(v))return "—";return (v>=0?"+":"−")+fmt(Math.abs(v),d==null?1:d)+"%"}
   function store(k,v){try{ if(v===undefined) return localStorage.getItem(k); localStorage.setItem(k,v);}catch(e){return null}}
   function tag(el,cls,txt){el.className="tag "+cls; el.textContent=txt}
   function iso(d){return d.toISOString().slice(0,10)}
   function addDays(d,n){var x=new Date(d.getTime()); x.setUTCDate(x.getUTCDate()+n); return x}
   function days(a,b){return Math.round((Date.parse(b)-Date.parse(a))/864e5)}
   function nextWeekday(a,b){var d=addDays(new Date(a+'T00:00:00Z'),1);while(d.getUTCDay()===0||d.getUTCDay()===6)d=addDays(d,1);return iso(d)===b;}
+  function cairoDay(now=Date.now()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));}
+  function freshQuote(q,age,now){const t=Date.parse(q&&q.sourceTime);return q&&q.status==='available'&&Number.isFinite(q.sell)&&q.sell>0&&Number.isFinite(t)&&now-t<=age&&t-now<=120000;}
+  function todayPoint(s,now=Date.now()){
+    const g=s&&s.gold,b=s&&s.misr,today=cairoDay(now);
+    if(!freshQuote(g,300000,now)||cairoDay(Date.parse(g.sourceTime))!==today)return null;
+    return {d:today,usd:g.sell,egp:freshQuote(b,86400000,now)?g.sell*b.sell:null,provisional:true};
+  }
+  function withToday(history,s,now=Date.now()){
+    const today=cairoDay(now),points=history.filter(p=>!p.provisional&&p.d<today).map(p=>({...p})),point=todayPoint(s,now);
+    if(point)points.push(point);return points;
+  }
   function k21(oz,usd){return oz*usd/OZ*K21}
   async function getJSON(u){var r=await fetch(u,{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json()}
 
@@ -35,7 +46,7 @@
   async function loadSeries(){
     var raw=await getJSON((window.DHB_DATA||'data/')+'history.json?t='+Date.now());
     var seen=new Set(),out=(raw.points||[]).filter(function(p){
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(p.d)||!Number.isFinite(p.usd)||!Number.isFinite(p.egp)||p.usd<=0||p.egp<=0||p.d>=iso(new Date())||seen.has(p.d))return false;
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(p.d)||!Number.isFinite(p.usd)||!Number.isFinite(p.egp)||p.usd<=0||p.egp<=0||p.d>=cairoDay()||seen.has(p.d))return false;
       seen.add(p.d);return true;
     });
     if($("historyQuality"))$("historyQuality").textContent='آخر قراءة: '+(raw.profile?.lastReferenceDate||'غير متاحة')+' • '+(raw.profile?.availableWeekdays||0)+' قراءة من '+(raw.profile?.expectedWeekdays||0)+' يوم عمل متوقع. '+(raw.profile?.missingWeekdays?.length?'توجد أيام ناقصة؛ التفاصيل في ملف البيانات.':'لا توجد أيام أسبوع ناقصة ضمن نافذة الجمع.')+' استبعاد السبت والأحد لا يثبت مطابقة تقويم التداول.';
@@ -58,7 +69,7 @@
     var hi=y[0],lo=y[0]; y.forEach(function(p){if(p.usd>hi.usd)hi=p; if(p.usd<lo.usd)lo=p});
     var peak=y[0].usd, mdd=0, pk=y[0], tr=y[0], curPk=y[0];
     y.forEach(function(p){ if(p.usd>peak){peak=p.usd; curPk=p} var dd=(peak-p.usd)/peak; if(dd>mdd){mdd=dd; pk=curPk; tr=p} });
-    var r60=lastN(61), rets=[];
+    var r60=recent.filter(p=>!p.provisional).slice(-61), rets=[];
     for(var i=1;i<r60.length;i++) if(nextWeekday(r60[i-1].d,r60[i].d))rets.push(Math.log(r60[i].usd/r60[i-1].usd));
     var mu=rets.reduce(function(s,v){return s+v},0)/rets.length;
     var sd=rets.length===60?Math.sqrt(rets.reduce(function(s,v){return s+(v-mu)*(v-mu)},0)/(rets.length-1)):null;
@@ -72,7 +83,7 @@
   function cell(v,c){var td=document.createElement("td"); td.textContent=v; if(c) td.className=c; return td}
 
   function drawMarket(){
-    var S=SERIES, m=M, L=m.last, f=function(p){return p.egp/OZ*K21};
+    var S=SERIES, m=M, L=m.last, f=function(p){return Number.isFinite(p.egp)&&p.egp>0?p.egp/OZ*K21:NaN};
     var tb=$("perBody"); tb.textContent="";
     [["أسبوع",7],["شهر",30],["3 شهور",91],["6 شهور",182],["سنة",365],["سنتين",730]].forEach(function(x){
       var p=asOf(S,iso(addDays(new Date(L.d+"T00:00:00Z"),-x[1]))); if(!p) return;
@@ -82,7 +93,7 @@
       tr.appendChild(cell(fmt(f(p))+" ج")); tr.appendChild(cell(sg(b),b>=0?"up":"dn"));
       tb.appendChild(tr);
     });
-    $("perNote").textContent="المقارنة كلها بآخر سعر يومي متاح ("+L.d+"): الأونصة "+fmt(L.usd)+" دولار، وعيار 21 بالقيمة العالمية "+fmt(f(L))+" جنيه. عمود عيار 21 بيشمل أثر تغير الدولار.";
+    $("perNote").textContent="المقارنة تنتهي بآخر قراءة متاحة ("+L.d+"): الأونصة "+fmt(L.usd)+" دولار، وعيار 21 بالقيمة العالمية "+fmt(f(L))+" جنيه. عمود عيار 21 بيشمل أثر تغير الدولار.";
 
     $("iA50").textContent=m.sma50===null?'غير متاح — أقل من 50 قراءة':fmt(m.sma50)+" دولار ("+(L.usd>m.sma50?"السعر فوقه":"السعر تحته")+")";
     $("iA200").textContent=m.sma200===null?'غير متاح — أقل من 200 قراءة':fmt(m.sma200)+" دولار ("+(L.usd>m.sma200?"السعر فوقه":"السعر تحته")+")";
@@ -96,8 +107,8 @@
   function rollMean(arr,i,n){ if(i+1<n || days(arr[i-n+1].d,arr[i].d)>n*2) return null; var s=0; for(var k=i-n+1;k<=i;k++) s+=arr[k].usd; return s/n }
   function drawChart(){
     var S=SERIES, y=M.year, start=S.indexOf(y[0]);
-    var pts=y.map(function(p,i){var gi=start+i; return {v:p.usd, m200:rollMean(S,gi,200), m50:rollMean(S,gi,50)}});
-    var all=[]; pts.forEach(function(p){all.push(p.v); if(p.m200) all.push(p.m200); if(p.m50) all.push(p.m50)});
+    var pts=y.map(function(p,i){var gi=start+i; return {v:p.provisional?null:p.usd, m200:rollMean(S,gi,200), m50:rollMean(S,gi,50)}});
+    var all=y.map(p=>p.usd); pts.forEach(function(p){if(p.v!==null)all.push(p.v); if(p.m200) all.push(p.m200); if(p.m50) all.push(p.m50)});
     var W=660,H=240,Lm=56,R=12,T=14,B=30, mn=Math.min.apply(null,all), mx=Math.max.apply(null,all), pad=(mx-mn)*0.06; mn-=pad; mx+=pad;
     if(mx===mn){mn-=1;mx+=1;}
     var X=function(i){return Lm+(W-Lm-R)*days(y[0].d,y[i].d)/Math.max(1,days(y[0].d,M.last.d))}, Y=function(v){return T+(H-T-B)*(1-(v-mn)/(mx-mn))};
@@ -112,6 +123,11 @@
       var d="",on=false; pts.forEach(function(p,i){var v=p[key]; if(v==null){on=false;return} d+=(on?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" "; on=true});
       if(!d) return; var e=document.createElementNS(NS,"path"); e.setAttribute("d",d); e.setAttribute("fill","none"); e.setAttribute("stroke",color); e.setAttribute("stroke-width",w); if(dash) e.setAttribute("stroke-dasharray",dash); e.setAttribute("stroke-linejoin","round"); svg.appendChild(e);
     }
+    if(M.last.provisional){
+      var i=y.length-1;
+      if(i>0){var extension=document.createElementNS(NS,'line');extension.setAttribute('x1',X(i-1));extension.setAttribute('y1',Y(y[i-1].usd));extension.setAttribute('x2',X(i));extension.setAttribute('y2',Y(y[i].usd));extension.setAttribute('stroke',C('--gold'));extension.setAttribute('stroke-width','2.5');extension.setAttribute('stroke-dasharray','5 5');svg.appendChild(extension);}
+      var dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(y[i].usd));dot.setAttribute('r','4');dot.setAttribute('fill',C('--gold'));svg.appendChild(dot);
+    }
     path("m200",C("--teal"),2,"7 5"); path("m50",C("--bad"),2,"2 4"); path("v",C("--gold"),2.5);
     text(X(0),H-8,y[0].d,"start"); text(X(pts.length-1),H-8,M.last.d,"end");
     var box=$("chart"); box.textContent=""; box.appendChild(svg);
@@ -120,6 +136,7 @@
   function drawRanges(){
     var usd=num($("usd").value); if(!(usd>0)) usd=M.last.egp/M.last.usd;
     var oz=num($("oz").value); if(!(oz>0)) oz=M.last.usd;
+    if(!(usd>0)){ $("rngBox").textContent="تحويل السيناريو للجنيه غير متاح دون سعر صرف صالح.";return;}
     var sm=M.sdD===null?null:M.sdD*Math.sqrt(21);
     var a1=oz*Math.exp(-sm), b1=oz*Math.exp(sm), a2=oz*Math.exp(-2*sm), b2=oz*Math.exp(2*sm);
     var stress=oz*(1-M.mdd);
@@ -176,26 +193,40 @@
     var H=$("sigHead"), T=$("sigText");
     function step(t){var li=document.createElement("li"); li.textContent=t; plan.appendChild(li)}
     var part=function(n){return (bud>0)?" ("+fmt(bud/n)+" جنيه"+(loc>0?" ≈ "+fmt(bud/n/loc,2)+" جرام":"")+")":""};
-    if(!(oz>0&&usd>0)){ sig.classList.add("info"); H.textContent="حسابات السعر الحالي معلقة"; T.textContent="الأسعار غير متاحة حاليًا. الرسم يعرض قراءات يومية مرجعية."; return; }
+    if(!(oz>0&&usd>0)){ sig.classList.add("info"); H.textContent="المقارنة المحلية غير متاحة حاليًا"; T.textContent="الأسعار غير متاحة حاليًا. الرسم يعرض قراءات يومية مرجعية."; return; }
     sig.classList.add("info"); H.textContent="قراءة وصفية للمؤشرات — بدون قرار شراء آلي";
     T.textContent="تابع الاتجاه والتذبذب معًا؛ المؤشرات وصف للحركة وليست توصية شراء."; return;
   }
 
 
-  if(typeof module !== 'undefined') {module.exports={metrics:metrics,asOf:asOf,rollMean:rollMean,nextWeekday:nextWeekday};return;}
+  if(typeof module !== 'undefined') {module.exports={metrics:metrics,asOf:asOf,rollMean:rollMean,nextWeekday:nextWeekday,todayPoint:todayPoint,withToday:withToday,cairoDay:cairoDay};return;}
   window.addEventListener('gold-board-updated',function(event){
-    var s=event.detail.sources, g=s.gold, b=s.misr, a=s.isagha;
+    var s=event.detail.sources, g=s.gold, b=s.misr, a=s.isagha;liveSources=s;
     var ready=event.detail.quality.usable;
     $("oz").value=ready?g.sell:'';
     $("usd").value=ready?b.sell:'';
     $("loc").value=ready?a['21'].sell:'';
     $("bud").value=($('budget').value||'');
-    if(M){drawMarket();drawRanges();}render();
+    applyAnalysis();
   });
 
-  render();
-  loadSeries().then(function(S){
-    if(S.length<220){ $("chart").textContent="البيانات التاريخية ناقصة دلوقتي ("+S.length+" يوم). جرّب «حدّث الآن» بعد شوية."; $("rngBox").textContent=""; return; }
-    SERIES=S; M=metrics(S); window.__GOLD={S:S,M:M}; drawMarket(); drawRanges(); render();
-  }).catch(function(){ $("chart").textContent="معرفتش أجيب البيانات التاريخية دلوقتي."; });
+  function applyAnalysis(){
+    var point=todayPoint(liveSources),today=cairoDay(),base=HISTORY&&HISTORY[HISTORY.length-1];
+    $('analysisDate').textContent='تحليل اليوم • '+new Date().toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',year:'numeric'});
+    $('analysisNow').textContent=point?fmt(point.usd,2)+' $':'—';
+    $('analysisDayState').textContent=point?'قراءة خلال اليوم • ليست إغلاقًا نهائيًا':'قراءة اليوم غير متاحة حاليًا؛ لن نضع تاريخ اليوم على سعر قديم.';
+    var delta=point&&base?(point.usd/base.usd-1)*100:null;
+    $('analysisMove').textContent=delta===null?'—':sg(delta,2);
+    $('analysisMoveLabel').textContent=base?'عن القراءة اليومية '+base.d:'انتظار السجل اليومي';
+    $('analysisBasis').textContent=point?'النقطة الذهبية والخط المتقطع يوضحان قراءة اليوم. المتوسطات تشملها بشكل مبدئي؛ التذبذب يُحسب من القراءات اليومية السابقة فقط.':'الرسم التاريخي يظل متاحًا للفهم، ولا يُقدّم كسعر اليوم.';
+    if(!HISTORY){render();return;}
+    SERIES=withToday(HISTORY,liveSources);
+    if(!SERIES.length){$('chart').textContent='القراءات غير متاحة حاليًا.';render();return;}
+    M=metrics(SERIES);drawMarket();drawRanges();render();
+  }
+  async function refreshHistory(){
+    if(historyBusy||document.hidden)return;historyBusy=true;
+    try{HISTORY=await loadSeries();applyAnalysis();}catch(_){if(!HISTORY)$('chart').textContent='تعذر تحميل الرسم التاريخي. قراءة اليوم مستقلة وتظهر عند توفرها.';}finally{historyBusy=false;}
+  }
+  applyAnalysis();refreshHistory();setInterval(refreshHistory,EVERY);setInterval(applyAnalysis,60000);
 })();
