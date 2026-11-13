@@ -24,7 +24,7 @@ const image = new URL(B + 'assets/logo-900.webp?v=' + ASSET_VERSION, Astro.site)
 <link rel="manifest" href={B + 'manifest.webmanifest'}>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="دهبولوجي">
-<script is:inline define:vars={{ sw: B + 'sw.js?v=' + ASSET_VERSION }}>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register(sw,{updateViaCache:'none'}).catch(() => {}));</script>
+<script is:inline define:vars={{ sw: B + 'sw.js?v=' + ASSET_VERSION }}>if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register(sw,{updateViaCache:'none'}).then(reg => reg.update()).catch(() => {}));</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet">
