@@ -2,7 +2,7 @@
    Always tries the network first, so prices and pages are never served stale while online.
    Offline, it falls back to the last copy it saw: pages, styles, scripts, and the last price
    snapshots (which keep their original source times, so nothing old is shown as new). */
-const CACHE = 'dhb-v3';
+const CACHE = 'dhb-v4';
 const isData = u => /\/data\/[\w-]+\.json$/.test(u.pathname);
 
 self.addEventListener('install', () => self.skipWaiting());

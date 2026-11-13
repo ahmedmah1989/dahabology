@@ -20,7 +20,7 @@ test('returning home keeps one motion timer and remembers the pause preference',
   const links = Array.from({length:8}, element);
   const get = id => { if (!elements.has(id)) elements.set(id,element()); return elements.get(id); };
   get('stage').querySelectorAll = () => links;
-  const document = { hidden:false, body:element(), getElementById:get, createElementNS:element,
+  const document = { documentElement:{dataset:{}}, hidden:false, body:element(), getElementById:get, createElementNS:element,
     addEventListener(k,f) { events[k] = f; } };
   const context = { document, window:{DHB_BASE:'/',DHB_DATA:'/data/'},
     matchMedia:()=>({matches:false}), location:{},

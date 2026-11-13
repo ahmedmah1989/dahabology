@@ -11,6 +11,7 @@
 <label class="x-field" style="margin-top:0">إجمالي الفاتورة<input id="invTotal" inputmode="decimal" placeholder="49500" autocomplete="off"></label>
 </div></div>
 
+<div class="result-explain">ابدأ بالوزن والإجمالي. لو الفاتورة قديمة، عدّل سعر الجرام يوم الشراء من التفاصيل عشان تقسيم المصنعية يكون أدق.</div>
 <div id="invOut" aria-live="polite">
 <div class="x-donut"><svg viewBox="0 0 36 36" aria-hidden="true"><circle class="gold" cx="18" cy="18" r="15.915"/><circle class="extra" id="invDonut" cx="18" cy="18" r="15.915" pathLength="100" stroke-dasharray="0 100"/></svg>
 <div class="x-donut-read"><span>فوق قيمة الذهب</span><b id="invDonutPct">—</b></div></div>
@@ -26,9 +27,10 @@
 <div class="line"><span>ومنها ضريبة للجرام (تقديري)</span><b id="invTax">—</b></div>
 <div class="x-grid2">
 <label class="x-field sm">سعر الجرام يوم الشراء<input id="invPrice" inputmode="decimal" placeholder="انتظار السعر" autocomplete="off"></label>
-<label class="x-field sm">ضريبة المصنعية %<input id="invVat" inputmode="decimal" value="14" autocomplete="off"></label>
+<label class="x-field sm">ضريبة المصنعية %<input id="invVat" inputmode="decimal" placeholder="0" autocomplete="off"></label>
 </div>
 <p class="x-note">تقسيم الزيادة إلى مصنعية وضريبة تقديري ويفترض عدم وجود دمغة أو رسوم أخرى؛ الفاتورة المفصلة من التاجر هي المرجع. الأداة لا تحكم بأن المصنعية مرتفعة أو مناسبة، لأنها تختلف حسب القطعة والمحل.</p>
 </details>
+<div class="x-actions"><button type="button" class="x-btn ghost" id="invReset">افحص فاتورة جديدة</button></div>
 <p class="x-note" id="invNote">في انتظار السعر…</p>
 </section>

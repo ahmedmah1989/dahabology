@@ -37,6 +37,7 @@
    const lines=[['الوزن والعيار',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+' • يُراجع شمولها والضريبة في السعر':'يُراجع شمولها قبل الشراء'],['الدمغة والشحن',o.stampIncluded===true?'الدمغة مشمولة • الشحن يُراجع عند الشراء':'يُراجع شمولها قبل الشراء']];
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
    if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
+   const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
   if(!selectedRows.length)cards.append(element('p','notice','اختر وزنًا آخر أو جرّب لاحقًا. لا نعرض سعرًا غير متحقق منه.'));
@@ -50,9 +51,10 @@
   const summary=$('productSummary');summary.replaceChildren();
   ['quarter','half','pound','bar10','ounce'].forEach(id=>{
    const c=data.catalog.find(p=>p.id===id);if(!c)return;
-   const representative=productRows(data,id).find(o=>displayable(o));
+   const available=productRows(data,id).filter(o=>displayable(o));
+   const representative=available.find(o=>o.inStock===true)||available.find(o=>o.inStock!==false)||available[0];
    const link=element('a','product-summary-card');link.href=(window.DHB_BASE||'')+'products/'+id+'/';
-   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?'سعر المنتج':'انتظار السعر'));
+   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?(representative.inStock===false?'غير متوفر حاليًا':'راجع الرسوم والتوافر'):'انتظار السعر'));
    link.append(element('span','summary-action','تفاصيل المنتج ←'));
    summary.append(link);
   });

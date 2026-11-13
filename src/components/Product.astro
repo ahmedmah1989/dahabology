@@ -17,7 +17,7 @@ const description = index
   ? 'أسعار ربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة الفعلية، مع المصنعية والضريبة والدمغة والتوافر.'
   : `سعر ${product.name} في مصر، مع المصنعية والضريبة والدمغة والتوافر وسعر إعادة الشراء.`;
 ---
-<Base page="products" path={index ? 'products/' : `products/${product.id}/`} scripts={['services', 'monitor', 'board']} title={title} description={description}>
+<Base page="products" path={index ? 'products/' : `products/${product.id}/`} scripts={['comparison', 'services', 'monitor', 'board']} title={title} description={description}>
   <script slot="config" is:inline define:vars={{ id: product.id }}>window.DHB_PRODUCT = id;</script>
   <Fragment set:html={body} />
 </Base>

@@ -28,9 +28,9 @@
   }
   /** Gain or loss per gram if a past purchase were sold to the dealer now. */
   function compare(paid, buyNow, grams) {
-    if (!(paid > 0) || !(buyNow > 0)) return null;
+    if (![paid,buyNow].every(v=>Number.isFinite(v)&&v>0)) return null;
     const diff = buyNow - paid;
-    return { diff, percent: diff / paid * 100, total: grams > 0 ? diff * grams : null };
+    return { diff, percent: diff / paid * 100, total: Number.isFinite(grams)&&grams > 0&&Number.isFinite(diff*grams) ? diff * grams : null };
   }
   if (typeof module !== 'undefined') module.exports = { pin, verdict, karat, change, compare };
   if (typeof document === 'undefined') return;

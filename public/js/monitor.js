@@ -86,7 +86,7 @@
       state.sources.gold={status:'available',sell:Number(global.value.price),sourceTime:global.value.updatedAt,fetchedAt:new Date().toISOString(),name:'gold-api.com',sourceTimeKind:'provider_upstream_fetch'};
     }
     state.lastCheck=new Date().toISOString();state.busy=false;$('refresh').disabled=false;render();
-    if(snapshot.status==='rejected') $('fetchStatus').textContent+=' • تعذر جلب لقطة أحدث؛ المعروض يحتفظ بتوقيته الأصلي.';
+    if(snapshot.status==='rejected') $('fetchStatus').textContent+='تعذر الاتصال؛ راجع الأسعار قبل الاعتماد عليها.';
   }
   $('refresh').addEventListener('click',refresh);
   $('budget').addEventListener('input',calculator);

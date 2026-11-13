@@ -325,3 +325,16 @@ main.wrap{width:100%;min-width:0}
 .x-status:has(#fetchStatus:empty){visibility:hidden}
 @media(hover:none){.x-dock>a:hover,.x-dock>details>summary:hover,.x-dock>.x-dock-home:hover{translate:0 0}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+/* Decision tools share one clear reading rhythm. */
+.compare-tool{scroll-margin-top:90px;margin-top:26px}.compare-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.compare-heading h2{margin:0}.compare-heading .badge{margin:0}
+.compare-check{display:flex;align-items:flex-start;gap:10px;line-height:1.8;margin:18px 0;color:#d5e0ee;font-size:14px}.compare-check input{width:20px;height:20px;flex:none;accent-color:#efc66c;margin:4px 0 0}
+.compare-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:14px;margin-top:16px;align-items:start}.compare-card{min-width:0;border:1px solid #efc66c3d;border-radius:20px;padding:16px;background:linear-gradient(145deg,#21395899,#0a1628cc)}
+.compare-card h3{font-size:18px;overflow-wrap:anywhere}.compare-total{font-size:26px;font-weight:700;color:#f5d58f;font-variant-numeric:tabular-nums}.compare-card .badge{font-size:12px}.compare-card .x-btn{font-size:13px;padding:10px}.compare-best{border-color:#efc66c;box-shadow:0 0 24px #efc66c12}.compare-highlight{font-size:13px;color:#f5d58f;border-top:1px solid #efc66c33;padding-top:10px}
+.compare-remove{border:0;background:transparent;color:#cdd8e8;font:inherit;font-size:14px;text-decoration:underline;text-underline-offset:4px;padding:10px;cursor:pointer}.compare-remove:hover{background:#ffffff09;color:#fff}.compare-empty{border:1px dashed #efc66c4d;border-radius:18px;padding:24px;text-align:center;color:#b4c4d8}
+.result-explain{padding:14px 16px;background:#efc66c0b;border-inline-start:3px solid #efc66c;border-radius:12px;color:#d5e0ee;font-size:15px;line-height:1.9;margin:16px 0}
+.retail-card>.x-btn{margin-top:14px;width:100%}.compare-tool .x-field select{margin-top:6px;min-height:48px;width:100%;background:#0a1628;color:#fff;border:1px solid #efc66c38;border-radius:12px;padding:10px}
+[hidden]{display:none!important}.x-field input:focus-visible,.x-field select:focus-visible{outline:2px solid #f5d58f;outline-offset:3px}
+@media(max-width:540px){.compare-tool{padding:16px}.compare-grid{grid-template-columns:1fr}.compare-card .retail-facts>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.compare-card .retail-facts dd{text-align:end;font-size:14px}.compare-card .retail-facts dt{max-width:52%}}
+
+html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-motion="paused"] *::after{animation:none!important;transition:none!important}

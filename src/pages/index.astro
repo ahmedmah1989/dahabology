@@ -290,6 +290,7 @@ document.body.classList.toggle('motion-paused',paused);
 if(seen || paused) startIdle(); else play();
 function syncMotion(){
  document.body.classList.toggle('motion-paused',paused);
+ document.documentElement.dataset.motion=paused?'paused':'playing';
  const button=document.getElementById('motionToggle');button.setAttribute('aria-pressed',String(paused));button.textContent=paused?'تشغيل الحركة':'إيقاف الحركة';
  document.getElementById('replay').hidden=paused;
 }
@@ -320,7 +321,7 @@ addEventListener('appinstalled', () => { installBtn.hidden = true; });
 /* live prices from the current published snapshot */
 const fmt = (v,dec=0) => Number(v).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
 function countUp(el,to,dec=0){
-  if(reduced){ el.textContent = fmt(to,dec); return; }
+  if(reduced||paused||seen){ el.textContent = fmt(to,dec); return; }
   const t0 = performance.now(), from = to*0.985;
   (function step(t){
     const p = Math.min(1,(t-t0)/900), e = 1-Math.pow(1-p,3);
@@ -335,7 +336,7 @@ fetch(DATA + 'quotes.json',{cache:'no-store'}).then(r => r.json()).then(q => {
     document.getElementById('pWhen').textContent = 'السعر للجرام بدون مصنعية';
   } else document.getElementById('pWhen').textContent = 'السعر غير متاح الآن';
   if(g.status === 'available' && Date.now()-Date.parse(g.sourceTime) <= 86400000 && Date.parse(g.sourceTime)-Date.now() <= 120000 && g['24']?.sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
-  if(m.sell) countUp(document.getElementById('pUsd'), m.sell, 2);
+  if(m.status==='available'&&Number.isFinite(m.sell)&&m.sell>0&&Date.now()-Date.parse(m.sourceTime)<=86400000&&Date.parse(m.sourceTime)-Date.now()<=120000) countUp(document.getElementById('pUsd'), m.sell, 2);
 }).catch(() => { document.getElementById('pWhen').textContent = 'تعذر تحميل السعر'; });
 /* the ounce is read live, as on the main board */
 fetch('https://api.gold-api.com/price/XAU',{cache:'no-store'}).then(r => r.json()).then(g => {

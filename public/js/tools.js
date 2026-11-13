@@ -6,6 +6,8 @@
   /** Sell / buy per gram for a karat from the isagha quote. 18 is derived from 24 by purity. */
   function prices(isagha, k) {
     if (!isagha) return null;
+    const base=isagha[k==='18'?'24':k];
+    if(!base||![base.sell,base.buy].every(v=>Number.isFinite(v)&&v>0))return null;
     if (k === '18') return isagha['24'] ? { sell: isagha['24'].sell * 0.75, buy: isagha['24'].buy * 0.75 } : null;
     return isagha[k] ? { sell: isagha[k].sell, buy: isagha[k].buy } : null;
   }
@@ -15,10 +17,11 @@
    * sell/buy: dealer's prices per gram now. vat: percent on the making charge (used only to split the extra).
    */
   function inspect(o) {
-    if (!(o.sell > 0) || !(o.grams > 0) || !(o.total > 0)) return null;
+    if (![o.sell,o.grams,o.total].every(v=>Number.isFinite(v)&&v>0) || (o.vat!==undefined&&(!Number.isFinite(o.vat)||o.vat<0))) return null;
+    if(!Number.isFinite(o.grams*o.sell))return null;
     const gold = o.grams * o.sell, extra = o.total - gold, vat = o.vat > 0 ? o.vat : 0;
     const perGram = extra / o.grams, making = perGram / (1 + vat / 100);
-    const resale = o.buy > 0 ? o.grams * o.buy : null;
+    const resale = Number.isFinite(o.buy)&&o.buy>0&&Number.isFinite(o.grams*o.buy) ? o.grams * o.buy : null;
     return {
       gold, extra, extraPerGram: perGram, extraPercent: extra / o.total * 100,
       makingPerGram: making, taxPerGram: perGram - making,
@@ -49,7 +52,7 @@
   const nf = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('ar-EG-u-nu-latn', { maximumFractionDigits: d }) : '—';
   const egp = (v, d = 0) => Number.isFinite(v) ? nf(v, d) + ' جنيه' : '—';
   const signed = (v, d = 0) => (v > 0 ? '+' : v < 0 ? '−' : '') + nf(Math.abs(v), d);
-  const usable = q => { const t = Date.parse(q && q.sourceTime); return !!q && q.status === 'available' && Number.isFinite(t) && Date.now() - t <= 86400000; };
+  const usable = q => { const t = Date.parse(q && q.sourceTime); return !!q && q.status === 'available' && Number.isFinite(t) && Date.now() - t <= 86400000 && t-Date.now()<=120000; };
   const when = v => new Date(v).toLocaleString('ar-EG-u-nu-latn', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
   let last = null;
   const local = () => last && usable(last.sources.isagha) ? last.sources.isagha : null;
@@ -58,9 +61,9 @@
   function invoice() {
     if (!$('invOut')) return;
     const a = local(), k = $('invKarat').value, p = a ? prices(a, k) : null;
-    if (p && !$('invPrice').dataset.edited) $('invPrice').value = Math.round(p.sell * 100) / 100;
+    if (!$('invPrice').dataset.edited) $('invPrice').value = p ? Math.round(p.sell * 100) / 100 : '';
     const sell = num($('invPrice').value);
-    const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: num($('invVat').value) });
+    const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: $('invVat').value.trim()?num($('invVat').value):0 });
     set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'الحساب بسعر الجرام المعروض.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
     const share = r && !r.belowGold ? Math.min(100, Math.max(0, r.extraPercent)) : 0, donut = $('invDonut');
     if (donut) { donut.style.strokeDasharray = share + ' ' + (100 - share); set('invDonutPct', r && !r.belowGold ? nf(r.extraPercent, 1) + '%' : '—'); }
@@ -70,17 +73,18 @@
     else { v.textContent = 'دفعت ' + egp(r.extra) + ' فوق قيمة الذهب'; v.className = 'x-verdict'; }
     set('invGold', egp(r.gold)); set('invExtra', egp(r.extra) + ' (' + nf(r.extraPercent, 1) + '%)'); set('invPerGram', egp(r.extraPerGram, 2));
     set('invMaking', r.belowGold ? '—' : egp(r.makingPerGram, 2)); set('invTax', r.belowGold ? '—' : egp(r.taxPerGram, 2));
-    set('invResale', r.resale === null ? 'غير متاح' : egp(r.resale)); set('invLoss', r.loss === null ? '—' : egp(r.loss) + ' (' + nf(r.lossPercent, 1) + '%)');
+    set('invResale', r.resale === null ? 'غير متاح' : egp(r.resale)); set('invLoss', r.loss === null ? '—' : (r.loss<0?'زيادة ':'نقص ')+egp(Math.abs(r.loss))+' ('+nf(Math.abs(r.lossPercent),1)+'%)');
   }
   if ($('invOut')) {
     ['invKarat', 'invGrams', 'invTotal', 'invVat'].forEach(id => $(id).addEventListener('input', () => { if (id === 'invKarat') delete $('invPrice').dataset.edited; invoice(); }));
     $('invPrice').addEventListener('input', () => { $('invPrice').dataset.edited = '1'; invoice(); });
+    $('invReset').addEventListener('click',()=>{['invGrams','invTotal','invVat'].forEach(id=>$(id).value='');delete $('invPrice').dataset.edited;invoice();$('invGrams').focus();});
     invoice();
   }
 
   /* ---------- my gold ---------- */
   const KEY = 'dhb-wallet-v1';
-  const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v.filter(i => PURITY[i.k] && i.g > 0 && i.paid >= 0) : []; } catch (_) { return []; } };
+  const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v.filter(i => i && PURITY[i.k] && Number.isFinite(i.g) && i.g > 0 && Number.isFinite(i.paid) && i.paid >= 0) : []; } catch (_) { return []; } };
   const save = items => { try { localStorage.setItem(KEY, JSON.stringify(items)); return true; } catch (_) { return false; } };
   function piece(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; }
   function walletRender() {
@@ -108,8 +112,8 @@
     $('walForm').addEventListener('submit', e => {
       e.preventDefault();
       const g = num($('walGramsIn').value), paid = num($('walPaidIn').value);
-      if (!(g > 0) || !(paid >= 0)) { set('walMsg', 'اكتب الوزن والمبلغ المدفوع بأرقام صحيحة.'); return; }
-      const items = load(); items.push({ id: Date.now().toString(36), k: $('walKarat').value, g, paid, note: $('walNoteIn').value.trim().slice(0, 40) });
+      if (!Number.isFinite(g)||!Number.isFinite(paid)||!(g > 0) || !(paid >= 0)) { set('walMsg', 'اكتب الوزن والمبلغ المدفوع بأرقام صحيحة.'); return; }
+      const items = load(); items.push({ id: typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2), k: $('walKarat').value, g, paid, note: $('walNoteIn').value.trim().slice(0, 40) });
       set('walMsg', save(items) ? 'اتحفظت على هذا الجهاز.' : 'المتصفح منع الحفظ؛ القطعة لن تبقى بعد إغلاق الصفحة.');
       ['walGramsIn', 'walPaidIn', 'walNoteIn'].forEach(id => $(id).value = ''); walletRender();
     });
