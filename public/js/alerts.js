@@ -20,11 +20,11 @@
   window.addEventListener('gold-board-updated',event=>{
     const box=document.getElementById('localAlerts'),status=document.getElementById('alertStatus');if(!box||!status)return;
     const s=event.detail.sources,q=event.detail.quality,r=event.detail.result;
-    if(!localUsable(s.isagha)){status.textContent='انتظار آي صاغة حديثة لمتابعة القمم والهبوط. تنبيهات الفجوة تحتاج كل مصادرها حديثة ومتزامنة.';return;}
+    if(!localUsable(s.isagha)){status.textContent='انتظار سعر محلي حديث لمتابعة القمم والهبوط.';return;}
     const a=s.isagha,gapReady=q?.fresh&&r,current={gapEGP:gapReady?r.gapEGP:NaN,gapPercent:gapReady?r.gapPercent:NaN,fxGap:gapReady?r.fxGap:NaN,fxPercent:gapReady?r.fxPercent:NaN,local24:a['24'].sell,local21:a['21'].sell};
     const previous=previousLocal?{...previousLocal,gapEGP:previousComparison?.gapEGP,gapPercent:previousComparison?.gapPercent,fxGap:previousComparison?.fxGap,fxPercent:previousComparison?.fxPercent}:null;
     const notices=changes(previous,current);
-    status.textContent=notices.length?'تحققت شروط تغير مهمة؛ تظهر هنا بصورة مستقلة عن رسائل Telegram.':gapReady?'لا تغير مهم؛ أول مرجع لكل نوع يُنشأ صامتًا.':'المراقبة المحلية جاهزة؛ تنبيهات الفجوة تنتظر مصادر حديثة ومتزامنة.';
+    status.textContent=notices.length?'تحققت شروط تغير مهمة.':gapReady?'لا تغير مهم؛ أول مرجع لكل نوع يُنشأ صامتًا.':'المتابعة جاهزة؛ تنبيهات الفجوة تنتظر أسعارًا حديثة ومتزامنة.';
     if(!previousLocal||notices.length){
       const peak24=Math.max(previousLocal?.peak24||0,current.local24),peak21=Math.max(previousLocal?.peak21||0,current.local21);
       previousLocal={local24:current.local24,local21:current.local21,peak24,peak21,dd24:(peak24-current.local24)/peak24*100,dd21:(peak21-current.local21)/peak21*100};

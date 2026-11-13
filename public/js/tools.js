@@ -61,7 +61,7 @@
     if (p && !$('invPrice').dataset.edited) $('invPrice').value = Math.round(p.sell * 100) / 100;
     const sell = num($('invPrice').value);
     const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: num($('invVat').value) });
-    set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'سعر الجرام من آخر قراءة آي صاغة: ' + when(a.sourceTime) + '.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
+    set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'سعر الجرام من آخر تحديث: ' + when(a.sourceTime) + '.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
     const share = r && !r.belowGold ? Math.min(100, Math.max(0, r.extraPercent)) : 0, donut = $('invDonut');
     if (donut) { donut.style.strokeDasharray = share + ' ' + (100 - share); set('invDonutPct', r && !r.belowGold ? nf(r.extraPercent, 1) + '%' : '—'); }
     const v = $('invVerdict');
@@ -139,10 +139,10 @@
     });
     x.textAlign = 'center'; x.fillStyle = '#d8e3f0'; x.font = F(600, 36);
     const extras = [];
-    if (usable(s.misr)) extras.push('الدولار في بنك مصر ' + nf(s.misr.sell));
+    if (usable(s.misr)) extras.push('الدولار في البنك ' + nf(s.misr.sell));
     if (usable(s.gold)) extras.push('الأونصة ' + nf(s.gold.sell) + ' $');
     if (extras.length) x.fillText(extras.join('   •   '), 540, 1110);
-    x.fillStyle = '#acbdd2'; x.font = F(500, 30); x.fillText('سعر الجرام بالجنيه بدون مصنعية • المصدر: آي صاغة', 540, 1200);
+    x.fillStyle = '#acbdd2'; x.font = F(500, 30); x.fillText('سعر الجرام بالجنيه بدون مصنعية', 540, 1200);
     x.fillStyle = '#e7bf67'; x.font = F(700, 34); x.fillText(location.host + (B === '/' ? '' : B.replace(/\/$/, '')), 540, 1270);
     return (await fetch(c.toDataURL('image/png'))).blob();
   }

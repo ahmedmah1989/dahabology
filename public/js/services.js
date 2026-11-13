@@ -28,7 +28,7 @@
   $('barWeightControl').hidden=c.kind!=='bars';if(c.kind==='bars')$('barWeight').value=c.id;
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
   const selectedRows=productRows(data,c.id),active=selectedRows.filter(o=>validOffer(o));
-  $('offersStatus').textContent='العروض المنشورة لهذا المنتج: '+selectedRows.filter(o=>displayable(o)).length+' • المتاجر المستوفية للمقارنة النهائية: '+new Set(active.map(o=>o.store)).size+' • آخر فحص '+t(data.checkedAt);
+  $('offersStatus').textContent=selectedRows.filter(o=>displayable(o)).length+' عرض منشور • آخر تحديث '+t(data.checkedAt);
   const cards=$('productOfferCards');cards.replaceChildren();
   selectedRows.forEach(o=>{
    const card=element('article','retail-card'),show=displayable(o);

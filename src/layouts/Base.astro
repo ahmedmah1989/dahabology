@@ -5,7 +5,9 @@ import { B, DATA, page as find } from '../lib/site.js';
 const { page, path = page + '/', title, description, heading, scripts = [] } = Astro.props;
 const emblem = B + 'assets/emblem.webp';
 const BAR = ['market', 'calculator', null, 'wallet'];   // null = home button in the middle
-const MORE = ['products', 'invoice', 'analysis', 'live', 'sources', 'guide'];
+const MORE = ['products', 'invoice', 'analysis', 'live', 'guide'];
+const SHORT = { invoice: 'الفاتورة' };                  // shorter names inside the round buttons
+const label = k => SHORT[k] || find(k).t;
 const moreIcon = 'M5 12h.01M12 12h.01M19 12h.01';
 const name = heading || find(page)?.t || 'دهبولوجي';
 ---
@@ -30,19 +32,19 @@ const name = heading || find(page)?.t || 'دهبولوجي';
   <p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p>
   <div id={'panel-' + page} data-panel={page}><slot /></div>
 </main>
-<footer><div class="wrap">لوحة متابعة مستقلة؛ ليست متجرًا ولا توصية شراء. <a href={B + 'sources/'}>المصادر</a> · <a href={B + 'guide/#faq'}>الأسئلة</a> · <a href="https://github.com/ahmedmah1989/gold-board/issues/new" target="_blank" rel="noopener">الإبلاغ عن خطأ</a></div></footer>
+<footer><div class="wrap">دهبولوجي للمتابعة والحساب؛ ليست متجرًا ولا توصية شراء. <a href={B + 'guide/'}>الأسئلة وطريقة الحساب</a></div></footer>
 
 <div class="x-dock" role="navigation" aria-label="التنقل">
   {BAR.map(k => k === null
-    ? <a class="x-dock-home" href={B}><img src={emblem} alt="" width="58" height="58"><span>الرئيسية</span></a>
+    ? <a class="x-dock-home" href={B}><img src={emblem} alt="" width="80" height="80"><span>الرئيسية</span></a>
     : <a href={B + k + '/'} aria-current={k === page ? 'page' : undefined}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{find(k).t}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{label(k)}</span>
       </a>)}
   <details class={MORE.includes(page) ? 'on' : undefined}>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d={moreIcon} stroke-width="3" /></svg><span>المزيد</span></summary>
     <div class="x-more-menu">
       {MORE.map(k => <a href={B + k + '/'} aria-current={k === page ? 'page' : undefined}>
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{find(k).t}</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{label(k)}</span>
       </a>)}
     </div>
   </details>

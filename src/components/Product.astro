@@ -14,8 +14,8 @@ const title = index
   ? 'سعر الجنيه الذهب والسبائك والأونصة في مصر — دهبولوجي'
   : `سعر ${product.name} اليوم في مصر (${productSpec(product)}) — دهبولوجي`;
 const description = index
-  ? 'أسعار ربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة الفعلية كما تنشرها المتاجر، مع المصنعية والضريبة والدمغة والتوافر ووقت الرصد.'
-  : `سعر ${product.name} كما تنشره المتاجر في مصر، مع المصنعية والضريبة والدمغة والتوافر، سعر إعادة الشراء، ووقت رصد كل عرض.`;
+  ? 'أسعار ربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة الفعلية عند المتاجر، مع المصنعية والضريبة والدمغة والتوافر.'
+  : `سعر ${product.name} كما تنشره المتاجر في مصر، مع المصنعية والضريبة والدمغة والتوافر وسعر إعادة الشراء.`;
 ---
 <Base page="products" path={index ? 'products/' : `products/${product.id}/`} scripts={['services', 'monitor', 'board']} title={title} description={description}>
   <script slot="config" is:inline define:vars={{ id: product.id }}>window.DHB_PRODUCT = id;</script>

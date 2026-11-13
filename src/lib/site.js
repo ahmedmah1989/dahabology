@@ -14,7 +14,6 @@ export const PAGES = [
   { k: 'wallet', t: 'دهبي', d: 'M3 7a2 2 0 012-2h13v4M3 7v10a2 2 0 002 2h15V9H5a2 2 0 01-2-2zM16 14h.01' },
   { k: 'analysis', t: 'التحليل', d: 'M4 4v16h16M8 15l3-4 3 2 5-7' },
   { k: 'live', t: 'الرسم الحي', d: 'M7 3v18M5 8h4v7H5zM17 3v18M15 6h4v8h-4z' },
-  { k: 'sources', t: 'المصادر', d: 'M4 6c0-1.7 3.6-3 8-3s8 1.3 8 3-3.6 3-8 3-8-1.3-8-3zM4 6v6c0 1.7 3.6 3 8 3s8-1.3 8-3V6M4 12v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6' },
   { k: 'guide', t: 'الدليل', d: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM8 8h7M8 12h5' },
 ];
 export const page = k => PAGES.find(p => p.k === k);
@@ -50,7 +49,7 @@ export const productSpec = c => (c.kind === 'ounce' ? 'أونصة ترويسية
 const HOME_OF = {
   market: 'market', prices: 'market', comparison: 'market',
   products: 'products', live: 'live', analysis: 'analysis', calculator: 'calculator',
-  sources: 'sources', guide: 'guide', faq: 'guide', coverage: 'guide', method: 'guide',
+  sources: 'guide', guide: 'guide', faq: 'guide', coverage: 'guide', method: 'guide',
 };
 
 /** Point the old in-page #links and data/ links of a panel at their new addresses. */

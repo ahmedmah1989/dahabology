@@ -7,7 +7,7 @@ const emblem = `url(${B}assets/emblem.webp)`;
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<Head title="دهبولوجي | أسعار الذهب والسبائك والجنيه في مصر" description="تابع أسعار الذهب في مصر، وربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة، مع مصادر الأسعار والمصنعية وحالة التوثيق والتحديث." path="" theme="#0a1628" />
+<Head title="دهبولوجي | أسعار الذهب والسبائك والجنيه في مصر" description="تابع أسعار الذهب في مصر، وربع ونصف الجنيه والجنيه الذهب والسبائك والأونصة، مع حاسبة الذهب وفحص الفاتورة ومؤشر الفجوة مع السعر العالمي." path="" theme="#0a1628" />
 <style is:global>
 :root{
   --night:#0a1628; --navy:#10213b; --navy-2:#192f4e;
@@ -168,10 +168,9 @@ body::after{
 
 <div class="ticker">
   <div class="chip"><span>عيار 24</span><b id="p24">—</b></div>
-  <div class="chip"><span>الدولار • بنك مصر</span><b id="pUsd">—</b></div>
+  <div class="chip"><span>الدولار في البنك</span><b id="pUsd">—</b></div>
   <div class="chip"><span>الأونصة $</span><b id="pOz">—</b></div>
 </div>
-<a class="replay" href={B + "sources/"}>المصادر والتحديث</a>
 <button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
 <button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button>
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
@@ -298,12 +297,12 @@ fetch(DATA + 'quotes.json',{cache:'no-store'}).then(r => r.json()).then(q => {
   if(g['21'] && g['21'].sell){
     countUp(document.getElementById('p21'), g['21'].sell);
     const t = new Date(g.sourceTime);
-    document.getElementById('pWhen').textContent = 'آي صاغة • ' + t.toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit',day:'numeric',month:'short'});
+    document.getElementById('pWhen').textContent = 'آخر تحديث ' + t.toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit',day:'numeric',month:'short'});
   } else document.getElementById('pWhen').textContent = 'السعر غير متاح الآن';
   if(g['24'] && g['24'].sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
   if(m.sell) countUp(document.getElementById('pUsd'), m.sell, 2);
 }).catch(() => { document.getElementById('pWhen').textContent = 'تعذر تحميل السعر'; });
-/* the ounce comes straight from the provider, as on the main board */
+/* the ounce is read live, as on the main board */
 fetch('https://api.gold-api.com/price/XAU',{cache:'no-store'}).then(r => r.json()).then(g => {
   if(g.symbol === 'XAU' && Number(g.price) > 0) countUp(document.getElementById('pOz'), Number(g.price), 2);
   else throw 0;

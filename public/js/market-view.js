@@ -40,12 +40,15 @@
     $('heroPrice').textContent = q ? nf(q.sell) : '—';
     $('heroBuy').textContent = q ? nf(q.buy) : '—';
     $('heroSpread').textContent = q ? nf(q.sell - q.buy) + ' (' + nf((q.sell - q.buy) / q.sell * 100) + '%)' : '—';
-    $('heroTime').textContent = !last ? 'تحميل السعر…' : !q ? 'السعر غير متاح الآن من المصدر.' :
-      'آي صاغة • ' + when(a.sourceTime) + ' • بدون مصنعية' + (karat === '18' ? ' • عيار 18 محسوب من عيار 24' : '');
+    $('heroTime').textContent = !last ? 'تحميل السعر…' : !q ? 'السعر غير متاح الآن.' :
+      'آخر تحديث ' + when(a.sourceTime) + ' • بدون مصنعية' + (karat === '18' ? ' • عيار 18 محسوب من عيار 24' : '');
     const c = $('heroChange'), base = karat === '18' ? '24' : karat;
     const ch = q && history ? D.change(history, base, a[base].sell, new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' })) : null;
     c.className = 'chg' + (ch ? (ch.diff > 0 ? ' up' : ch.diff < 0 ? ' dn' : '') : '');
     c.textContent = ch ? (ch.diff > 0 ? '▲ ' : ch.diff < 0 ? '▼ ' : '') + signed(ch.percent) + '% عن أمس' : '';
+    const s = last ? last.sources : {};
+    $('bankTime').textContent = usable(s.misr) ? 'آخر تحديث ' + when(s.misr.sourceTime) : '';
+    $('ounceTime').textContent = usable(s.gold) ? 'آخر تحديث ' + when(s.gold.sourceTime) : '';
     const r = last && last.result;
     $('gaugeNeedle').style.transform = 'rotate(' + (r ? -90 + D.pin(r.gapPercent) * 1.8 : -90) + 'deg)';
     $('gaugeNeedle').style.opacity = r ? 1 : .25;
