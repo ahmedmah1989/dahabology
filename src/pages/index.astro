@@ -2,7 +2,8 @@
 import Head from '../components/Head.astro';
 import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
-import { B, DATA, PAGES, ASSET_VERSION } from '../lib/site.js';
+import { B, DATA, PAGES, page, ASSET_VERSION } from '../lib/site.js';
+const HOME_PAGES = [...PAGES, page('about')];
 const logo = `url(${B}assets/logo-900.webp?v=${ASSET_VERSION})`;
 const emblem = `url(${B}assets/emblem.webp?v=${ASSET_VERSION})`;
 ---
@@ -183,8 +184,8 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <div class="halo"></div>
   <svg class="bolts" id="bolts" viewBox="-500 -500 1000 1000" aria-hidden="true"></svg>
   <div class="core" role="img" aria-label="شعار دهبولوجي"></div>
-  {PAGES.map((tab,i)=>{
-    const angle=(-90+i*360/PAGES.length)*Math.PI/180;
+  {HOME_PAGES.map((tab,i)=>{
+    const angle=(-90+i*360/HOME_PAGES.length)*Math.PI/180;
     return <a class="orb" href={B+tab.k+'/'} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
       <svg class="zap" viewBox="-60 -60 120 120" aria-hidden="true"><path class="ring"/><path class="spk"/></svg>
       <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.k === 'invoice' ? 'الفاتورة' : tab.t}</span>
@@ -202,8 +203,9 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a href={B+'market/'}><strong>تابع السوق</strong><span>بيع وشراء كل عيار</span></a>
   <a href={B+'products/'}><strong>اختار منتجك</strong><span>سبائك وجنيهات</span></a>
   <a href={B+'calculator/'}><strong>احسب بمبلغك</strong><span>وزن وتكلفة واضحة</span></a>
+  <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>
 </nav>
-<a class="dhb-story-link" href={B+'about/'}><span>من ذهب الفراعنة إلى ذكاء الأسواق الحديثة.</span><strong>اكتشف حكاية دهبولوجي ←</strong></a>
+
 <button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
 <div class="home-controls"><button class="replay" id="motionToggle" type="button" aria-pressed="false">إيقاف الحركة</button><button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button></div>
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
