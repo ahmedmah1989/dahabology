@@ -15,7 +15,7 @@ const emblem = `url(${B}assets/emblem.webp)`;
   --ink:#ffffff; --muted:#cdd8e8;
 }
 *{box-sizing:border-box}
-html{min-height:100%;overflow-x:clip;overscroll-behavior-x:none}
+html{min-height:100%;overflow-x:clip;overscroll-behavior-x:none;scrollbar-gutter:stable both-edges}
 body{width:100%;min-width:0;isolation:isolate}
 body{
   margin:0; color:var(--ink); overflow-x:clip;
@@ -184,7 +184,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
     const angle=(-90+i*360/PAGES.length)*Math.PI/180;
     return <a class="orb" href={B+tab.k+'/'} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
       <svg class="zap" viewBox="-60 -60 120 120" aria-hidden="true"><path class="ring"/><path class="spk"/></svg>
-      <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.t}</span>
+      <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.k === 'invoice' ? 'الفاتورة' : tab.t}</span>
     </a>;
   })}
 </main>
