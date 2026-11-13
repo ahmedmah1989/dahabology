@@ -1,4 +1,5 @@
 // Site-wide constants shared by every page.
+export const ASSET_VERSION = process.env.GITHUB_SHA || process.env.SOURCE_REV || '20261114-compare1';
 export const B = import.meta.env.BASE_URL.replace(/\/?$/, '/');
 
 // Price snapshots are still produced by the gold-board collectors (GitHub Actions).

@@ -1,8 +1,8 @@
 ---
 import Head from '../components/Head.astro';
-import { B, DATA, PAGES } from '../lib/site.js';
-const logo = `url(${B}assets/logo-900.webp)`;
-const emblem = `url(${B}assets/emblem.webp)`;
+import { B, DATA, PAGES, ASSET_VERSION } from '../lib/site.js';
+const logo = `url(${B}assets/logo-900.webp?v=${ASSET_VERSION})`;
+const emblem = `url(${B}assets/emblem.webp?v=${ASSET_VERSION})`;
 ---
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">

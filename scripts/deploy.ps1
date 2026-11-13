@@ -7,6 +7,7 @@ Set-Location $root
 
 $env:SITE_URL = 'https://ahmedmah1989.github.io'
 $env:BASE_PATH = '/dahabology'
+$env:SOURCE_REV = git rev-parse --short HEAD
 npm test
 if ($LASTEXITCODE -ne 0) { throw 'tests failed; nothing was published' }
 npm run build
