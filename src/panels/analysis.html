@@ -3,29 +3,14 @@
 <div class="x-reads" role="group" aria-label="قراءات السوق">
 <button type="button" class="x-read" data-open="read1"><span>السعر مقابل العالمي</span><span class="tag none" id="t1">—</span></button>
 <button type="button" class="x-read" data-open="read2"><span>اتجاه السعر</span><span class="tag none" id="t2">—</span></button>
-<button type="button" class="x-read" data-open="read3"><span>توقعات 2027</span><span class="tag none" id="t3">—</span></button>
+<button type="button" class="x-read" data-open="read3"><span>قراءة المخاطر</span><span class="tag none" id="t3">—</span></button>
 </div>
 <div class="signal" id="signal" aria-live="polite"><div class="head" id="sigHead">تجهيز القراءة…</div><p id="sigText"></p><ol class="plan" id="plan"></ol></div>
 <div hidden><input id="loc"><input id="bud"><b id="f21"></b><b id="diff"></b><b id="gramsLegacy"></b><input id="oz"><input id="usd"><span id="prog"></span></div>
 
 <details class="x-more" id="read1" name="read"><summary>السعر المحلي قريب من القيمة العالمية؟</summary><p id="c1"></p><p class="x-note" style="text-align:start">حساب مباشر من السعر العالمي والدولار؛ حدود 2% و4% تقديرية.</p></details>
 <details class="x-more" id="read2" name="read"><summary>اتجاه السعر (متوسط 50 و200 يوم)</summary><p id="c2"></p><p class="x-note" style="text-align:start">وصف للاتجاه من السلسلة المرجعية؛ ليس اختبارًا لاستراتيجية تداول.</p></details>
-<details class="x-more" id="read3" name="read"><summary>توقعات المحللين والبنوك</summary><p id="c3"></p>
-  <p class="muted-note" id="fcAge"></p>
-  <ul class="fc" style="background:none;border:0;padding:0;box-shadow:none">
-<li><div class="who">UBS <span class="audit verified">تحقق جزئي من المصدر الرسمي</span></div>
-      <div>المصدر الرسمي يؤكد مستهدف <b>5,400 دولار لسبتمبر 2027</b>، ويذكر مستوى 4,000 دولار في سياق إضافة انكشاف. بقية درجات التوقعات الواردة في النسخة القديمة (4,600 و5,000 و5,200) محفوظة للمراجعة ولم أجد توثيقها في الصفحة المفتوحة.</div>
-      <div>تاريخ المقال: 20 أكتوبر 2026؛ مراجعة المصدر 11 نوفمبر 2026. <a href="https://www.ubs.com/global/en/wealthmanagement/insights/marketnews/article.3875359.html" target="_blank" rel="noopener">المصدر</a></div></li>
-<li><div class="who">Bank of America <span class="audit verified">تطابق مع تقرير Kitco المؤرخ — مصدر ثانوي</span></div>
-      <div>متوسط الربع الأخير 2026: <b>4,000</b>. متوسط 2027: <b>4,813</b>.</div>
-      <div>تقرير 12 أكتوبر 2026. <a href="https://www.kitco.com/news/article/2026-10-12/gold-price-needs-dovish-fed-or-renewed-debasement-fears-reverse-its" target="_blank" rel="noopener">المصدر</a></div></li>
-<li><div class="who">استطلاع رويترز (30 محلل وتاجر) <span class="audit pending">تعذر الوصول للمستند — قيد التحقق، غير معتمد للحساب</span></div>
-      <div>متوسط 2026: <b>4,495 دولار</b>. متوسط 2027: <b>4,650 دولار</b>.</div>
-      <div>منشور 27 أكتوبر 2026. <a href="https://www.reuters.com/world/china/strong-dollar-high-yields-drag-gold-outlook-central-bank-demand-lends-support-2026-10-27/" target="_blank" rel="noopener">المصدر</a></div></li>
-<li><div class="who">Goldman Sachs <span class="audit pending">المصدر رفض الطلب — قيد التحقق، غير معتمد للحساب</span></div>
-      <div>نهاية 2026: <b>4,150</b> (بدل 4,650). نهاية 2027: <b>4,800</b> (بدل 5,400). سيناريو أسوأ لو الفيدرالي رفع الفايدة تاني: حوالي <b>4,660</b> نهاية 2027.</div>
-      <div>تقرير 5 نوفمبر 2026. <a href="https://finance.yahoo.com/markets/commodities/articles/goldman-sachs-cuts-gold-price-145146563.html" target="_blank" rel="noopener">المصدر</a></div></li>
-</ul><p class="x-note" style="text-align:start">آراء منسوبة لمصادرها بآجال مختلفة، وليست ضمانًا أو إجماعًا. القائمة تُراجع يدويًا ولا تتحدث تلقائيًا.</p></details>
+<details class="x-more" id="read3" name="read"><summary>افهم المخاطر قبل القرار</summary><p id="c3"></p><p>الاتجاه الصاعد لا يمنع الهبوط. راجع التذبذب وأكبر تراجع في الفترة، وافصل المبلغ الذي تحتاجه قريبًا عن أي مبلغ تدخره في الذهب.</p></details>
 
 <div class="x-card"><h2>الأونصة في 12 شهر</h2>
   <div class="chart"><div id="chart">تحميل البيانات…</div>
@@ -68,7 +53,7 @@
     <div class="line"><span>الفرق عن سعر شرائك</span><b id="myrefDiff">—</b></div>
     <div class="line"><span>الفرق على كل الكمية</span><b id="myrefTotal">—</b></div>
   </div>
-  <p class="x-note" style="text-align:start">المقارنة بسعر شراء التاجر من آخر تحديث. المصنعية التي دفعتها لا تُسترد، فأضفها إلى سعر شرائك لو أردت الخسارة الفعلية. البيانات على جهازك فقط.</p></details>
+  <p class="x-note" style="text-align:start">المقارنة بسعر شراء التاجر المعروض. المصنعية التي دفعتها لا تُسترد، فأضفها إلى سعر شرائك لو أردت الخسارة الفعلية. البيانات على جهازك فقط.</p></details>
 
 <details class="x-more"><summary>راجع نفسك قبل قرار الشراء</summary>
   <ul class="plain">

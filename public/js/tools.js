@@ -61,7 +61,7 @@
     if (p && !$('invPrice').dataset.edited) $('invPrice').value = Math.round(p.sell * 100) / 100;
     const sell = num($('invPrice').value);
     const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: num($('invVat').value) });
-    set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'سعر الجرام من آخر تحديث: ' + when(a.sourceTime) + '.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
+    set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'الحساب بسعر الجرام المعروض.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
     const share = r && !r.belowGold ? Math.min(100, Math.max(0, r.extraPercent)) : 0, donut = $('invDonut');
     if (donut) { donut.style.strokeDasharray = share + ' ' + (100 - share); set('invDonutPct', r && !r.belowGold ? nf(r.extraPercent, 1) + '%' : '—'); }
     const v = $('invVerdict');
@@ -102,7 +102,7 @@
     set('walPaid', items.length ? egp(w.paid) : '—');
     set('walWeight', items.length ? nf(w.grams, 3) + ' جم' : '—');
     const d = $('walDiff'); d.textContent = w.diff === null ? '' : signed(w.diff) + ' (' + signed(w.percent, 1) + '%)'; d.className = 'chg' + (w.diff === null ? '' : w.diff >= 0 ? ' up' : ' dn');
-    set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر من المصدر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
+    set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
   }
   if ($('walRows')) {
     $('walForm').addEventListener('submit', e => {
@@ -128,7 +128,7 @@
     try { const bg = await img(B + 'assets/logo-900.webp'); x.globalAlpha = .09; x.drawImage(bg, 90, 300, 900, 900); x.globalAlpha = 1; } catch (_) {}
     try { const em = await img(B + 'assets/emblem.webp'); x.drawImage(em, 430, 50, 220, 220); } catch (_) {}
     x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#f0ca78'; x.font = F(700, 76); x.fillText('دهبولوجي', 540, 350);
-    x.fillStyle = '#d8e3f0'; x.font = F(600, 38); x.fillText('سعر الذهب في مصر • ' + when(a.sourceTime), 540, 415);
+    x.fillStyle = '#d8e3f0'; x.font = F(600, 38); x.fillText('سعر الذهب في مصر', 540, 415);
     const rows = [['عيار 21', '21'], ['عيار 24', '24'], ['عيار 18 (محسوب)', '18']];
     rows.forEach((r, i) => {
       const p = prices(a, r[1]), y = 480 + i * 190;
@@ -148,7 +148,7 @@
   }
   const share = $('shareBtn');
   if (share) share.addEventListener('click', async () => {
-    if (!local()) { set('shareMsg', 'السعر غير متاح الآن؛ جرّب بعد تحديث الأسعار.'); return; }
+    if (!local()) { set('shareMsg', 'السعر غير متاح الآن؛ جرّب لاحقًا.'); return; }
     share.disabled = true; set('shareMsg', 'تجهيز الصورة…');
     try {
       const blob = await card(), file = new File([blob], 'dahabology-gold-price.png', { type: 'image/png' });

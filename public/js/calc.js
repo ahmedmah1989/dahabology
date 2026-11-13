@@ -41,7 +41,7 @@
     $('cAmount').placeholder = by === 'money' ? 'مثال: 100000' : 'مثال: 10';
     const q = quote({ mode: state.mode, by, price: num($('cPrice').value), amount: num($('cAmount').value), making: num($('cMaking').value), stamp: num($('cStamp').value), vat: num($('cVat').value) });
     const dl = $('cBreak'); dl.replaceChildren();
-    $('cPriceNote').textContent = state.edited ? 'الحساب بالسعر الذي أدخلته.' : state.prices ? 'السعر من آخر تحديث' + ($('cKarat').value === '18' ? '، وعيار 18 محسوب من عيار 24.' : '.') : 'في انتظار السعر؛ تقدر تكتب السعر بنفسك.';
+    $('cPriceNote').textContent = state.edited ? 'الحساب بالسعر الذي أدخلته.' : state.prices ? 'الحساب بسعر الجرام المعروض' + ($('cKarat').value === '18' ? '، وعيار 18 محسوب من عيار 24.' : '.') : 'في انتظار السعر؛ تقدر تكتب السعر بنفسك.';
     if (!q) { $('cResultLabel').textContent = buy ? (by === 'money' ? 'تشتري تقريبًا' : 'التكلفة التقريبية') : 'تستلم تقريبًا'; $('cResult').textContent = '—'; return; }
     if (!buy) {
       $('cResultLabel').textContent = 'تستلم تقريبًا'; $('cResult').textContent = egp(q.total);

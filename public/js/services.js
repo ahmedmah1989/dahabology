@@ -17,7 +17,6 @@
  let catalogData=null,selected='pound';
  const element=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined)e.textContent=text;return e;};
  const weight=c=>c.kind==='ounce'?'أونصة ترويسية ≈ 31.1035 جرام':c.weight+' جرام';
- const stock=o=>o.inStock===true?'متاح حسب المصدر':o.inStock===false?'غير متوفر حسب المصدر':'التوافر غير مؤكد';
  async function load(path){const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{const r=await fetch(path+'?t='+Date.now(),{cache:'no-store',signal:c.signal});if(!r.ok)throw Error();return await r.json();}finally{clearTimeout(timer);}}
  function renderProduct(){
   if(!catalogData)return;
@@ -27,29 +26,21 @@
   document.querySelectorAll('[data-product-kind]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.productKind===c.kind)));
   $('barWeightControl').hidden=c.kind!=='bars';if(c.kind==='bars')$('barWeight').value=c.id;
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
-  const selectedRows=productRows(data,c.id),active=selectedRows.filter(o=>validOffer(o));
-  $('offersStatus').textContent=selectedRows.filter(o=>displayable(o)).length+' عرض منشور • آخر تحديث '+t(data.checkedAt);
+  const selectedRows=productRows(data,c.id).filter(o=>displayable(o));
+  $('offersStatus').textContent=selectedRows.length?'أسعار المنتج بالجنيه المصري • راجع شمول الرسوم قبل الشراء':'السعر غير متاح حاليًا لهذا المنتج';
   const cards=$('productOfferCards');cards.replaceChildren();
-  selectedRows.forEach(o=>{
-   const card=element('article','retail-card'),show=displayable(o);
-   card.append(element('div','source-type',o.brand+' • '+stock(o)),element('h3','',o.store),element('p','retail-price',show?f(o.listedPrice):o.contentWarning?'السعر يحتاج مراجعة':'السعر غير متاح'));
-   card.append(element('span','badge'+(validOffer(o)?' good':''),!show?'بيانات السعر غير معتمدة':validOffer(o)?'عرض مؤهل للمقارنة':'سعر منشور؛ التكلفة النهائية غير مؤكدة'));
+  selectedRows.forEach((o,i)=>{
+   const card=element('article','retail-card');
+   card.append(element('div','source-type',o.brand==='El Galla'?'ذهب عيار '+c.karat:o.brand||'ذهب عيار '+c.karat),element('h3','',c.name),element('p','retail-price',f(o.listedPrice)));
+   card.append(element('span','badge',o.inStock===false?'غير متوفر حاليًا':'سعر المنتج'));
    const facts=element('dl','retail-facts');
-   const lines=[['المنتج',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي المعلن':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+'؛ شمولها والضريبة في السعر غير مؤكد':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة وفق المصدر':'شمولها في السعر غير مؤكد'],['الدمغة والشحن','الدمغة: '+(o.stampIncluded===true?'مشمولة':'غير مؤكدة')+' • الشحن: '+(o.shippingIncluded===true?'مشمول':'غير مؤكد')],['وقت تسعير المنتج',t(o.sourceTime)],['آخر رصد للصفحة',t(o.checkedAt)]];
-   lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});const more=element('details','x-more');more.append(element('summary','','الرسوم والتوثيق'),facts);card.append(more);
-   if(o.contentWarning)card.append(element('p','notice',o.contentWarning));
-   if(show&&Date.now()-Date.parse(o.checkedAt)>300000)card.append(element('p','notice','آخر رصد أقدم من خمس دقائق؛ راجع السعر الحالي لدى المصدر.'));
-   if(Number.isFinite(o.buybackPrice)){const details=element('details');details.append(element('summary','','إعادة الشراء المنشورة لدى المتجر'),element('p','','السعر المنشور لإعادة شراء هذا المنتج: '+f(o.buybackPrice)+'. شروط التغليف والفحص والسعر النهائي يحددها المتجر؛ هذا ليس عرض بيع مضمونًا.'));card.append(details);}
-   const link=element('a','source-button','افتح صفحة المنتج والسعر ↗');link.href=o.url;link.target='_blank';link.rel='noopener';card.append(link);cards.append(card);
+   const lines=[['الوزن والعيار',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+' • يُراجع شمولها والضريبة في السعر':'يُراجع شمولها قبل الشراء'],['الدمغة والشحن',o.stampIncluded===true?'الدمغة مشمولة • الشحن يُراجع عند الشراء':'يُراجع شمولها قبل الشراء']];
+   lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
+   if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
+   cards.append(card);
   });
-  if(!selectedRows.length)cards.append(element('p','notice','لم تصل صفحة منتج موثقة لهذا الاختيار بعد.'));
-  const rows=$('offerRows');rows.replaceChildren();
-  selectedRows.forEach(o=>{
-   const tr=document.createElement('tr');
-   const fees=[['المصنعية',o.manufacturingIncluded],['الضريبة',o.taxIncluded],['الدمغة',o.stampIncluded]].map(([n,v])=>n+': '+(v===true?'مشمولة':v===false?'غير مشمولة':'غير مؤكدة')).join(' • ');
-   const values=[o.store,c.name+' • '+o.brand+' • '+stock(o),displayable(o)?f(o.listedPrice):'غير متاح للاعتماد',fees,t(o.sourceTime),t(o.checkedAt),validOffer(o)?'صالح للمقارنة':o.reason||'غير مؤهل للمقارنة'];
-   values.forEach((v,i)=>{const td=document.createElement('td');if(i===0){const a=document.createElement('a');a.href=o.url;a.target='_blank';a.rel='noopener';a.textContent=v+' ↗';td.append(a);}else td.textContent=v;tr.append(td);});rows.append(tr);
-  });
+  if(!selectedRows.length)cards.append(element('p','notice','اختر وزنًا آخر أو جرّب لاحقًا. لا نعرض سعرًا غير متحقق منه.'));
+
  }
  function offers(data){
   if(data.schemaVersion!==2||!Array.isArray(data.catalog)||!data.catalog.length)throw Error('Missing product catalog');
@@ -61,9 +52,8 @@
    const c=data.catalog.find(p=>p.id===id);if(!c)return;
    const representative=productRows(data,id).find(o=>displayable(o));
    const link=element('a','product-summary-card');link.href=(window.DHB_BASE||'')+'products/'+id+'/';
-   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?'عرض منشور من '+representative.store:'انتظار عرض موثق'));
-   if(representative)link.append(element('span','small','رصد الصفحة: '+t(representative.checkedAt)));
-   link.append(element('span','summary-action','المتاجر وتفاصيل السعر ←'));
+   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?'سعر المنتج':'انتظار السعر'));
+   link.append(element('span','summary-action','تفاصيل المنتج ←'));
    summary.append(link);
   });
   route();
@@ -80,18 +70,16 @@
   $('telegramConnection').textContent=data.connection?.status==='confirmed'?'Telegram أكد إرسال رسالة تأكيد الربط؛ لا يثبت ذلك فتحها أو قراءتها.':'لا يوجد تأكيد موثق لرسالة الربط حتى الآن.';
  }
  function catalogError(message){
-  if(catalogData){offers(catalogData);$('offersStatus').textContent=message+' المعروض يحتفظ بأوقات رصده الأصلية.';}
+  if(catalogData){offers(catalogData);$('offersStatus').textContent=message+' جرّب مرة أخرى لاحقًا.';}
   else{$('offersStatus').textContent=message;$('productSummary').replaceChildren(element('p','notice',message));}
  }
  async function refresh(){
   const D=window.DHB_DATA||'data/';
-  const r=await Promise.allSettled([load(D+'offers.json'),load(D+'alert-state.json'),load(D+'audit.json')]);
-  if(r[0].status==='fulfilled'){try{offers(r[0].value);}catch(_){catalogError('كتالوج المنتجات غير متاح حاليًا؛ لا نعتمد أسعارًا غير مكتملة.');}}else catalogError('تعذر تحميل أحدث فحص للمتاجر.');
-  if(r[1].status==='fulfilled')telegram(r[1].value);else $('telegramStatus').textContent='تعذر جلب حالة خدمة التنبيهات؛ لا يمكن تأكيد التشغيل الحالي.';
-  if(r[2].status==='fulfilled'){
-   const a=r[2].value,s=a.manualSample,records=s.records||[],compared=records.filter(x=>typeof x.withinDailyRange==='boolean');
-   $('historyAuditStatus').textContent='مراجعة يدوية بتاريخ '+s.reviewDate+': '+compared.filter(x=>x.withinDailyRange).length+' من '+compared.length+' عينات تقع داخل نطاق اليوم المنشور في Investing. هذا لا يثبت مطابقة سعر الإغلاق أو صحة كامل السلسلة. أيام الأسبوع الناقصة: '+(a.historyProfile.missingWeekdays.join('، ')||'لا توجد في نافذة الفحص')+'.';
-  }else $('historyAuditStatus').textContent='تعذر جلب سجل التدقيق. المطابقة التاريخية الشاملة غير مكتملة.';
+  try{offers(await load(D+'offers.json'));}catch(_){catalogError('تعذر تحميل أسعار المنتجات.');}
+  if(document.getElementById('telegramStatus')){
+   try{telegram(await load(D+'alert-state.json'));}catch(_){$('telegramStatus').textContent='حالة التنبيهات غير متاحة.';}
+  }
+
  }
  refresh();setInterval(refresh,60000);
 })();

@@ -294,12 +294,11 @@ function countUp(el,to,dec=0){
 }
 fetch(DATA + 'quotes.json',{cache:'no-store'}).then(r => r.json()).then(q => {
   const s = q.sources || {}, g = s.isagha || {}, m = s.misr || {}, oz = s.gold || {};
-  if(g['21'] && g['21'].sell){
+  if(g.status === 'available' && Date.now()-Date.parse(g.sourceTime) <= 86400000 && Date.parse(g.sourceTime)-Date.now() <= 120000 && g['21']?.sell){
     countUp(document.getElementById('p21'), g['21'].sell);
-    const t = new Date(g.sourceTime);
-    document.getElementById('pWhen').textContent = 'آخر تحديث ' + t.toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',hour:'numeric',minute:'2-digit',day:'numeric',month:'short'});
+    document.getElementById('pWhen').textContent = 'السعر للجرام بدون مصنعية';
   } else document.getElementById('pWhen').textContent = 'السعر غير متاح الآن';
-  if(g['24'] && g['24'].sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
+  if(g.status === 'available' && Date.now()-Date.parse(g.sourceTime) <= 86400000 && Date.parse(g.sourceTime)-Date.now() <= 120000 && g['24']?.sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
   if(m.sell) countUp(document.getElementById('pUsd'), m.sell, 2);
 }).catch(() => { document.getElementById('pWhen').textContent = 'تعذر تحميل السعر'; });
 /* the ounce is read live, as on the main board */
