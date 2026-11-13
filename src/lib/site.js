@@ -17,7 +17,7 @@ export const PAGES = [
   { k: 'live', t: 'الرسم الحي', d: 'M7 3v18M5 8h4v7H5zM17 3v18M15 6h4v8h-4z' },
   { k: 'guide', t: 'الدليل', d: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM8 8h7M8 12h5' },
 ];
-export const page = k => PAGES.find(p => p.k === k);
+export const page = k => k === 'about' ? { k: 'about', t: 'حكايتنا', d: 'M12 3l9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5' } : PAGES.find(p => p.k === k);
 
 // Product catalog as of the last check; used only if the live catalog cannot be read while building.
 const CATALOG_FALLBACK = [

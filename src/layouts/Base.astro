@@ -1,12 +1,14 @@
 ---
 import Head from '../components/Head.astro';
+import Brand from '../components/Brand.astro';
+import Watermark from '../components/Watermark.astro';
 import { B, DATA, ASSET_VERSION, page as find } from '../lib/site.js';
 // page: nav key • path: address when it differs from "<page>/" • scripts: files from public/js
-const { page, path = page + '/', title, description, heading, scripts = [] } = Astro.props;
+const { page, path = page + '/', title, description, heading, scripts = [], informational = false } = Astro.props;
 const asset=p=>B+p+'?v='+ASSET_VERSION;
 const emblem = asset('assets/emblem.webp');
 const BAR = ['market', 'calculator', null, 'wallet'];   // null = home button in the middle
-const MORE = ['products', 'invoice', 'analysis', 'live', 'guide'];
+const MORE = ['products', 'invoice', 'analysis', 'live', 'guide', 'about'];
 const SHORT = { invoice: 'الفاتورة' };                  // shorter names inside the round buttons
 const label = k => SHORT[k] || find(k).t;
 const moreIcon = 'M5 12h.01M12 12h.01M19 12h.01';
@@ -23,17 +25,18 @@ const name = heading || find(page)?.t || 'دهبولوجي';
 <link rel="stylesheet" href={asset('app.css')}>
 <slot name="head" />
 </head>
-<body style={`--x-logo:url(${asset('assets/logo-900.webp')})`}>
+<body class="app-shell">
+<Watermark />
 <header class="x-top">
-  <a class="x-home" href={B} aria-label="دهبولوجي — الصفحة الرئيسية"><img src={emblem} alt="" width="48" height="48"></a>
+  <Brand />
   <h1>{name}</h1>
-  <button id="refresh" class="x-refresh" type="button" aria-label="إعادة تحميل الأسعار">↻</button>
+  {!informational && <button id="refresh" class="x-refresh" type="button" aria-label="إعادة تحميل الأسعار">↻</button>}
 </header>
 <main class="wrap">
-  <p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p>
+  {!informational && <p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p>}
   <div id={'panel-' + page} data-panel={page}><slot /></div>
 </main>
-<footer><div class="wrap">دهبولوجي للمتابعة والحساب؛ ليست متجرًا ولا توصية شراء. <a href={B + 'guide/'}>الأسئلة وطريقة الحساب</a></div></footer>
+<footer><div class="wrap"><span class="dhb-footer-brand">دهبولوجي.. افهم الدهب قبل ما تشتريه.</span>منصة معلوماتية وتحليلية؛ ليست جهة لبيع الذهب أو تقديم توصيات استثمارية شخصية. <a href={B + 'about/'}>حكايتنا</a> · <a href={B + 'guide/'}>الأسئلة وطريقة الحساب</a></div></footer>
 
 <div class="x-dock" role="navigation" aria-label="التنقل">
   {BAR.map(k => k === null

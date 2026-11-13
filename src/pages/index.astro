@@ -1,5 +1,7 @@
 ---
 import Head from '../components/Head.astro';
+import Brand from '../components/Brand.astro';
+import Watermark from '../components/Watermark.astro';
 import { B, DATA, PAGES, ASSET_VERSION } from '../lib/site.js';
 const logo = `url(${B}assets/logo-900.webp?v=${ASSET_VERSION})`;
 const emblem = `url(${B}assets/emblem.webp?v=${ASSET_VERSION})`;
@@ -163,10 +165,11 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 @media(orientation:landscape) and (max-height:500px){.stage{--s:min(100%,360px)}}
 </style>
 </head>
-<body style={`--logo:${logo};--emblem:${emblem}`}>
+<body class="home-shell" style={`--logo:${logo};--emblem:${emblem}`}>
+<Watermark />
 <header class="top">
-  <h1>دهبولوجي</h1>
-  <p>الذهب في مصر… من الرقم إلى الصورة الكاملة</p>
+  <Brand hero />
+  <p>افهم الدهب قبل ما تشتريه.</p>
 </header>
 
 <div class="hero-price" aria-live="polite">
@@ -200,6 +203,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a href={B+'products/'}><strong>اختار منتجك</strong><span>سبائك وجنيهات</span></a>
   <a href={B+'calculator/'}><strong>احسب بمبلغك</strong><span>وزن وتكلفة واضحة</span></a>
 </nav>
+<a class="dhb-story-link" href={B+'about/'}><span>من ذهب الفراعنة إلى ذكاء الأسواق الحديثة.</span><strong>اكتشف حكاية دهبولوجي ←</strong></a>
 <button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
 <div class="home-controls"><button class="replay" id="motionToggle" type="button" aria-pressed="false">إيقاف الحركة</button><button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button></div>
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
