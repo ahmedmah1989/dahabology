@@ -20,10 +20,19 @@ npm run build    # يبني الموقع في مجلد dist
 
 ### 2) النشر الحقيقي على GitHub Pages
 
-1. أنشئ مستودعًا جديدًا وارفع محتويات هذا المجلد (بدون `node_modules` و `dist`).
-2. في المستودع: **Settings → Pages → Source → GitHub Actions**.
-3. ملف `.github/workflows/deploy.yml` يبني وينشر تلقائيًا مع كل تعديل على فرع `main`،
-   ويضبط عنوان الموقع والمسار من إعدادات Pages، فتُفعَّل الفهرسة وخريطة الموقع.
+الموقع منشور على `https://ahmedmah1989.github.io/dahabology/` من فرع `gh-pages`.
+لنشر أي تعديل، من مجلد المشروع:
+
+```bash
+powershell -ExecutionPolicy Bypass -File scripts\deploy.ps1
+```
+
+السكربت يشغّل الاختبارات، يبني الموقع بعنوانه الحقيقي، ويرفع الناتج إلى `gh-pages`. لو فشل اختبار لا يُنشر شيء.
+الكود نفسه في فرع `main` ويُرفع بـ `git push` كالعادة.
+
+**نشر تلقائي (اختياري):** الملف `deploy/github-actions-deploy.yml` جاهز. لتفعيله انقله إلى
+`.github/workflows/deploy.yml` واختر **Settings → Pages → Source → GitHub Actions**؛
+رفعه يحتاج صلاحية `workflow` لحساب GitHub على الجهاز (`gh auth refresh --scopes workflow`).
 
 للنشر على دومين خاص من استضافة أخرى، ابنِ بالعنوان الحقيقي:
 
