@@ -161,6 +161,43 @@ details.x-more .line{font-size:16px}
 .x-item .wal-del{justify-self:end;background:none;border:0;color:#93a4bd;font-size:13px;padding:2px 0;text-decoration:underline}
 .x-item .wal-del:hover{background:none;color:var(--bad)}
 
+.x-item .d.mid{color:var(--x-gold-hot)}
+.x-item .d{direction:rtl}
+#walRows .x-item .d{direction:ltr}
+
+/* ---------- folds used across pages (products, sources, guide, live) ---------- */
+details.x-fold,[data-panel=guide] details{margin-top:12px;padding:6px 16px;background:var(--x-glass);border:1px solid var(--x-line);border-radius:18px;box-shadow:none;text-align:start}
+details.x-fold>summary,[data-panel=guide] details>summary{list-style:none;text-align:start;font-size:18px;font-weight:700;color:#fff;padding:12px 0;cursor:pointer}
+details.x-fold>summary::-webkit-details-marker,[data-panel=guide] details>summary::-webkit-details-marker{display:none}
+[data-panel=guide] details>summary::after{content:' ▾';color:var(--x-gold-hot)}
+[data-panel=guide] details[open]>summary::after{content:' ▴'}
+details.x-fold p,details.x-fold li,[data-panel=guide] details p,[data-panel=guide] details li{font-size:16px;line-height:1.9;color:var(--x-muted)}
+details.x-fold .table-wrap{background:none;border:0}
+[data-panel=guide] .section-head{justify-content:center;margin-top:8px}
+[data-panel=guide] .section-head h2,[data-panel=guide] #method>h2{font-size:21px;text-align:center}
+[data-panel=guide] #method>h2{margin-top:26px}
+[data-panel=guide] .coverage-grid article{box-shadow:none}
+
+/* ---------- products ---------- */
+.x-kinds{gap:clamp(4px,1.6vw,12px);flex-wrap:nowrap}
+.x-kinds .x-karat{width:clamp(52px,15vw,76px);height:clamp(52px,15vw,76px);font-size:11px;flex:none}
+.x-kinds .x-karat[aria-pressed=true]{scale:1.06}
+.x-kinds .x-karat b{font-size:clamp(13px,3.8vw,16px);color:#fff}
+.x-kinds .x-karat[aria-pressed=true] b{color:var(--x-gold)}
+.x-pick{max-width:320px;margin-inline:auto}
+.x-pick select{text-align:center;border-radius:16px;border-color:var(--x-line);background:#0a1628}
+.retail-offer-grid{gap:14px;margin-top:16px}
+.retail-card{padding:20px;text-align:center}
+.retail-card h3{font-size:22px;margin:4px 0}
+.retail-card .retail-price{margin:6px 0;font-size:clamp(30px,8vw,38px);color:var(--x-gold)}
+.retail-card .source-type{font-size:14px;color:var(--x-muted)}
+.retail-card .badge{margin:0 0 6px}
+.retail-card details{background:none;border:0;padding:0;margin-top:4px;text-align:start}
+.retail-card details summary{font-size:15px;color:var(--x-gold-hot);text-align:center}
+.retail-card .retail-facts{margin:8px 0}
+.retail-card .source-button{border-radius:14px;margin-top:12px;font-size:16px;padding:11px}
+.live-chart-shell{margin:14px 0 0}
+
 /* ---------- analysis reading orbs ---------- */
 .x-reads{display:flex;justify-content:center;gap:12px;margin:20px 0 6px}
 .x-read{flex:0 1 150px;aspect-ratio:1;min-width:0;padding:8px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;text-align:center;

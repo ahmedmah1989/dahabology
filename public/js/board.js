@@ -76,6 +76,34 @@
     if (badge) { badge.textContent = v.text; badge.className = 'meter-verdict v-' + v.key; }
     if ($('gapBig')) set('gapBig', r ? signed(r.gapPercent) + '%' : '—');
     myref();
+    sources(detail.sources);
+  }
+
+  /* ---- sources screen: how many of the three calculation sources answered, and one card per source ---- */
+  const SOURCES = [
+    ['isagha', 'آي صاغة', 'سعر الذهب المحلي', true],
+    ['misr', 'بنك مصر', 'سعر الدولار', true],
+    ['gold', 'Gold API', 'الأونصة العالمية', true],
+    ['nbe', 'البنك الأهلي', 'للمراجعة فقط، لا يدخل الحساب', false],
+    ['cbe', 'البنك المركزي', 'للمراجعة فقط، لا يدخل الحساب', false],
+  ];
+  const when = v => new Date(v).toLocaleString('ar-EG-u-nu-latn', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
+  function sources(all) {
+    const box = $('srcCards'); if (!box) return;
+    box.replaceChildren();
+    let ok = 0, need = 0;
+    SOURCES.forEach(([key, name, role, used]) => {
+      const q = all[key], good = usable(q), fresh = good && Date.now() - Date.parse(q.sourceTime) <= 300000;
+      if (used) { need++; if (good) ok++; }
+      const it = document.createElement('div'); it.className = 'x-item';
+      const piece = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; };
+      it.append(
+        piece('b', '', name), piece('span', 'd ' + (fresh ? 'up' : good ? 'mid' : 'dn'), fresh ? 'حديث' : good ? 'آخر سعر منشور' : 'غير متاح'),
+        piece('span', 'w', role), piece('span', 'p', good ? when(q.sourceTime) : ''));
+      box.append(it);
+    });
+    set('srcCount', ok + ' / ' + need);
+    set('srcState', ok === need ? 'كل المصادر ردّت' : 'المقارنة تنتظر مصدرًا ناقصًا');
   }
 
   /* ---- compare with my purchase price (stays on this device) ---- */

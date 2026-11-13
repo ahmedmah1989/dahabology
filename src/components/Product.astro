@@ -6,8 +6,10 @@ import { panel, productSpec } from '../lib/site.js';
 const { product, index = false } = Astro.props;
 const swap = (s, a, b) => { if (!s.includes(a)) throw new Error('products panel changed: ' + a); return s.replace(a, b); };
 let body = panel(html, 'products');
-body = swap(body, '<h3 id="selectedProductName">جنيه ذهب</h3>', `<h3 id="selectedProductName">${product.name}</h3>`);
-body = swap(body, '<p id="selectedProductSpec" class="notice">8 جرامات • عيار 21</p>', `<p id="selectedProductSpec" class="notice">${productSpec(product)}</p>`);
+body = swap(body, '<h2 id="selectedProductName">جنيه ذهب</h2>', `<h2 id="selectedProductName">${product.name}</h2>`);
+body = swap(body, '<p class="x-sub" id="selectedProductSpec">8 جرامات • عيار 21</p>', `<p class="x-sub" id="selectedProductSpec">${productSpec(product)}</p>`);
+body = swap(body, `data-product-kind="pound" aria-pressed="true"`, `data-product-kind="pound" aria-pressed="false"`);
+body = swap(body, `data-product-kind="${product.kind}" aria-pressed="false"`, `data-product-kind="${product.kind}" aria-pressed="true"`);
 const title = index
   ? 'سعر الجنيه الذهب والسبائك والأونصة في مصر — دهبولوجي'
   : `سعر ${product.name} اليوم في مصر (${productSpec(product)}) — دهبولوجي`;

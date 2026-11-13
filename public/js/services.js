@@ -36,7 +36,7 @@
    card.append(element('span','badge'+(validOffer(o)?' good':''),!show?'بيانات السعر غير معتمدة':validOffer(o)?'عرض مؤهل للمقارنة':'سعر منشور؛ التكلفة النهائية غير مؤكدة'));
    const facts=element('dl','retail-facts');
    const lines=[['المنتج',weight(c)+' • عيار '+c.karat],['المصنعية والضريبة',Number.isFinite(o.makingAndVAT)?f(o.makingAndVAT)+' ضمن الإجمالي المعلن':Number.isFinite(o.declaredMakingCharge)?'مصنعية معلنة '+f(o.declaredMakingCharge)+'؛ شمولها والضريبة في السعر غير مؤكد':o.manufacturingIncluded===true&&o.taxIncluded===true?'مشمولة وفق المصدر':'شمولها في السعر غير مؤكد'],['الدمغة والشحن','الدمغة: '+(o.stampIncluded===true?'مشمولة':'غير مؤكدة')+' • الشحن: '+(o.shippingIncluded===true?'مشمول':'غير مؤكد')],['وقت تسعير المنتج',t(o.sourceTime)],['آخر رصد للصفحة',t(o.checkedAt)]];
-   lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
+   lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});const more=element('details','x-more');more.append(element('summary','','الرسوم والتوثيق'),facts);card.append(more);
    if(o.contentWarning)card.append(element('p','notice',o.contentWarning));
    if(show&&Date.now()-Date.parse(o.checkedAt)>300000)card.append(element('p','notice','آخر رصد أقدم من خمس دقائق؛ راجع السعر الحالي لدى المصدر.'));
    if(Number.isFinite(o.buybackPrice)){const details=element('details');details.append(element('summary','','إعادة الشراء المنشورة لدى المتجر'),element('p','','السعر المنشور لإعادة شراء هذا المنتج: '+f(o.buybackPrice)+'. شروط التغليف والفحص والسعر النهائي يحددها المتجر؛ هذا ليس عرض بيع مضمونًا.'));card.append(details);}
