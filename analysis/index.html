@@ -1,0 +1,78 @@
+<!DOCTYPE html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>تحليل الذهب: قراءة اليوم والاتجاه والمتوسطات — دهبولوجي</title><meta name="description" content="رسم سعر الأونصة خلال 12 شهرًا، متوسطا 50 و200 يوم، التذبذب والهبوط، سيناريوهات السعر، وقراءة اليوم غير المكتملة."><link rel="canonical" href="https://ahmedmah1989.github.io/dahabology/analysis/"><meta property="og:title" content="تحليل الذهب: قراءة اليوم والاتجاه والمتوسطات — دهبولوجي"><meta property="og:description" content="رسم سعر الأونصة خلال 12 شهرًا، متوسطا 50 و200 يوم، التذبذب والهبوط، سيناريوهات السعر، وقراءة اليوم غير المكتملة."><meta property="og:type" content="website"><meta property="og:locale" content="ar_EG"><meta property="og:url" content="https://ahmedmah1989.github.io/dahabology/analysis/"><meta property="og:image" content="https://ahmedmah1989.github.io/dahabology/assets/logo-900.webp?v=9f7a462"><meta name="theme-color" content="#0a1628"><link rel="stylesheet" href="/dahabology/brand.css?v=9f7a462"><link rel="icon" href="/dahabology/assets/icon-192.png"><link rel="apple-touch-icon" href="/dahabology/assets/icon-192.png"><link rel="manifest" href="/dahabology/manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="دهبولوجي"><script>(function(){const sw = "/dahabology/sw.js?v=9f7a462";
+if ('serviceWorker' in navigator) addEventListener('load', () => navigator.serviceWorker.register(sw,{updateViaCache:'none'}).then(reg => reg.update()).catch(() => {}));})();</script><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"><script>try{if(localStorage.getItem('dhb-motion')==='paused')document.documentElement.dataset.motion='paused';}catch(_){};</script><link rel="stylesheet" href="/dahabology/design.css?v=9f7a462"><link rel="stylesheet" href="/dahabology/dark.css?v=9f7a462"><link rel="stylesheet" href="/dahabology/products.css?v=9f7a462"><link rel="stylesheet" href="/dahabology/site.css?v=9f7a462"><link rel="stylesheet" href="/dahabology/app.css?v=9f7a462"></head><body class="app-shell"><div class="dhb-watermark" aria-hidden="true"><img src="/dahabology/assets/logo-900.webp?v=9f7a462" width="900" height="900" alt="" decoding="async" fetchpriority="low"></div><header class="x-top"><a class="dhb-brand" href="/dahabology/" aria-label="دهبولوجي — الصفحة الرئيسية"><span class="dhb-brand-frame"><img src="/dahabology/assets/logo-192.webp?v=9f7a462" width="56" height="56" alt="" decoding="async"></span><span class="dhb-brand-type"><span class="dhb-brand-name">دهبولوجي</span><span class="dhb-brand-en" lang="en" dir="ltr">DAHABOLOGY</span></span></a><h1>التحليل</h1><button id="refresh" class="x-refresh" type="button" aria-label="إعادة تحميل الأسعار">↻</button></header><main class="wrap"><p class="x-status" role="status" aria-live="polite"><span id="fetchStatus">تحميل الأسعار…</span></p><div id="panel-analysis" data-panel="analysis"><section id="analysis" class="analytics">
+<p class="x-lead">ملخص اليوم أولًا، ثم الاتجاه والمخاطر وتفاصيل الأرقام.</p>
+<section class="x-card today-brief" aria-labelledby="analysisDate"><p class="x-sub" id="analysisDate">تحليل اليوم</p><h2>الصورة من آخر حركة للسعر</h2><b class="today-price" id="analysisNow">—</b><p id="analysisDayState" class="x-note" role="status">انتظار قراءة اليوم…</p><div class="today-change"><b id="analysisMove">—</b><span id="analysisMoveLabel">عن آخر قراءة يومية</span></div><p id="analysisBasis" class="x-note"></p></section>
+<div class="x-reads" role="group" aria-label="قراءات السوق">
+<button type="button" class="x-read" data-open="read1"><span>السعر مقابل العالمي</span><span class="tag none" id="t1">—</span></button>
+<button type="button" class="x-read" data-open="read2"><span>اتجاه السعر</span><span class="tag none" id="t2">—</span></button>
+<button type="button" class="x-read" data-open="read3"><span>قراءة المخاطر</span><span class="tag none" id="t3">—</span></button>
+</div>
+<div class="signal" id="signal" aria-live="polite"><div class="head" id="sigHead">تجهيز القراءة…</div><p id="sigText"></p><ol class="plan" id="plan"></ol></div>
+<div hidden><input id="loc"><input id="bud"><b id="f21"></b><b id="diff"></b><b id="gramsLegacy"></b><input id="oz"><input id="usd"><span id="prog"></span></div>
+
+<details class="x-more" id="read1" name="read"><summary>السعر المحلي قريب من القيمة العالمية؟</summary><p id="c1"></p><p class="x-note" style="text-align:start">حساب مباشر من السعر العالمي والدولار؛ حدود 2% و4% تقديرية.</p></details>
+<details class="x-more" id="read2" name="read"><summary>اتجاه السعر (متوسط 50 و200 يوم)</summary><p id="c2"></p><p class="x-note" style="text-align:start">وصف للاتجاه من السلسلة المرجعية؛ ليس اختبارًا لاستراتيجية تداول.</p></details>
+<details class="x-more" id="read3" name="read"><summary>افهم المخاطر قبل القرار</summary><p id="c3"></p><p>الاتجاه الصاعد لا يمنع الهبوط. راجع التذبذب وأكبر تراجع في الفترة، وافصل المبلغ الذي تحتاجه قريبًا عن أي مبلغ تدخره في الذهب.</p></details>
+
+<div class="x-card"><h2>الأونصة في 12 شهر</h2>
+  <div class="chart"><div id="chart">تحميل البيانات…</div>
+    <div class="legend"><span><i class="sw" style="border-color:var(--gold)"></i>القراءات اليومية</span><span><i class="sw" style="border-color:var(--gold);border-top-style:dashed"></i>قراءة اليوم</span><span><i class="sw" style="border-color:var(--teal); border-top-style:dashed"></i>متوسط 200 يوم</span><span><i class="sw" style="border-color:var(--bad); border-top-style:dotted"></i>متوسط 50 يوم</span></div>
+  </div>
+  <ul class="ind">
+    <li><b id="iA50">—</b><span>متوسط 50 يوم</span></li>
+    <li><b id="iA200">—</b><span>متوسط 200 يوم</span></li>
+    <li><b id="iHL">—</b><span>أقل وأعلى سعر في 12 شهر</span></li>
+    <li><b id="iDD">—</b><span>الهبوط عن أعلى قراءة</span></li>
+    <li><b id="iMDD">—</b><span>أكبر هبوط من قمة لقاع</span></li>
+    <li><b id="iVol">—</b><span>التذبذب السنوي</span></li>
+  </ul>
+</div>
+
+<details class="x-more"><summary>مقارنة الفترات</summary>
+  <div class="tblw" style="background:none;border:0;box-shadow:none"><table class="per">
+    <thead><tr><th>من</th><th>الأونصة وقتها</th><th>التغير</th><th>عيار 21 (قيمة عالمية) وقتها</th><th>التغير</th></tr></thead>
+    <tbody id="perBody"><tr><td colspan="5">تحميل البيانات…</td></tr></tbody>
+  </table></div>
+  <p class="muted-note" id="perNote"></p></details>
+
+<details class="x-more"><summary>السعر ممكن يروح فين؟</summary>
+  <p>ثلاث طرق مستقلة، كل واحدة تجاوب على سؤال مختلف. التحويل لعيار 21 لا يشمل علاوة السوق أو رسوم المنتج.</p>
+  <ul class="rng" id="rngBox"><li>تحميل البيانات التاريخية…</li></ul></details>
+
+<details class="x-more"><summary>قارن بسعر شرائك</summary>
+  <div class="x-karats" role="group" aria-label="اختر العيار" style="margin-top:6px">
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="21" aria-pressed="true"><span>عيار<b>21</b></span></button>
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="24" aria-pressed="false"><span>عيار<b>24</b></span></button>
+  <button type="button" class="x-karat" data-set="myrefKarat" data-value="18" aria-pressed="false"><span>عيار<b>18</b></span></button>
+  </div>
+  <select id="myrefKarat" hidden aria-hidden="true"><option value="21">21</option><option value="24">24</option><option value="18">18</option></select>
+  <div class="x-grid2">
+  <label class="x-field sm">سعر شراء الجرام<input id="myrefPrice" inputmode="decimal" placeholder="5800" autocomplete="off"></label>
+  <label class="x-field sm">عدد الجرامات (اختياري)<input id="myrefGrams" inputmode="decimal" placeholder="10" autocomplete="off"></label>
+  </div>
+  <div id="myrefOut" style="margin-top:12px">
+    <div class="line"><span>التاجر يشتري الجرام منك الآن بـ</span><b id="myrefNow">—</b></div>
+    <div class="line"><span>الفرق عن سعر شرائك</span><b id="myrefDiff">—</b></div>
+    <div class="line"><span>الفرق على كل الكمية</span><b id="myrefTotal">—</b></div>
+  </div>
+  <p class="x-note" style="text-align:start">المقارنة بسعر شراء التاجر المعروض. أضف الرسوم إلى سعر شرائك لتقدير الفرق عن إجمالي ما دفعته، وراجع أي استرداد للمصنعية حسب شروط المنتج. البيانات على جهازك فقط.</p></details>
+
+<details class="x-more"><summary>راجع نفسك قبل قرار الشراء</summary>
+  <ul class="plain">
+    <li>الفلوس مطلوبة قريبًا لالتزام أساسي. الذهب قد يتراجع وقت احتياجك للبيع، واحتياج السيولة أهم من قراءة المؤشرات.</li>
+    <li>الفلوس سلف أو دين.</li>
+    <li>الشراء لتعويض خسارة. لا تزد فوق الخطة لما السعر ينزل؛ الخطة تتحدد قبل الشراء وتتنفذ كما هي.</li>
+    <li>قارن المصنعية وفرق البيع والشراء وشروط التغليف، ولا تعتمد على سعر الجرام وحده.</li>
+  </ul></details>
+
+<p class="x-note">الرسم والمؤشرات من قراءات يومية مرجعية، وليست أسعارًا لحظية ولا توقعًا مضمونًا ولا نصيحة استثمار شخصية. <a href="/dahabology/guide/#method">طريقة الحساب ←</a></p>
+<span id="historyQuality" hidden></span><span id="historyAuditStatus" hidden></span>
+</section>
+</div></main><footer><div class="wrap"><span class="dhb-footer-brand">دهبولوجي.. افهم الدهب قبل ما تشتريه.</span>منصة معلوماتية وتحليلية؛ ليست جهة لبيع الذهب أو تقديم توصيات استثمارية شخصية. <a href="/dahabology/assistant/">المساعد الذكي</a> · <a href="/dahabology/about/">حكايتنا</a> · <a href="/dahabology/guide/">الأسئلة وطريقة الحساب</a></div></footer><div class="x-dock" role="navigation" aria-label="التنقل"><a href="/dahabology/market/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l2-6 4 12 2-6h6"></path></svg><span>السوق</span></a><a href="/dahabology/calculator/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18H6zM9 7h6M9 12h.01M12 12h.01M15 12h.01M9 16h.01M12 16h.01M15 16h.01"></path></svg><span>الحاسبة</span></a><a class="x-dock-home" href="/dahabology/"><img src="/dahabology/assets/emblem.webp?v=9f7a462" alt="" width="80" height="80"><span>الرئيسية</span></a><a href="/dahabology/wallet/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7a2 2 0 012-2h13v4M3 7v10a2 2 0 002 2h15V9H5a2 2 0 01-2-2zM16 14h.01"></path></svg><span>دهبي</span></a><details class="on"><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01" stroke-width="3"></path></svg><span>المزيد</span></summary><div class="x-more-menu"><a href="/dahabology/products/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18l2-6h14l2 6zM8 12l1.2-5h5.6L16 12"></path></svg><span>المنتجات</span></a><a href="/dahabology/invoice/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"></path></svg><span>الفاتورة</span></a><a href="/dahabology/analysis/" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16h16M8 15l3-4 3 2 5-7"></path></svg><span>التحليل</span></a><a href="/dahabology/live/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v18M5 8h4v7H5zM17 3v18M15 6h4v8h-4z"></path></svg><span>الرسم الحي</span></a><a href="/dahabology/guide/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2zM8 8h7M8 12h5"></path></svg><span>الدليل</span></a><a href="/dahabology/about/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 5-9 5-9-5zM3 12l9 5 9-5M3 16l9 5 9-5"></path></svg><span>حكايتنا</span></a><a href="/dahabology/assistant/"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4zM8 9h.01M12 9h.01M16 9h.01"></path></svg><span>المساعد الذكي</span></a></div></details></div><script>(function(){const B = "/dahabology/";
+const DATA = "https://ahmedmah1989.github.io/gold-board/data/";
+window.DHB_BASE = B; window.DHB_DATA = DATA;})();</script><script src="/dahabology/js/analytics.js?v=9f7a462"></script><script src="/dahabology/js/monitor.js?v=9f7a462"></script><script src="/dahabology/js/board.js?v=9f7a462"></script><script src="/dahabology/js/ui.js?v=9f7a462"></script><script>
+(()=>{const menu=document.querySelector('.x-dock details');if(!menu)return;
+document.addEventListener('click',e=>{if(menu.open&&!menu.contains(e.target))menu.open=false;});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu.open){menu.open=false;menu.querySelector('summary').focus();}});
+addEventListener('pagehide',()=>{menu.open=false;});})();
+</script></body></html>

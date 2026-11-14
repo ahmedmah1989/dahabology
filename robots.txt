@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /dahabology/owner/
+Sitemap: https://ahmedmah1989.github.io/dahabology/sitemap.xml
