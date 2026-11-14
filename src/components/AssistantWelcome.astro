@@ -1,0 +1,45 @@
+---
+import TutMascot from './TutMascot.astro';
+import { B } from '../lib/site.js';
+const { compact = false } = Astro.props;
+const id = compact ? 'welcome-home' : 'welcome-assistant';
+---
+<div class:list={['assistant-welcome', { 'assistant-home': compact }]} data-welcome>
+  <button class="assistant-avatar" type="button" aria-label="دهبولوجي مساعدك الذكي — افتح رسالة الترحيب" aria-controls={id} aria-expanded="false">
+    <TutMascot compact={compact} />
+  </button>
+  {compact && <span class="assistant-welcome-label"><strong>دهبولوجي المساعد الذكي</strong><small>اضغط عليّ… أنا هنا لمساعدتك</small></span>}
+  <div class="assistant-greeting" id={id} hidden>
+    <button class="assistant-greeting-close" type="button" aria-label="إغلاق رسالة الترحيب">×</button>
+    <p><strong>أهلاً بيك، أنا هنا لمساعدتك!</strong><br />دهبولوجي، مساعدك الذكي، معاك.<br />اتفضل، أقدر أساعدك إزاي النهارده؟</p>
+    <a href={compact ? B+'assistant/' : '#assistantQuestion'}>{compact ? 'افتح المساعد ←' : 'اكتب سؤالك ←'}</a>
+  </div>
+</div>
+<script>
+  document.querySelectorAll<HTMLElement>('[data-welcome]').forEach(root => {
+    const button = root.querySelector<HTMLButtonElement>('.assistant-avatar')!;
+    const panel = root.querySelector<HTMLElement>('.assistant-greeting')!;
+    const close = root.querySelector<HTMLButtonElement>('.assistant-greeting-close')!;
+    let pinned = false;
+    let dismissed = false;
+    const show = (open: boolean) => { panel.hidden = !open; button.setAttribute('aria-expanded', String(open)); };
+    button.addEventListener('pointerenter', event => {
+      if (event.pointerType === 'mouse' && !dismissed) show(true);
+    });
+    root.addEventListener('pointerleave', () => {
+      dismissed = false;
+      if (!pinned && !root.contains(document.activeElement)) show(false);
+    });
+    button.addEventListener('click', () => { pinned = !pinned; dismissed = !pinned; show(pinned); });
+    const dismiss = () => { pinned = false; dismissed = true; show(false); button.focus(); };
+    close.addEventListener('click', dismiss);
+    root.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { event.preventDefault(); dismiss(); } });
+    root.addEventListener('focusout', () => { queueMicrotask(() => { if (!root.contains(document.activeElement) && !pinned) show(false); }); });
+    document.addEventListener('click', event => { if (!root.contains(event.target as Node)) { pinned = false; show(false); } });
+    panel.querySelector('a')!.addEventListener('click', () => {
+      if (panel.querySelector('a')!.getAttribute('href') === '#assistantQuestion') {
+        pinned = false; show(false); document.querySelector<HTMLTextAreaElement>('#assistantQuestion')?.focus();
+      }
+    });
+  });
+</script>

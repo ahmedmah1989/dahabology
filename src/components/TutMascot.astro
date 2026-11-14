@@ -1,17 +1,14 @@
 ---
 import { B, ASSET_VERSION } from '../lib/site.js';
 const { compact = false } = Astro.props;
-const image = B + 'assets/tut-assistant-' + (compact ? '160' : '600') + '.webp?v=' + ASSET_VERSION;
+const image = B + 'assets/tut-welcome-' + (compact ? '160' : '320') + '.webp?v=' + ASSET_VERSION;
 ---
 <div class:list={['dhb-tut', { 'dhb-tut-small': compact }]}>
   <div class="tut-character">
-    <img src={image} width="600" height="900" alt="شخصية توت من هوية دهبولوجي، بالتاج الذهبي والكحلي، ممسكًا بالعصايتين وعيناه مضيئتان" decoding="async" />
-    <svg class="tut-eye-energy" viewBox="0 0 1024 1536" aria-hidden="true">
-      <g class="tut-eye-light"><ellipse cx="474" cy="190" rx="17" ry="4"/><ellipse cx="550" cy="190" rx="17" ry="4"/></g>
-      <g class="tut-eye-sparks">
-        <path d="m473 190-30-3-11 5-18-13-14 5-23-13-17 6-25-9-18 5" />
-        <path d="m550 190 28-3 12 5 18-13 14 5 23-13 17 6 25-9 18 5" />
-        <path class="tut-eye-spark-secondary" d="m465 192-28 6-16-6-22 10-12-6-23 7M559 192l28 6 16-6 22 10 12-6 23 7" />
+    <img src={image} width="320" height="320" alt="شعار دهبولوجي بحرف D وتوت، يمد إيدًا للترحيب والمساعدة" decoding="async" />
+    <svg class="tut-eye-energy" viewBox="0 0 1280 1280" aria-hidden="true">
+      <g class="tut-eye-sparks" fill="none">
+        <path d="m578 256-32-3-12 6-18-13-18 5-22-11M651 256l32-3 12 6 18-13 18 5 22-11" />
       </g>
     </svg>
   </div>

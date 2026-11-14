@@ -30,8 +30,8 @@ body.app-shell::after,body.home-shell::after{display:none}
 .motto-track{opacity:.3}.motto-current{stroke:#ffe4a0;stroke-width:2;stroke-dasharray:10 5 1 8;animation:dhb-electric-flow 5s linear infinite}.motto-sparks{stroke-width:1.6;animation:dhb-electric-sparks 2s ease-in-out infinite alternate}
 @keyframes dhb-electric-flow{to{stroke-dashoffset:-96}}@keyframes dhb-electric-sparks{0%,35%{opacity:.3}45%,75%{opacity:1}60%,100%{opacity:.55}}
 /* Character adapted from the original Dahabology artwork. */
-.dhb-tut{display:block;width:230px;max-width:100%;margin:0 auto 12px;flex:none}
-.dhb-tut-small{width:66px;margin:0}
+.dhb-tut{display:block;width:104px;max-width:100%;margin:0 auto 12px;flex:none}
+.dhb-tut-small{width:76px;margin:0}
 .tut-character{position:relative;width:100%;filter:drop-shadow(0 0 15px #efc66c40);animation:dhb-tut-presence 5s ease-in-out infinite;transform-origin:50% 90%}
 .dhb-tut img,.assistant-intro .dhb-tut img{display:block;width:100%;height:auto;max-width:100%;margin:0;object-fit:contain;filter:none}
 .tut-eye-energy{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 5px #ffd84acc)}
@@ -43,3 +43,18 @@ body.app-shell::after,body.home-shell::after{display:none}
 @keyframes dhb-eye-current{to{stroke-dashoffset:-110}}
 @media(prefers-reduced-motion:reduce){.motto-current,.motto-sparks,.dhb-tut *{animation:none!important}}
 html[data-motion="paused"] .motto-current,html[data-motion="paused"] .motto-sparks,html[data-motion="paused"] .dhb-tut *{animation:none!important}
+
+.assistant-welcome{position:relative;max-width:100%;margin:0 auto 16px}
+.assistant-welcome.assistant-home{display:grid;grid-template-columns:76px minmax(0,1fr);gap:12px;margin:16px 0 2px}
+.assistant-avatar{display:block;border:0;padding:0;background:transparent;border-radius:20px;color:inherit;cursor:pointer;margin:0 auto;flex:none}
+.assistant-avatar .dhb-tut{margin:0}
+.assistant-avatar:hover .tut-character{filter:drop-shadow(0 0 16px #efc66c99)}
+.assistant-avatar:focus-visible{outline:2px solid #efc66c;outline-offset:5px}
+.assistant-welcome .assistant-greeting{position:relative;box-sizing:border-box;width:min(100%,360px);margin:12px auto 0;padding:22px 18px 18px;border:1px solid #efc66c77;border-radius:18px;background:#13253f;box-shadow:0 10px 30px #0004;text-align:center;color:#d4deeb;z-index:4}
+.assistant-home .assistant-greeting{grid-column:1/-1;width:100%;margin:0}
+.assistant-greeting[hidden]{display:none}
+.assistant-greeting p{margin:0 0 12px;font-size:16px;line-height:1.9}
+.assistant-greeting strong{color:#f3d591}
+.assistant-greeting a{display:inline-block;padding:9px 16px;border-radius:10px;border:1px solid #efc66c66;background:#efc66c;color:#10213b;text-decoration:none;font-weight:700}
+.assistant-greeting-close{position:absolute;inset-inline-end:2px;top:2px;width:32px;height:32px;border:0;background:transparent;color:#cdd8e8;font-size:25px;cursor:pointer;border-radius:50%}
+.assistant-welcome .assistant-greeting-close:focus-visible,.assistant-greeting a:focus-visible{outline:2px solid #efc66c;outline-offset:2px}
