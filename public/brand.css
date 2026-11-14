@@ -29,16 +29,17 @@ body.app-shell::after,body.home-shell::after{display:none}
 .dhb-electric-motto svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;fill:none;stroke:#efc66c;stroke-width:1.4;filter:drop-shadow(0 0 4px #ffd84a80)}
 .motto-track{opacity:.3}.motto-current{stroke:#ffe4a0;stroke-width:2;stroke-dasharray:10 5 1 8;animation:dhb-electric-flow 5s linear infinite}.motto-sparks{stroke-width:1.6;animation:dhb-electric-sparks 2s ease-in-out infinite alternate}
 @keyframes dhb-electric-flow{to{stroke-dashoffset:-96}}@keyframes dhb-electric-sparks{0%,35%{opacity:.3}45%,75%{opacity:1}60%,100%{opacity:.55}}
-/* Lightweight vector character: greeting, breathing, and an occasional blink. */
-.dhb-tut{display:block;width:190px;height:auto;max-width:100%;margin:0 auto 8px;overflow:visible;filter:drop-shadow(0 0 18px #efc66c30)}
-.dhb-tut-small{width:66px;height:75px;flex:none;margin:0;filter:drop-shadow(0 0 8px #efc66c25)}
-.tut-body{transform-origin:120px 230px;animation:dhb-tut-breathe 4.8s ease-in-out infinite}
-.tut-wave{transform-origin:156px 190px;animation:dhb-tut-wave 6s ease-in-out infinite}
-.tut-eyes{transform-box:fill-box;transform-origin:center;animation:dhb-tut-blink 5.6s linear infinite}
-.tut-stars{animation:dhb-tut-shimmer 3s ease-in-out infinite alternate}
-@keyframes dhb-tut-breathe{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes dhb-tut-wave{0%,12%,32%,100%{transform:rotate(0deg)}17%,27%{transform:rotate(12deg)}22%{transform:rotate(-7deg)}}
-@keyframes dhb-tut-blink{0%,43%,47%,100%{transform:scaleY(1)}45%{transform:scaleY(.08)}}
-@keyframes dhb-tut-shimmer{from{opacity:.35}to{opacity:1}}
+/* Character adapted from the original Dahabology artwork. */
+.dhb-tut{display:block;width:230px;max-width:100%;margin:0 auto 12px;flex:none}
+.dhb-tut-small{width:66px;margin:0}
+.tut-character{position:relative;width:100%;filter:drop-shadow(0 0 15px #efc66c40);animation:dhb-tut-presence 5s ease-in-out infinite;transform-origin:50% 90%}
+.dhb-tut img,.assistant-intro .dhb-tut img{display:block;width:100%;height:auto;max-width:100%;margin:0;object-fit:contain;filter:none}
+.tut-eye-energy{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 5px #ffd84acc)}
+.tut-eye-light{fill:#fff4be;animation:dhb-eye-glow 3.4s ease-in-out infinite alternate}
+.tut-eye-sparks{fill:none;stroke:#fff0a6;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:32 7 5 11;animation:dhb-eye-current 3s linear infinite}
+.tut-eye-spark-secondary{stroke:#efc66c;stroke-width:1.7;opacity:.65}
+@keyframes dhb-tut-presence{0%,100%{transform:translateY(0) rotate(-.3deg)}50%{transform:translateY(-4px) rotate(.3deg)}}
+@keyframes dhb-eye-glow{from{opacity:.55}to{opacity:1}}
+@keyframes dhb-eye-current{to{stroke-dashoffset:-110}}
 @media(prefers-reduced-motion:reduce){.motto-current,.motto-sparks,.dhb-tut *{animation:none!important}}
 html[data-motion="paused"] .motto-current,html[data-motion="paused"] .motto-sparks,html[data-motion="paused"] .dhb-tut *{animation:none!important}

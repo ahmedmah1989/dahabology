@@ -1,43 +1,18 @@
 ---
+import { B, ASSET_VERSION } from '../lib/site.js';
 const { compact = false } = Astro.props;
-const id = compact ? 'tut-small' : 'tut-hero';
+const image = B + 'assets/tut-assistant-' + (compact ? '160' : '600') + '.webp?v=' + ASSET_VERSION;
 ---
-<svg class:list={['dhb-tut', { 'dhb-tut-small': compact }]} viewBox="0 0 240 270" role="img" aria-label="دهبولوجي، شخصية توت الكرتونية، يرحب بك">
-  <defs>
-    <linearGradient id={id+'gold'} x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff0ad"/><stop offset=".45" stop-color="#efc66c"/><stop offset="1" stop-color="#b47c22"/></linearGradient>
-    <linearGradient id={id+'face'} x1="0" y1="0" x2="0" y2="1"><stop stop-color="#ffe3a1"/><stop offset="1" stop-color="#dfab4e"/></linearGradient>
-    <pattern id={id+'stripes'} width="12" height="16" patternUnits="userSpaceOnUse"><rect width="12" height="16" fill="#163c65"/><rect width="12" height="5" fill="#efc66c"/></pattern>
-  </defs>
-  <ellipse class="tut-shadow" cx="120" cy="252" rx="57" ry="8" fill="#efc66c" opacity=".15" />
-  <g class="tut-body" stroke="#a8792d" stroke-width="2" stroke-linejoin="round">
-    <path d="M91 210 84 245Q91 252 108 247L115 216M133 214 132 247Q150 253 158 245L149 210" fill={"url(#"+id+'gold)'} />
-    <path d="M75 181Q66 202 67 222Q74 233 82 223L95 193" fill={"url(#"+id+'face)'} />
-    <g class="tut-wave">
-      <path d="M148 180Q172 178 182 148L192 138Q197 141 194 149Q192 152 195 150L200 140Q204 139 204 143L198 159Q188 196 159 202" fill={"url(#"+id+'face)'} />
-      <path d="m184 160 13 6" stroke="#163c65" stroke-width="6" />
-    </g>
-    <path d="M87 169Q120 157 152 169L159 215Q120 234 80 215Z" fill={"url(#"+id+'gold)'} />
-    <path d="M87 179Q120 211 151 179L147 197Q120 220 91 197Z" fill="#163c65" />
-    <path d="M87 177Q120 201 151 177M92 187Q120 207 147 187" fill="none" stroke="#efc66c" stroke-width="4" />
-    <path d="m120 192 8 10-8 12-8-12Z" fill="#47b6ba" />
-    <g class="tut-head">
-      <path d="M59 88Q58 28 120 24Q182 28 181 88L194 170Q175 189 149 170L91 170Q65 189 46 170Z" fill={"url(#"+id+'stripes)'} stroke="#efc66c" stroke-width="3" />
-      <path d="M70 75Q120 40 170 75L160 136Q151 166 120 174Q89 166 80 136Z" fill={"url(#"+id+'face)'} />
-      <path d="M65 77Q120 45 175 77L175 88Q120 59 65 88Z" fill={"url(#"+id+'gold)'} />
-      <path d="M115 73 114 53Q108 44 114 38Q120 33 125 40Q131 47 125 54L126 73" fill={"url(#"+id+'gold)'} />
-      <circle cx="120" cy="44" r="3" fill="#47b6ba" stroke="none" />
-      <path d="M84 101Q96 94 106 100M134 100Q144 94 156 101" fill="none" stroke="#4d392a" stroke-width="4" stroke-linecap="round" />
-      <g class="tut-eyes" fill="#142b45" stroke="none">
-        <ellipse cx="97" cy="112" rx="8" ry="10"/><ellipse cx="143" cy="112" rx="8" ry="10"/>
-        <g fill="#fff7dc"><circle cx="99" cy="109" r="2.7"/><circle cx="145" cy="109" r="2.7"/></g>
+<div class:list={['dhb-tut', { 'dhb-tut-small': compact }]}>
+  <div class="tut-character">
+    <img src={image} width="600" height="900" alt="شخصية توت من هوية دهبولوجي، بالتاج الذهبي والكحلي، ممسكًا بالعصايتين وعيناه مضيئتان" decoding="async" />
+    <svg class="tut-eye-energy" viewBox="0 0 1024 1536" aria-hidden="true">
+      <g class="tut-eye-light"><ellipse cx="474" cy="190" rx="17" ry="4"/><ellipse cx="550" cy="190" rx="17" ry="4"/></g>
+      <g class="tut-eye-sparks">
+        <path d="m473 190-30-3-11 5-18-13-14 5-23-13-17 6-25-9-18 5" />
+        <path d="m550 190 28-3 12 5 18-13 14 5 23-13 17 6 25-9 18 5" />
+        <path class="tut-eye-spark-secondary" d="m465 192-28 6-16-6-22 10-12-6-23 7M559 192l28 6 16-6 22 10 12-6 23 7" />
       </g>
-      <path d="m85 113-7-4M155 113l7-4" stroke="#142b45" stroke-width="3" stroke-linecap="round" />
-      <path d="M119 119 115 131 123 131" fill="none" stroke="#bb8137" stroke-linecap="round" />
-      <ellipse cx="92" cy="133" rx="9" ry="4" fill="#d79551" opacity=".45" stroke="none"/><ellipse cx="148" cy="133" rx="9" ry="4" fill="#d79551" opacity=".45" stroke="none"/>
-      <path d="M106 143Q120 155 134 143" fill="none" stroke="#76502a" stroke-width="3" stroke-linecap="round" />
-      <path d="m113 165 2 20h10l2-20" fill="#163c65" stroke="#efc66c" />
-      <path d="M115 172h10M115 178h10" stroke="#efc66c" />
-    </g>
-  </g>
-  <g class="tut-stars" fill="#efc66c" stroke="none"><path d="m204 52 3 8 8 3-8 3-3 8-3-8-8-3 8-3Z"/><path d="m32 113 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z"/></g>
-</svg>
+    </svg>
+  </div>
+</div>
