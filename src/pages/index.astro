@@ -1,4 +1,6 @@
 ---
+import Motto from '../components/Motto.astro';
+import TutMascot from '../components/TutMascot.astro';
 import Head from '../components/Head.astro';
 import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
@@ -170,7 +172,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 <Watermark />
 <header class="top">
   <Brand hero />
-  <p class="dhb-radiant-motto"><span>افهم الدهب قبل ما تشتريه.</span></p>
+  <Motto />
 </header>
 
 <div class="hero-price" aria-live="polite">
@@ -206,7 +208,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>
 </nav>
 
-<a class="assistant-home" href={B+'assistant/'}><img src={B+'assets/emblem.webp?v='+ASSET_VERSION} width="58" height="58" alt="" /><span><strong>دهبولوجي المساعد الذكي</strong><small>جهّز سؤالك… وكمّل في ChatGPT ↗</small></span></a>
+<a class="assistant-home" href={B+'assistant/'}><TutMascot compact /><span><strong>دهبولوجي المساعد الذكي</strong><small>جهّز سؤالك… وكمّل في ChatGPT ↗</small></span></a>
 <button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
 <div class="home-controls"><button class="replay" id="motionToggle" type="button" aria-pressed="false">إيقاف الحركة</button><button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button></div>
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>

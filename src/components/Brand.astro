@@ -5,5 +5,5 @@ const Name = hero ? 'h1' : 'span';
 ---
 <a class:list={['dhb-brand', { 'dhb-brand-hero': hero }]} href={B} aria-label="دهبولوجي — الصفحة الرئيسية">
   {!hero && <span class="dhb-brand-frame"><img src={B + 'assets/logo-192.webp?v=' + ASSET_VERSION} width="56" height="56" alt="" decoding="async" /></span>}
-  <span class="dhb-brand-type"><Name class="dhb-brand-name">دهبولوجي</Name><span class="dhb-brand-en" lang="en" dir="ltr">DAHABOLOGY</span></span>
+  <span class="dhb-brand-type"><Name class="dhb-brand-name">دهبولوجي</Name>{!hero && <span class="dhb-brand-en" lang="en" dir="ltr">DAHABOLOGY</span>}</span>
 </a>
