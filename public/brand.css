@@ -58,3 +58,4 @@ html[data-motion="paused"] .motto-current,html[data-motion="paused"] .motto-spar
 .assistant-greeting a{display:inline-block;padding:9px 16px;border-radius:10px;border:1px solid #efc66c66;background:#efc66c;color:#10213b;text-decoration:none;font-weight:700}
 .assistant-greeting-close{position:absolute;inset-inline-end:2px;top:2px;width:32px;height:32px;border:0;background:transparent;color:#cdd8e8;font-size:25px;cursor:pointer;border-radius:50%}
 .assistant-welcome .assistant-greeting-close:focus-visible,.assistant-greeting a:focus-visible{outline:2px solid #efc66c;outline-offset:2px}
+.assistant-welcome .assistant-avatar,.assistant-welcome .assistant-avatar:hover,.assistant-welcome .assistant-avatar:focus{background:transparent;border:0;padding:0}
