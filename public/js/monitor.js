@@ -21,7 +21,7 @@
     if (times.some(t => t > now + 120000)) return {usable:false, fresh:false, reason:'المقارنة معلقة لحين التحقق.'};
     if (times.some(t => now-t > 24*3600000)) return {usable:false, fresh:false, reason:'إحدى القراءات تجاوزت 24 ساعة؛ المقارنة معلقة حتى يصل سعر أحدث.'};
     const fresh = times.every(t => now-t <= 300000) && Math.max(...times)-Math.min(...times) <= 300000;
-    return {usable:true, fresh, reason:fresh ? 'الحساب قبل رسوم المنتج النهائي.' : 'مقارنة استرشادية؛ ليست إشارة لحظية.'};
+    return {usable:true, fresh, reason:'الحساب قبل رسوم المنتج النهائي.'};
   }
   function quoteUsable(q,now=Date.now()) {const t=validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN;return q?.status==='available' && Number.isFinite(t) && t<=now+120000 && now-t<=86400000;}
   if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable};
@@ -41,7 +41,7 @@
   }
   function row(label,q,buy,sell,unit,url) {
     const tr=document.createElement('tr');
-    [label,usable(q)?fmt(buy,unit):'—',usable(q)?fmt(sell,unit):'—',time(q?.sourceTime),time(q?.fetchedAt),usable(q)?(Date.now()-Date.parse(q.sourceTime)<=300000?'قراءة حديثة':'آخر سعر منشور • أقدم من 5 دقائق'):(q?.reason||'بيانات غير متاحة أو أقدم من 24 ساعة')].forEach((value,i)=>{const td=document.createElement('td');if(i===0&&url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent=value+' ↗';td.appendChild(link);}else td.textContent=value;tr.appendChild(td)});
+    [label,usable(q)?fmt(buy,unit):'—',usable(q)?fmt(sell,unit):'—',time(q?.sourceTime),time(q?.fetchedAt),usable(q)?'منشور':(q?.reason||'بيانات غير متاحة أو أقدم من 24 ساعة')].forEach((value,i)=>{const td=document.createElement('td');if(i===0&&url){const link=document.createElement('a');link.href=url;link.target='_blank';link.rel='noopener';link.textContent=value+' ↗';td.appendChild(link);}else td.textContent=value;tr.appendChild(td)});
     return tr;
   }
   function render() {
@@ -55,7 +55,7 @@
     const map={gapEGP:[result?.gapEGP],gapPercent:[result?.gapPercent,'%'],gapUSD:[result?.gapUSD,' دولار'],implied:[result?.implied],fxGap:[result?.fxGap],fxPercent:[result?.fxPercent,'%'],global24:[result?.globalEGP],global21:[result?.global21]};
     Object.entries(map).forEach(([id,args])=>$(id).textContent=fmt(...args));
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
-    $('qualityBadge').textContent=result?(quality.fresh?'مقارنة حديثة ومتزامنة':'مقارنة استرشادية • آخر أسعار منشورة'):'المقارنة معلقة';
+    $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
     $('qualityText').textContent=quality.reason;
     $('fetchStatus').textContent=(state.busy?'تحميل الأسعار… • ':'')+window.DHB_QUOTE.connection(state.transport);
