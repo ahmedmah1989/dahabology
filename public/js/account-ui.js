@@ -32,13 +32,19 @@ async function run(btn, el, fn) {
 $("tabIn").onclick = () => setMode("in"); $("tabUp").onclick = () => setMode("up");
 $("authForm").onsubmit = (ev) => {
   ev.preventDefault();
+  if ($("go").disabled) return; // a second Enter/tap while the first request is running
   const em = $("em").value.trim(), pw = $("pw").value;
   if (!em || !/^\S+@\S+\.\S+$/.test(em)) return show($("msg"), "اكتب بريدك الإلكتروني بصيغة صحيحة.", "err");
   if (mode === "up" && pw.length < 8) return show($("msg"), "كلمة السر لازم تكون 8 أحرف على الأقل.", "err");
   if (!pw) return show($("msg"), "اكتب كلمة السر.", "err");
-  run($("go"), $("msg"), async () => { await (mode === "up" ? A.signUp(em, pw) : A.signIn(em, pw)); $("pw").value = ""; show($("msg"), ""); view(); });
+  run($("go"), $("msg"), async () => {
+    const r = await (mode === "up" ? A.signUp(em, pw) : A.signIn(em, pw));
+    $("pw").value = ""; show($("msg"), ""); view();
+    if (r && r.verificationSent === false) show($("vMsg"), "تم إنشاء حسابك، لكن تعذّر إرسال رسالة التأكيد. اضغط «أرسل الرسالة مرة أخرى».", "err");
+  });
 };
 $("forgot").onclick = () => {
+  if ($("forgot").disabled) return;
   const em = $("em").value.trim();
   if (!/^\S+@\S+\.\S+$/.test(em)) return show($("msg"), "اكتب بريدك أولاً ثم اضغط «نسيت كلمة السر».", "err");
   run($("forgot"), $("msg"), async () => { await A.sendPasswordReset(em); show($("msg"), "لو كان هذا البريد مسجّلاً، سنرسل لك رسالة فيها رابط تغيير كلمة السر. راجع البريد المزعج أيضاً.", "ok"); });
@@ -65,6 +71,7 @@ $("iType").onchange = () => { $("iPur").hidden = $("iType").value !== "jewelry";
 $("iCancel").onclick = resetForm;
 $("itemForm").onsubmit = (ev) => {
   ev.preventDefault();
+  if ($("iSave").disabled) return;
   const g = Number(String($("iGrams").value).replace(",", ".")), type = $("iType").value, date = $("iDate").value;
   const pur = (document.querySelector('input[name=iP]:checked') || {}).value;
   if (!(g > 0)) return show($("nMsg"), "اكتب الوزن بالجرام بصيغة صحيحة.", "err");
