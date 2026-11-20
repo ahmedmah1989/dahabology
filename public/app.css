@@ -159,7 +159,7 @@ details.x-more .line{font-size:16px}
 .x-card .retail-facts .total dt,.x-card .retail-facts .total dd{color:var(--x-gold-hot);font-size:19px}
 .x-card:has(>dl:empty):not(:has(.result-explain)){display:none}
 .x-hero.sm{width:min(74vw,290px)}
-.x-ring .val.fit{font-size:clamp(30px,9.5vw,44px)}
+.x-ring .val.fit{font-size:clamp(28px,17cqi,38px)}
 .x-ring .chg{direction:ltr;unicode-bidi:isolate}
 .x-ring .up{color:var(--good)}.x-ring .dn{color:var(--bad)}
 .x-lead{margin:14px auto 0;max-width:520px;text-align:center;font-size:16px;line-height:1.8;color:var(--x-muted)}
@@ -270,13 +270,18 @@ details.x-fold .table-wrap{background:none;border:0}
 .x-zap{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;filter:drop-shadow(0 0 4px #ffd84a)}
 .x-zap path{fill:none;stroke:var(--x-bolt);stroke-width:.7;stroke-linejoin:round;opacity:.4;transition:opacity .5s}
 .x-zap.strike path{opacity:1;stroke:#fff3b0;stroke-width:1;transition:none}
-.x-ring{position:relative;width:80%;height:80%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;
+.x-ring{container-type:inline-size;position:relative;width:80%;height:80%;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;
   background:radial-gradient(circle at 50% 30%,#22395c,var(--x-navy) 70%);border:2px solid var(--x-gold);
   box-shadow:0 0 0 6px #efc66c14,0 0 44px #ffd84a66,inset 0 0 30px #0008}
 .x-ring .lbl{font-size:16px;font-weight:600;color:var(--x-muted)}
-.x-ring .val{font-size:clamp(46px,14vw,62px);font-weight:700;line-height:1.15;color:var(--x-gold);font-variant-numeric:tabular-nums;text-shadow:0 0 24px #efc66c55}
+.x-ring .val{max-width:86%;overflow-wrap:anywhere;font-size:clamp(32px,20cqi,56px);font-weight:700;line-height:1.15;color:var(--x-gold);font-variant-numeric:tabular-nums;text-shadow:0 0 24px #efc66c55}
 .x-ring .unit{font-size:15px;font-weight:600;color:#fff}
-.x-ring .chg{min-height:24px;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+/* A circle narrows above and below its centre. Keep captions on its inner chord,
+   not the full bounding square, and override the table/card nowrap rule. */
+.x-ring .lbl,.x-ring .unit{max-width:74%;overflow-wrap:anywhere;line-height:1.5}
+.x-ring .chg{width:74%;max-width:74%;min-width:0;min-height:24px;flex-shrink:0;
+  white-space:normal;overflow-wrap:anywhere;text-wrap:balance;line-height:1.5;
+  font-size:14px;font-weight:700;font-variant-numeric:tabular-nums}
 .x-ring .chg.up{color:var(--good)}.x-ring .chg.dn{color:var(--bad)}
 
 /* ---------- market: arc gauge ---------- */
@@ -286,7 +291,9 @@ details.x-fold .table-wrap{background:none;border:0}
 #gaugeNeedle{transform-origin:150px 150px;transition:transform 1.1s cubic-bezier(.2,.9,.3,1)}
 .x-gauge-read{margin-top:6px;display:flex;flex-direction:column;align-items:center;gap:8px}
 .x-gauge-read b{font-size:clamp(36px,10vw,46px);line-height:1.2;color:var(--x-gold);font-variant-numeric:tabular-nums;direction:ltr;unicode-bidi:isolate}
-#heroSpread,#fxGap,#fxPercent,#heroChange{direction:ltr;unicode-bidi:isolate}
+#heroSpread,#fxGap,#fxPercent{direction:ltr;unicode-bidi:isolate}
+#heroChange{display:flex;flex-direction:column;align-items:center;direction:rtl;unicode-bidi:isolate}
+#heroChange>span{max-width:100%;overflow-wrap:anywhere}
 .x-chip .price-unit{font-size:13px;margin:0;line-height:1.5}
 .x-gauge-read .meter-verdict{font-size:18px}
 

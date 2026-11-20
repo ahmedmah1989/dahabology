@@ -45,7 +45,15 @@
     const c = $('heroChange'), base = karat === '18' ? '24' : karat;
     const ch = q && history ? D.change(history, base, a[base].sell, new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' })) : null;
     c.className = 'chg' + (ch ? (ch.diff > 0 ? ' up' : ch.diff < 0 ? ' dn' : '') : '');
-    c.textContent = ch ? (ch.diff > 0 ? '▲ ' : ch.diff < 0 ? '▼ ' : '') + signed(ch.percent) + '% عن إغلاق '+ch.date : '';
+    c.replaceChildren();
+    if (ch) {
+      const amount = document.createElement('span'), reference = document.createElement('span'), date = document.createElement('bdi');
+      amount.className = 'change-amount'; amount.dir = 'ltr';
+      amount.textContent = (ch.diff > 0 ? '▲ ' : ch.diff < 0 ? '▼ ' : '') + signed(ch.percent) + '%';
+      reference.className = 'change-reference'; reference.dir = 'rtl';
+      reference.append('عن إغلاق '); date.dir = 'ltr'; date.textContent = ch.date; reference.append(date);
+      c.append(amount, reference);
+    }
     const s = last ? last.sources : {};
     $('bankTime').textContent = usable(s.misr)?'آخر تحديث: '+when(s.misr.sourceTime)+' القاهرة':'السعر غير متاح';
     $('ounceTime').textContent = usable(s.gold)?'آخر تحديث: '+when(s.gold.sourceTime)+' القاهرة':'السعر غير متاح';
