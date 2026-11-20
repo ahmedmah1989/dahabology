@@ -118,7 +118,9 @@
  async function refresh(){
   if(refreshBusy)return;refreshBusy=true;if(productPage){$('refresh').disabled=true;$('fetchStatus').textContent='تحميل أسعار المحلات…';}
   const D=window.DHB_DATA||'data/';
-  try{offers(await load(D+'offers.json'));}catch(_){catalogError('تعذر تحميل أسعار المنتجات.');}
+  if(productPage||document.getElementById('productSummary')){
+   try{offers(await load(D+'offers.json'));}catch(_){catalogError('تعذر تحميل أسعار المنتجات.');}
+  }
   if(document.getElementById('telegramStatus')){
    try{telegram(await load(D+'alert-state.json'));}catch(_){$('telegramStatus').textContent='حالة التنبيهات غير متاحة.';}
   }
