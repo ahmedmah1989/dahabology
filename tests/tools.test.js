@@ -23,3 +23,12 @@ near(w.paid, 109424); near(w.now, 114600); near(w.diff, 5176); near(w.grams, 18)
 w = wallet([{ id: 'x', k: '21', g: 8, paid: 49424 }], null); assert.equal(w.now, null); assert.equal(w.diff, null); near(w.paid, 49424);
 w = wallet([], a); assert.equal(w.now, null); near(w.paid, 0);
 console.log('Invoice breakdown, resale loss, and wallet valuation passed.');
+
+// A gift or other zero-cost holding has no finite percentage return.
+const { percentageSuffix } = require('../public/js/tools.js');
+w = wallet([{k:'21',g:10,paid:0}], {'21':{buy:5500,sell:5550}});
+assert.equal(w.now,55000);assert.equal(w.diff,55000);assert.equal(w.percent,null);assert.equal(w.rows[0].percent,null);
+assert.equal(percentageSuffix(w.percent,String),' (النسبة غير متاحة)');
+assert.equal(percentageSuffix(null,String),' (النسبة غير متاحة)');
+assert.equal(percentageSuffix(0,String),' (0%)');
+assert.equal(percentageSuffix(-5,String),' (-5%)');
