@@ -179,6 +179,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <span class="cap">جرام عيار 21 الآن • بيع • بدون مصنعية</span>
   <b><span id="p21">—</span><small>جنيه</small></b>
   <span class="when" id="pWhen">تحميل السعر…</span>
+  <span class="when" id="pSourceTime">آخر تحديث: في انتظار البيانات</span>
 </div>
 
 <main class="stage" id="stage" aria-label="أقسام دهبولوجي">
@@ -343,6 +344,7 @@ fetch(DATA + 'quotes.json',{cache:'no-store'}).then(r => r.json()).then(q => {
   if(g.status === 'available' && Date.now()-Date.parse(g.sourceTime) <= 86400000 && Date.parse(g.sourceTime)-Date.now() <= 120000 && g['21']?.sell){
     countUp(document.getElementById('p21'), g['21'].sell);
     document.getElementById('pWhen').textContent = 'السعر للجرام بدون مصنعية';
+    document.getElementById('pSourceTime').textContent = 'آخر تحديث: '+new Date(g.sourceTime).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo'})+' بتوقيت القاهرة';
   } else document.getElementById('pWhen').textContent = 'السعر غير متاح الآن';
   if(g.status === 'available' && Date.now()-Date.parse(g.sourceTime) <= 86400000 && Date.parse(g.sourceTime)-Date.now() <= 120000 && g['24']?.sell) countUp(document.getElementById('p24'), g['24'].sell, 2);
   if(m.status==='available'&&Number.isFinite(m.sell)&&m.sell>0&&Date.now()-Date.parse(m.sourceTime)<=86400000&&Date.parse(m.sourceTime)-Date.now()<=120000) countUp(document.getElementById('pUsd'), m.sell, 2);
