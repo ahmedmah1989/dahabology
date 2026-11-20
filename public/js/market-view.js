@@ -47,8 +47,8 @@
     c.className = 'chg' + (ch ? (ch.diff > 0 ? ' up' : ch.diff < 0 ? ' dn' : '') : '');
     c.textContent = ch ? (ch.diff > 0 ? '▲ ' : ch.diff < 0 ? '▼ ' : '') + signed(ch.percent) + '% عن إغلاق '+ch.date : '';
     const s = last ? last.sources : {};
-    $('bankTime').textContent = usable(s.misr)?'بنك مصر • '+when(s.misr.sourceTime)+' القاهرة':'بنك مصر • السعر غير متاح';
-    $('ounceTime').textContent = usable(s.gold)?'gold-api.com • '+when(s.gold.sourceTime)+' القاهرة':'gold-api.com • السعر غير متاح';
+    $('bankTime').textContent = usable(s.misr)?'آخر تحديث: '+when(s.misr.sourceTime)+' القاهرة':'السعر غير متاح';
+    $('ounceTime').textContent = usable(s.gold)?'آخر تحديث: '+when(s.gold.sourceTime)+' القاهرة':'السعر غير متاح';
     const r = last && last.result;
     $('gaugeNeedle').style.transform = 'rotate(' + (r ? -90 + D.pin(r.gapPercent) * 1.8 : -90) + 'deg)';
     $('gaugeNeedle').style.opacity = r ? 1 : .25;
