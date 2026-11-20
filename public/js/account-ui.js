@@ -102,3 +102,4 @@ const keyOf = (u) => (u ? u.uid + ":" + !!u.emailVerified : "");
 A.onChange((u) => { const k = keyOf(u); if (k === shownKey) return; if ((u?.uid || "") !== (shownKey || "").split(":")[0]) wipe(); shownKey = k; view(); });
 shownKey = keyOf(A.currentUser());
 setMode("in"); view();
+A.validateSession();
