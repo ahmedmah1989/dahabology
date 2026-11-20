@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 <Base page="wallet" path="account-preview/" informational={true} heading="حسابي"
-  title="معاينة: حسابي — دهبولوجي" description="معاينة غير منشورة">
+  title="معاينة: حسابي — دهبولوجي" description="نسخة تجريبية لحساب دهبولوجي">
 <meta name="robots" content="noindex" slot="head" />
 <style>
 #ac{overflow-wrap:anywhere}#ac *{max-width:100%;box-sizing:border-box}
@@ -11,7 +11,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 #ac .x-field input.pw,#ac .x-field input.em{font-size:18px}
 #ac .msg{margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--x-line);text-align:right;line-height:1.8}
 #ac .err{border-color:#e0707a}#ac .ok{border-color:#6fcf97}
-#ac{padding-bottom:140px}
+#ac{padding-bottom:200px}html{scroll-padding-bottom:180px}
 #ac .x-field input.em{direction:ltr;text-align:left;font-size:17px;overflow-x:auto}
 #ac .x-field input.pw{direction:ltr;text-align:left;font-size:17px}
 #ac .x-field input.txt,#ac .x-field select{display:block;width:100%;margin-top:8px;padding:12px;font:inherit;font-size:18px;font-weight:600;color:var(--x-text,#f4f1e8);background:var(--x-glass,#0d1b33);border:1px solid var(--x-line);border-radius:14px}
@@ -25,7 +25,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 #ac .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
 </style>
 <section id="ac" data-base={base}>
-<p class="x-note" role="note"><b>معاينة غير منشورة.</b> حسابك مستقل: بياناتك لا يراها غيرك، ولا نحفظ إلا ما تكتبه هنا.</p>
+<p class="x-note" role="note"><b>نسخة تجريبية للاختبار.</b> الصفحة غير مدرجة في قوائم الموقع ولا تظهر في محركات البحث، لكن أي شخص معه الرابط يقدر يفتحها. حسابك مستقل: بياناتك لا يراها غيرك، ولا نحفظ إلا ما تكتبه هنا.</p>
 
 <div id="out" class="x-card" hidden>
 <h2>تسجيل الدخول</h2>

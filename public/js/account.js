@@ -79,8 +79,10 @@ export function onChange(fn) { listeners.add(fn); return () => listeners.delete(
 export async function signUp(email, password) {
   const d = await call(`${AUTH}/accounts:signUp?key=${FIREBASE.apiKey}`, { email, password, returnSecureToken: true });
   save({ ...toSession(d), emailVerified: false });
-  await call(`${AUTH}/accounts:sendOobCode?key=${FIREBASE.apiKey}`, { requestType: "VERIFY_EMAIL", idToken: session.idToken });
-  return publicUser();
+  // The account now exists. A failed mail must not look like a failed sign-up: the verify screen offers "resend".
+  let verificationSent = true;
+  try { await call(`${AUTH}/accounts:sendOobCode?key=${FIREBASE.apiKey}`, { requestType: "VERIFY_EMAIL", idToken: d.idToken }); } catch { verificationSent = false; }
+  return { ...publicUser(), verificationSent };
 }
 export async function signIn(email, password) {
   const d = await call(`${AUTH}/accounts:signInWithPassword?key=${FIREBASE.apiKey}`, { email, password, returnSecureToken: true });
