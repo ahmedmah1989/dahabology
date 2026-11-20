@@ -30,6 +30,8 @@ self.addEventListener('fetch', e => {
     return new Response(res.body,{status:res.status,statusText:res.statusText,headers});
   }
   const response = fetch(networkRequest).then(async res => {
+    // A page URL without its trailing slash is redirected by the host. Hand that redirect to the browser instead of returning a redirected response (which a navigation rejects).
+    if (navigation && (res.redirected || (res.status>=300&&res.status<400))) { const to = new URL(res.url || req.url); to.searchParams.delete('_dhb_page'); return Response.redirect(to.href, 302); }
     res=tagged(res,'network');
     if (res.ok) {
       const copy = res.clone();
