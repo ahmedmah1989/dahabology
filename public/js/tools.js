@@ -52,7 +52,7 @@
   const nf = (v, d = 2) => Number.isFinite(v) ? v.toLocaleString('ar-EG-u-nu-latn', { maximumFractionDigits: d }) : '—';
   const egp = (v, d = 0) => Number.isFinite(v) ? nf(v, d) + ' جنيه' : '—';
   const signed = (v, d = 0) => (v > 0 ? '+' : v < 0 ? '−' : '') + nf(Math.abs(v), d);
-  const usable = q => { const t = Date.parse(q && q.sourceTime); return !!q && q.status === 'available' && Number.isFinite(t) && Date.now() - t <= 86400000 && t-Date.now()<=120000; };
+  const usable = q => window.DHB_QUOTE.assess(q).usable;
   const when = v => new Date(v).toLocaleString('ar-EG-u-nu-latn', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit' });
   let last = null;
   const local = () => last && usable(last.sources.isagha) ? last.sources.isagha : null;
@@ -62,6 +62,7 @@
     if (!$('invOut')) return;
     const a = local(), k = $('invKarat').value, p = a ? prices(a, k) : null;
     if (!$('invPrice').dataset.edited) $('invPrice').value = p ? Math.round(p.sell * 100) / 100 : '';
+    set('invQuoteStatus',($('invPrice').dataset.edited?'تقسيم الفاتورة بسعر أدخلته بنفسك ليوم الشراء، وليس سعرًا حيًا. ':'')+'تقييم إعادة البيع الآن: '+window.DHB_QUOTE.describe(last?.sources?.isagha));
     const sell = num($('invPrice').value);
     const r = inspect({ sell, buy: p ? p.buy : NaN, grams: num($('invGrams').value), total: num($('invTotal').value), vat: $('invVat').value.trim()?num($('invVat').value):0 });
     set('invNote', $('invPrice').dataset.edited ? 'الحساب بسعر الجرام الذي أدخلته.' : a ? 'الحساب بسعر الجرام المعروض.' : 'في انتظار السعر؛ تقدر تكتب سعر الجرام يوم الشراء بنفسك.');
@@ -89,6 +90,7 @@
   function piece(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; }
   function walletRender() {
     if (!$('walRows')) return;
+    set('walQuoteStatus','تقدير قيمة دهبك بسعر شراء التاجر منك • '+window.DHB_QUOTE.describe(last?.sources?.isagha));
     const items = load(), w = wallet(items, local()), body = $('walRows');
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
@@ -123,7 +125,8 @@
   /* ---------- share card ---------- */
   function img(src) { return new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; }); }
   async function card() {
-    const a = local(), s = last.sources, B = window.DHB_BASE || '';
+    const a = local(), s = last?.sources, B = window.DHB_BASE || '';
+    if(!a)throw Error('Quote unavailable');
     const c = document.createElement('canvas'); c.width = 1080; c.height = 1350;
     const x = c.getContext('2d'), F = (w, px) => w + ' ' + px + 'px "IBM Plex Sans Arabic", Tahoma, sans-serif';
     if (document.fonts && document.fonts.ready) await document.fonts.ready;
@@ -133,6 +136,7 @@
     try { const em = await img(B + 'assets/emblem.webp'); x.drawImage(em, 430, 50, 220, 220); } catch (_) {}
     x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#f0ca78'; x.font = F(700, 76); x.fillText('دهبولوجي', 540, 350);
     x.fillStyle = '#d8e3f0'; x.font = F(600, 38); x.fillText('سعر الذهب في مصر', 540, 415);
+    if(!usable(a))throw Error('Quote expired');
     const rows = [['عيار 21', '21'], ['عيار 24', '24'], ['عيار 18 (محسوب)', '18']];
     rows.forEach((r, i) => {
       const p = prices(a, r[1]), y = 480 + i * 190;
@@ -142,12 +146,19 @@
       x.textAlign = 'left'; x.fillStyle = '#f3dcaa'; x.font = F(700, 78); x.fillText(nf(p.sell), 110, y + 100);
     });
     x.textAlign = 'center'; x.fillStyle = '#d8e3f0'; x.font = F(600, 36);
-    const extras = [];
-    if (usable(s.misr)) extras.push('الدولار في البنك ' + nf(s.misr.sell));
-    if (usable(s.gold)) extras.push('الأونصة ' + nf(s.gold.sell) + ' $');
-    if (extras.length) x.fillText(extras.join('   •   '), 540, 1110);
-    x.fillStyle = '#acbdd2'; x.font = F(500, 30); x.fillText('سعر الجرام بالجنيه بدون مصنعية', 540, 1200);
-    x.fillStyle = '#e7bf67'; x.font = F(700, 34); x.fillText(location.host + (B === '/' ? '' : B.replace(/\/$/, '')), 540, 1270);
+    x.font=F(500,23);
+    const extras=[];
+    if(usable(s.misr)&&Number.isFinite(s.misr.sell))extras.push('دولار البنك '+nf(s.misr.sell)+' • '+window.DHB_QUOTE.when(s.misr.sourceTime)+' القاهرة');
+    if(usable(s.gold)&&Number.isFinite(s.gold.sell))extras.push('الأونصة '+nf(s.gold.sell)+' $ • '+window.DHB_QUOTE.when(s.gold.sourceTime)+' القاهرة');
+    extras.forEach((text,i)=>x.fillText(text,540,1080+i*32));
+    x.fillStyle='#e7bf67';x.font=F(600,25);
+    x.fillText('وقت تسعيرة الذهب: '+window.DHB_QUOTE.when(a.sourceTime)+' القاهرة',540,1160);
+    x.fillText(window.DHB_QUOTE.assess(a).fresh?'تسعيرة حديثة وقت إنشاء الصورة':'آخر تسعيرة منشورة • متأخرة؛ تحقق قبل الاعتماد عليها',540,1198);
+    x.fillStyle='#acbdd2';x.font=F(500,23);
+    x.fillText('إنشاء الصورة: '+window.DHB_QUOTE.when(new Date().toISOString())+' القاهرة',540,1235);
+    x.fillText('سعر الجرام بالجنيه بدون مصنعية'+(last.transport?.mode==='cache'?' • بيانات محفوظة':last.transport?.mode!=='network'?' • الاتصال غير متحقق':''),540,1270);
+    x.fillStyle='#e7bf67';x.font=F(700,28);x.fillText(location.host+(B==='/'?'':B.replace(/\/$/,'')),540,1320);
+    if(!usable(a))throw Error('Quote expired');
     return (await fetch(c.toDataURL('image/png'))).blob();
   }
   const share = $('shareBtn');
@@ -163,5 +174,7 @@
   });
   window.DHB_CARD = () => card();   // lets the card be previewed while developing
 
+  setInterval(()=>{invoice();walletRender();},30000);
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){invoice();walletRender();}});
   window.addEventListener('gold-board-updated', e => { last = e.detail; invoice(); walletRender(); });
 })();
