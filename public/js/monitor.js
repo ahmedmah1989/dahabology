@@ -27,7 +27,7 @@
   if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable};
   if (typeof document === 'undefined') return;
   const $ = id => (document.getElementById(id)||document.createElement('div'));
-  const state = {sources:{}, generatedAt:null, lastCheck:null, busy:false, dealerEdited:false};
+  const state = {sources:{}, generatedAt:null, lastCheck:null, busy:false, dealerEdited:false, transport:null};
   const number = v => { const s=String(v).replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[٬,\s]/g,'').replace(/٫/g,'.'); return /^\d+(\.\d+)?$/.test(s)?Number(s):NaN; };
   const positive = v => Number.isFinite(v) && v>0;
   const fmt = (v,unit=' جنيه') => Number.isFinite(v)?v.toLocaleString('ar-EG-u-nu-latn',{maximumFractionDigits:2})+unit:'—';
@@ -58,16 +58,16 @@
     $('qualityBadge').textContent=result?(quality.fresh?'مقارنة حديثة ومتزامنة':'مقارنة استرشادية • آخر أسعار منشورة'):'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
     $('qualityText').textContent=quality.reason;
-    $('fetchStatus').textContent=state.busy?'تحميل الأسعار…':'';
+    $('fetchStatus').textContent=(state.busy?'تحميل الأسعار… • ':'')+window.DHB_QUOTE.connection(state.transport);
     if (!state.dealerEdited) $('dealer').value=usable(a)?a['21'].sell:'';
     calculator();
     if($('reference24'))$('reference24').textContent=result?fmt(result.drop24)+' ('+fmt(result.drop24/7735*100,'%')+')':'—';
     if($('reference21'))$('reference21').textContent=result?fmt(result.drop21)+' ('+fmt(result.drop21/6767*100,'%')+')':'—';
-    window.dispatchEvent(new CustomEvent('gold-board-updated',{detail:{sources:state.sources,quality,result}}));
+    window.dispatchEvent(new CustomEvent('gold-board-updated',{detail:{sources:state.sources,quality,result,transport:state.transport}}));
   }
   async function json(url) {
     const controller=new AbortController(), timer=setTimeout(()=>controller.abort(),15000);
-    try {const r=await fetch(url,{cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.json();}finally{clearTimeout(timer);}
+    try {const r=await fetch(url,{cache:'no-store',signal:controller.signal});if(!r.ok)throw Error('HTTP '+r.status);const value=await r.json();if(value&&typeof value==='object')value._dhbTransport={mode:r.headers.get('X-DHB-Transport')||((navigator.serviceWorker&&navigator.serviceWorker.controller)?'unverified':'network'),lastOnline:r.headers.get('X-DHB-Online-At')||null};return value;}finally{clearTimeout(timer);}
   }
   async function refresh() {
     if(state.busy)return;
@@ -77,19 +77,26 @@
     const previousGold=state.sources.gold;
     if(snapshot.status==='fulfilled'&&snapshot.value.schemaVersion===1) {
       state.sources=snapshot.value.sources||{};state.generatedAt=snapshot.value.generatedAt;
+      const observed=snapshot.value._dhbTransport;
+      state.transport={mode:observed.mode,offline:navigator.onLine===false,lastOnline:observed.lastOnline||(observed.mode==='network'?new Date().toISOString():state.transport?.lastOnline)};
+      if(state.transport.lastOnline)try{localStorage.setItem('dhb-last-online',state.transport.lastOnline);}catch(_){}
     } else {
       // Keep visible previous values and their real timestamps, never relabel as new.
       state.sources={...state.sources};
+      let prior=state.transport?.lastOnline;try{prior=prior||localStorage.getItem('dhb-last-online');}catch(_){}
+      state.transport={mode:'unavailable',offline:navigator.onLine===false,lastOnline:prior};
     }
     if(!state.sources.gold&&previousGold)state.sources.gold=previousGold;
     if(global.status==='fulfilled'&&global.value.symbol==='XAU'&&(!global.value.currency||global.value.currency==='USD')&&positive(Number(global.value.price))&&Number.isFinite(Date.parse(global.value.updatedAt))) {
       state.sources.gold={status:'available',sell:Number(global.value.price),sourceTime:global.value.updatedAt,fetchedAt:new Date().toISOString(),name:'gold-api.com',sourceTimeKind:'provider_upstream_fetch'};
     }
     state.lastCheck=new Date().toISOString();state.busy=false;$('refresh').disabled=false;render();
-    if(snapshot.status==='rejected') $('fetchStatus').textContent+='تعذر الاتصال؛ راجع الأسعار قبل الاعتماد عليها.';
+
   }
   $('refresh').addEventListener('click',refresh);
   $('budget').addEventListener('input',calculator);
   $('dealer').addEventListener('input',()=>{state.dealerEdited=true;calculator();});
+  window.addEventListener('offline',()=>{state.transport={...state.transport,mode:'unavailable',offline:true};render();});
+  setInterval(render,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)render();});
   setInterval(refresh,60000);refresh();
 })();
