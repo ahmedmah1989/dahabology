@@ -21,11 +21,21 @@
   function todayPoint(s,now=Date.now()){
     const g=s&&s.gold,b=s&&s.misr,today=cairoDay(now);
     if(!freshQuote(g,300000,now)||cairoDay(Date.parse(g.sourceTime))!==today)return null;
-    return {d:today,usd:g.sell,egp:freshQuote(b,86400000,now)?g.sell*b.sell:null,provisional:true};
+    return {d:today,usd:g.sell,egp:freshQuote(b,86400000,now)?g.sell*b.sell:null,sourceTime:g.sourceTime,provisional:true};
   }
   function withToday(history,s,now=Date.now()){
     const today=cairoDay(now),points=history.filter(p=>!p.provisional&&p.d<today).map(p=>({...p})),point=todayPoint(s,now);
     if(point)points.push(point);return points;
+  }
+  function readingLabels(history,s,now=Date.now()){
+    const point=todayPoint(s,now),today=cairoDay(now),base=history&&history.filter(p=>!p.provisional&&p.d<today).at(-1);
+    const time=point?new Date(point.sourceTime).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit',second:'2-digit'}):null;
+    const day=d=>new Date(d+'T12:00:00Z').toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',day:'numeric',month:'long'});
+    return {point,base,
+      history:base?'اليومية حتى '+day(base.d):'القراءات اليومية',
+      today:point?'مستوى اليوم • '+day(point.d):'قراءة اليوم غير متاحة',
+      state:point?'قراءة خلال اليوم • '+time+' بتوقيت القاهرة • ليست إغلاقًا نهائيًا':'قراءة اليوم غير متاحة حاليًا؛ لن نضع تاريخ اليوم على سعر قديم.',
+      basis:(base?'آخر مرجع يومي: '+fmt(base.usd,2)+' دولار ('+day(base.d)+'). ':'السجل اليومي غير متاح حاليًا. ')+(point?'آخر قراءة اليوم: '+fmt(point.usd,2)+' دولار، '+time+' بتوقيت القاهرة. الخط الأصفر المتقطع مستوى سعر واحد، وليس سجل حركة خلال اليوم.':'قراءة اليوم غير متاحة حاليًا؛ لا توجد نقطة حديثة على الرسم.')};
   }
   function k21(oz,usd){return oz*usd/OZ*K21}
   async function getJSON(u){var r=await fetch(u,{cache:"no-store"}); if(!r.ok) throw new Error(r.status); return r.json()}
@@ -123,12 +133,21 @@
       var d="",on=false; pts.forEach(function(p,i){var v=p[key]; if(v==null){on=false;return} d+=(on?"L":"M")+X(i).toFixed(1)+" "+Y(v).toFixed(1)+" "; on=true});
       if(!d) return; var e=document.createElementNS(NS,"path"); e.setAttribute("d",d); e.setAttribute("fill","none"); e.setAttribute("stroke",color); e.setAttribute("stroke-width",w); if(dash) e.setAttribute("stroke-dasharray",dash); e.setAttribute("stroke-linejoin","round"); svg.appendChild(e);
     }
-    if(M.last.provisional){
-      var i=y.length-1;
-      if(i>0){var extension=document.createElementNS(NS,'line');extension.setAttribute('x1',X(i-1));extension.setAttribute('y1',Y(y[i-1].usd));extension.setAttribute('x2',X(i));extension.setAttribute('y2',Y(y[i].usd));extension.setAttribute('stroke',C('--gold'));extension.setAttribute('stroke-width','2.5');extension.setAttribute('stroke-dasharray','5 5');svg.appendChild(extension);}
-      var dot=document.createElementNS(NS,'circle');dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(y[i].usd));dot.setAttribute('r','4');dot.setAttribute('fill',C('--gold'));svg.appendChild(dot);
-    }
     path("m200",C("--teal"),2,"7 5"); path("m50",C("--bad"),2,"2 4"); path("v",C("--gold"),2.5);
+    if(M.last.provisional){
+      var i=y.length-1, level=document.createElementNS(NS,'line');
+      level.setAttribute('data-series','today-level');level.setAttribute('x1',Lm);level.setAttribute('x2',W-R);
+      level.setAttribute('y1',Y(y[i].usd));level.setAttribute('y2',Y(y[i].usd));
+      level.setAttribute('stroke',C('--gold'));level.setAttribute('stroke-width','1.5');
+      level.setAttribute('stroke-dasharray','6 4');level.setAttribute('vector-effect','non-scaling-stroke');svg.appendChild(level);
+      var dot=document.createElementNS(NS,'circle');dot.setAttribute('data-series','today-point');
+      dot.setAttribute('cx',X(i));dot.setAttribute('cy',Y(y[i].usd));dot.setAttribute('r','5');dot.setAttribute('fill',C('--gold'));
+      dot.setAttribute('stroke',C('--ink'));dot.setAttribute('stroke-width','1.5');dot.setAttribute('vector-effect','non-scaling-stroke');svg.appendChild(dot);
+      var label=document.createElementNS(NS,'text');label.setAttribute('data-series','today-label');
+      label.setAttribute('x',W-R-8);label.setAttribute('y',Math.max(T+14,Y(y[i].usd)-12));label.setAttribute('text-anchor','end');
+      label.setAttribute('font-size','20');label.setAttribute('font-weight','700');label.setAttribute('fill',C('--gold'));
+      label.setAttribute('direction','ltr');label.textContent=fmt(y[i].usd,2)+' $';svg.appendChild(label);
+    }
     text(X(0),H-8,y[0].d,"start"); text(X(pts.length-1),H-8,M.last.d,"end");
     var box=$("chart"); box.textContent=""; box.appendChild(svg);
   }
@@ -199,7 +218,7 @@
   }
 
 
-  if(typeof module !== 'undefined') {module.exports={metrics:metrics,asOf:asOf,rollMean:rollMean,nextWeekday:nextWeekday,todayPoint:todayPoint,withToday:withToday,cairoDay:cairoDay};return;}
+  if(typeof module !== 'undefined') {module.exports={metrics:metrics,asOf:asOf,rollMean:rollMean,nextWeekday:nextWeekday,todayPoint:todayPoint,withToday:withToday,cairoDay:cairoDay,readingLabels:readingLabels};return;}
   window.addEventListener('gold-board-updated',function(event){
     var s=event.detail.sources, g=s.gold, b=s.misr, a=s.isagha;liveSources=s;
     var ready=event.detail.quality.usable;
@@ -211,14 +230,17 @@
   });
 
   function applyAnalysis(){
-    var point=todayPoint(liveSources),today=cairoDay(),base=HISTORY&&HISTORY[HISTORY.length-1];
+    var labels=readingLabels(HISTORY,liveSources),point=labels.point,base=labels.base;
     $('analysisDate').textContent='تحليل اليوم • '+new Date().toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',year:'numeric'});
     $('analysisNow').textContent=point?fmt(point.usd,2)+' $':'—';
-    $('analysisDayState').textContent=point?'قراءة خلال اليوم • ليست إغلاقًا نهائيًا':'قراءة اليوم غير متاحة حاليًا؛ لن نضع تاريخ اليوم على سعر قديم.';
+    $('analysisDayState').textContent=labels.state;
+    $('historyLegend').textContent=labels.history;
+    $('todayLegend').textContent=labels.today;
+    $('analysisChartBasis').textContent=labels.basis;
     var delta=point&&base?(point.usd/base.usd-1)*100:null;
     $('analysisMove').textContent=delta===null?'—':sg(delta,2);
     $('analysisMoveLabel').textContent=base?'عن القراءة اليومية '+base.d:'انتظار السجل اليومي';
-    $('analysisBasis').textContent=point?'النقطة الذهبية والخط المتقطع يوضحان قراءة اليوم. المتوسطات تشملها بشكل مبدئي؛ التذبذب يُحسب من القراءات اليومية السابقة فقط.':'الرسم التاريخي يظل متاحًا للفهم، ولا يُقدّم كسعر اليوم.';
+    $('analysisBasis').textContent=point?'النقطة والخط الأصفر المتقطع يحددان مستوى آخر قراءة خلال اليوم، لا مسار حركة اليوم. المتوسطات تشمل القراءة بشكل مبدئي؛ التذبذب يُحسب من القراءات اليومية السابقة فقط.':'الرسم التاريخي يظل متاحًا للفهم، ولا يُقدّم كسعر اليوم.';
     if(!HISTORY){render();return;}
     SERIES=withToday(HISTORY,liveSources);
     if(!SERIES.length){$('chart').textContent='القراءات غير متاحة حاليًا.';render();return;}
