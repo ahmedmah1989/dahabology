@@ -1,0 +1,82 @@
+---
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+---
+<Base page="wallet" path="account-preview/" informational={true} heading="حسابي"
+  title="معاينة: حسابي — دهبولوجي" description="معاينة غير منشورة">
+<meta name="robots" content="noindex" slot="head" />
+<style>
+#ac{overflow-wrap:anywhere}#ac *{max-width:100%;box-sizing:border-box}
+#ac .tabs{display:flex;gap:8px;margin-bottom:12px}#ac .tabs button{flex:1}
+#ac .x-field input.pw,#ac .x-field input.em{font-size:18px}
+#ac .msg{margin-top:14px;padding:12px;border-radius:12px;border:1px solid var(--x-line);text-align:right;line-height:1.8}
+#ac .err{border-color:#e0707a}#ac .ok{border-color:#6fcf97}
+#ac{padding-bottom:140px}
+#ac .x-field input.em{direction:ltr;text-align:left;font-size:17px;overflow-x:auto}
+#ac .x-field input.pw{direction:ltr;text-align:left;font-size:17px}
+#ac .x-field input.txt,#ac .x-field select{display:block;width:100%;margin-top:8px;padding:12px;font:inherit;font-size:18px;font-weight:600;color:var(--x-text,#f4f1e8);background:var(--x-glass,#0d1b33);border:1px solid var(--x-line);border-radius:14px}
+#ac .x-field select{text-align:center}
+#ac label.opt{display:flex;gap:10px;align-items:center;margin-top:10px;font-size:16px;text-align:right}#ac label.opt input{width:auto;margin:0}
+#ac .items{list-style:none;padding:0;margin:12px 0 0}
+#ac .items li{border:1px solid var(--x-line);border-radius:14px;padding:12px;margin-top:10px;text-align:right;line-height:1.8}
+#ac .items .row{margin-top:6px}
+#ac .items .x-btn{padding:7px 14px;font-size:14px}
+#ac details{margin-top:16px;text-align:right}#ac details li{margin-top:6px;line-height:1.8}
+#ac .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+</style>
+<section id="ac" data-base={base}>
+<p class="x-note" role="note"><b>معاينة غير منشورة.</b> حسابك مستقل: بياناتك لا يراها غيرك، ولا نحفظ إلا ما تكتبه هنا.</p>
+
+<div id="out" class="x-card" hidden>
+<h2>تسجيل الدخول</h2>
+<div class="tabs" role="tablist" style="margin-top:14px"><button type="button" class="x-btn" id="tabIn" role="tab">دخول</button><button type="button" class="x-btn ghost" id="tabUp" role="tab">حساب جديد</button></div>
+<form id="authForm" novalidate>
+<label class="x-field">البريد الإلكتروني<input id="em" class="em" type="email" autocomplete="email" inputmode="email"></label>
+<label class="x-field" id="pwWrap">كلمة السر<input id="pw" class="pw" type="password" autocomplete="current-password"></label>
+<p class="x-note" id="pwHint" hidden>8 أحرف على الأقل.</p>
+<div class="row"><button class="x-btn" id="go" type="submit">دخول</button></div>
+<div class="row"><button type="button" class="x-btn ghost" id="forgot">نسيت كلمة السر</button></div>
+</form>
+<div id="msg" class="msg" role="status" aria-live="polite" hidden></div>
+</div>
+
+<div id="verify" class="x-card" hidden>
+<h2>أكّد بريدك</h2>
+<p id="vMail" class="msg"></p>
+<p class="msg">أرسلنا رسالة فيها رابط التأكيد. افتحها واضغط الرابط، ثم ارجع هنا واضغط «تم التأكيد». لو لم تجدها راجع البريد المزعج.</p>
+<div class="row"><button class="x-btn" id="vDone">تم التأكيد</button><button class="x-btn ghost" id="vResend">أرسل الرسالة مرة أخرى</button><button class="x-btn ghost" id="vOut">خروج</button></div>
+<div id="vMsg" class="msg" role="status" aria-live="polite" hidden></div>
+</div>
+
+<div id="inn" class="x-card" hidden>
+<h2>ذهبي</h2>
+<p id="who" class="x-note"></p>
+<p class="x-note">سجّل قطع ذهبك هنا لتبقى محفوظة في حسابك فقط. لا يُحسب شيء من الزكاة في هذه الصفحة.</p>
+<ul id="list" class="items"></ul>
+<form id="itemForm" novalidate>
+<h3 id="formTitle" style="margin:16px 0 0">إضافة قطعة</h3>
+<label class="x-field">الاسم (اختياري)<input id="iLabel" class="txt" maxlength="60"></label>
+<label class="x-field">النوع<select id="iType"><option value="bar">سبيكة</option><option value="coin">جنيه / عملة ذهبية</option><option value="jewelry">مصوغات</option><option value="scrap">كسر / خردة</option></select></label>
+<div class="x-grid2"><label class="x-field">العيار<select id="iKarat"><option>24</option><option selected>21</option><option>22</option><option>18</option></select></label>
+<label class="x-field">الوزن بالجرام<input id="iGrams" inputmode="decimal"></label></div>
+<label class="x-field">تاريخ الشراء<input id="iDate" type="date"></label>
+<fieldset id="iPur" hidden style="border:0;padding:0;margin:14px 0 0"><legend style="font-weight:700">نية الشراء</legend>
+<label class="opt"><input type="radio" name="iP" value="adornment"> زينة</label>
+<label class="opt"><input type="radio" name="iP" value="saving"> ادخار / استثمار</label></fieldset>
+<div class="row"><button class="x-btn" id="iSave" type="submit">حفظ القطعة</button><button class="x-btn ghost" id="iCancel" type="button" hidden>إلغاء التعديل</button></div>
+</form>
+<div class="row"><button class="x-btn ghost" id="outBtn">خروج</button></div>
+<div id="nMsg" class="msg" role="status" aria-live="polite" hidden></div>
+</div>
+
+<details class="x-card"><summary><b>مساعدة في التسجيل</b></summary>
+<ul>
+<li>لم تصلك رسالة التأكيد؟ راجع البريد المزعج، وتأكد من كتابة البريد بدون أخطاء، ثم اضغط «أرسل الرسالة مرة أخرى». قد تتأخر دقائق.</li>
+<li>نسيت كلمة السر؟ اضغط «نسيت كلمة السر» بعد كتابة بريدك، وستصلك رسالة بخيار تغييرها.</li>
+<li>رابط التأكيد أو التغيير لا يعمل؟ هو يستعمل مرة واحدة وينتهي بعد فترة. اطلب رسالة جديدة واستخدم أحدث رسالة.</li>
+<li>كلمة السر لا تقل عن 8 أحرف. نفس البريد لا يسجَّل مرتين.</li>
+<li>لا يوجد حالياً دعم مباشر بالهاتف أو الدردشة. الخطوات أعلاه هي ما نقدمه الآن.</li>
+</ul></details>
+</section>
+<script type="module" src={base + '/js/account-ui.js'}></script>
+</Base>
