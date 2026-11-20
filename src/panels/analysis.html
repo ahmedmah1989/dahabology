@@ -15,8 +15,9 @@
 
 <div class="x-card"><h2>الأونصة في 12 شهر</h2>
   <div class="chart"><div id="chart">تحميل البيانات…</div>
-    <div class="legend"><span><i class="sw" style="border-color:var(--gold)"></i>القراءات اليومية</span><span><i class="sw" style="border-color:var(--gold);border-top-style:dashed"></i>قراءة اليوم</span><span><i class="sw" style="border-color:var(--teal); border-top-style:dashed"></i>متوسط 200 يوم</span><span><i class="sw" style="border-color:var(--bad); border-top-style:dotted"></i>متوسط 50 يوم</span></div>
+    <div class="legend"><span><i class="sw" style="border-color:var(--gold)"></i><span id="historyLegend">القراءات اليومية</span></span><span><i class="sw" style="border-color:var(--gold);border-top-style:dashed"></i><span id="todayLegend">قراءة اليوم</span></span><span><i class="sw" style="border-color:var(--teal); border-top-style:dashed"></i>متوسط 200 يوم</span><span><i class="sw" style="border-color:var(--bad); border-top-style:dotted"></i>متوسط 50 يوم</span></div>
   </div>
+  <p id="analysisChartBasis" class="x-note" role="status"></p>
   <ul class="ind">
     <li><b id="iA50">—</b><span>متوسط 50 يوم</span></li>
     <li><b id="iA200">—</b><span>متوسط 200 يوم</span></li>
@@ -64,6 +65,6 @@
     <li>قارن المصنعية وفرق البيع والشراء وشروط التغليف، ولا تعتمد على سعر الجرام وحده.</li>
   </ul></details>
 
-<p class="x-note">الرسم والمؤشرات من قراءات يومية مرجعية، وليست أسعارًا لحظية ولا توقعًا مضمونًا ولا نصيحة استثمار شخصية. <a href="#method">طريقة الحساب ←</a></p>
+<p class="x-note">الخط المتصل والمؤشرات التاريخية من قراءات يومية مرجعية، وليست إغلاقات بورصة موثقة. النقطة والخط المتقطع يمثلان آخر قراءة خلال اليوم عند توفرها. ليست توقعًا مضمونًا ولا نصيحة استثمار شخصية. <a href="#method">طريقة الحساب ←</a></p>
 <span id="historyQuality" hidden></span><span id="historyAuditStatus" hidden></span>
 </section>
