@@ -59,6 +59,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
 <script is:inline src={asset('js/quote-state.js')}></script>
 {/* Register all price consumers before starting the first asynchronous price fetch. */}
 {[...scripts.filter(s => s !== 'monitor'), ...scripts.filter(s => s === 'monitor')].map(s => <script is:inline src={asset('js/' + s + '.js')}></script>)}
+<script is:inline src={asset('js/hscroll.js')}></script>
 <slot name="scripts" />
 <script is:inline>
 (()=>{const menu=document.querySelector('.x-dock details');if(!menu)return;
