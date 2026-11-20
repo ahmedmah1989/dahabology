@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {validOffer,displayable,productRows,priceChange,safeSource,groupMerchants}=require('../public/js/services.js');
+const {validOffer,displayable,productRows,priceChange,safeSource,groupMerchants,observationDelayed}=require('../public/js/services.js');
 const now=Date.parse('2026-11-11T12:00:00Z');
 const offer={kind:'quarter',url:'https://merchant.example/product',weight:2,karat:21,status:'observed',identityVerified:true,inStock:true,manufacturingIncluded:true,taxIncluded:true,stampIncluded:true,listedPrice:50000,sourceTime:'2026-11-11T11:59:00Z',checkedAt:'2026-11-11T12:00:00Z'};
 assert.equal(validOffer(offer,now),true);
@@ -28,3 +28,9 @@ console.log('Verified basic offers, source safety, identity, freshness and truth
 const grouped=groupMerchants([{store:'one',brand:'A'},{store:'one',brand:'B'},...['two','three','four','five'].map(store=>({store,brand:'A'}))]);
 assert.equal(grouped.length,5);assert.equal(grouped[0].offers.length,2);
 assert.deepEqual(groupMerchants([]),[]);assert.equal(groupMerchants([{store:'one'}]).length,1);
+
+assert.equal(observationDelayed(offer,now),false);
+assert.equal(observationDelayed(offer,now+600000),false);
+assert.equal(observationDelayed(offer,now+600001),true);
+assert.equal(observationDelayed({...offer,checkedAt:null},now),true);
+assert.equal(observationDelayed({...offer,checkedAt:'2026-11-11T12:03:00Z'},now),true);
