@@ -2,7 +2,7 @@
  'use strict';
  const $=id=>(document.getElementById(id)||document.createElement('div'));
  const f=v=>Number.isFinite(v)?v.toLocaleString('ar-EG-u-nu-latn',{maximumFractionDigits:2})+' جنيه':'غير متاح';
- const t=v=>Number.isFinite(Date.parse(v))?new Date(v).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo'}):'غير منشور';
+ const t=v=>Number.isFinite(Date.parse(v))?new Date(v).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'}):'غير منشور';
  function validOffer(o,now=Date.now()){
   const stamp=Date.parse(o.sourceTime);
   return o.status==='observed'&&o.identityVerified===true&&o.inStock===true&&[o.manufacturingIncluded,o.taxIncluded,o.stampIncluded].every(x=>x===true)&&Number.isFinite(o.listedPrice)&&o.listedPrice>0&&typeof o.sourceTime==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(o.sourceTime)&&Number.isFinite(stamp)&&now-stamp<=300000&&stamp-now<=120000;
@@ -57,7 +57,7 @@
   const head=element('thead'),header=element('tr');header.append(element('th','','المقارنة'));
   rows.forEach(o=>{const th=element('th','',o.store);th.scope='col';header.append(th);});head.append(header);table.append(head);
   const body=element('tbody');
-  const metrics=[['الماركة',o=>o.brand||'غير منشورة'],['السعر المعلن',o=>f(o.listedPrice)],['التغير منذ الفحص السابق',o=>{const ch=priceChange(o);return ch?(ch.percent>0?'+':'')+ch.percent.toFixed(2)+'% منذ '+t(ch.at):'غير متاح؛ لا توجد قراءة سابقة موثقة';}],['وقت آخر فحص (القاهرة)',o=>t(o.checkedAt)],['التوافر',o=>o.inStock===true?'متاح حسب الفحص':o.inStock===false?'غير متاح حسب الفحص':'غير مؤكد'],['الرسوم',o=>o.manufacturingIncluded===true&&o.taxIncluded===true&&o.stampIncluded===true?'المصنعية والضريبة والدمغة مشمولة؛ راجع الشحن':'قد تختلف الرسوم؛ راجع الإجمالي قبل الشراء']];
+  const metrics=[['الماركة',o=>o.brand||'غير منشورة'],['السعر المعلن',o=>f(o.listedPrice)],['التغير منذ الفحص السابق',o=>{const ch=priceChange(o);return ch?(ch.percent>0?'ارتفاع ':ch.percent<0?'انخفاض ':'ثابت ')+Math.abs(ch.percent).toFixed(2)+'% منذ '+t(ch.at):'غير متاح؛ لا توجد قراءة سابقة موثقة';}],['وقت آخر فحص (القاهرة)',o=>t(o.checkedAt)],['التوافر',o=>o.inStock===true?'متاح حسب الفحص':o.inStock===false?'غير متاح حسب الفحص':'غير مؤكد'],['الرسوم',o=>o.manufacturingIncluded===true&&o.taxIncluded===true&&o.stampIncluded===true?'المصنعية والضريبة والدمغة مشمولة؛ راجع الشحن':'قد تختلف الرسوم؛ راجع الإجمالي قبل الشراء']];
   metrics.forEach(([label,read])=>{const tr=element('tr'),th=element('th','',label);th.scope='row';tr.append(th);rows.forEach(o=>tr.append(element('td','',read(o))));body.append(tr);});
   const tr=element('tr'),th=element('th','','المصدر');th.scope='row';tr.append(th);rows.forEach(o=>{const td=element('td'),a=element('a','','صفحة التاجر ↗');a.href=o.url;a.target='_blank';a.rel='noopener noreferrer';td.append(a);tr.append(td);});body.append(tr);table.append(body);wrap.append(table);host.append(wrap,element('p','x-note','المقارنة لنفس الوزن والعيار؛ الماركة والتغليف والرسوم قد تختلف. نسبة التغير تقارن نفس عرض التاجر بفحصه السابق، وليست فرقًا بين تاجرين.'));
  }
@@ -84,7 +84,7 @@
    const available=productRows(data,id).filter(o=>displayable(o));
    const representative=available.find(o=>o.inStock===true)||available.find(o=>o.inStock!==false)||available[0];
    const link=element('a','product-summary-card');link.href=(window.DHB_BASE||'')+'products/'+id+'/';
-   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?(representative.inStock===false?'غير متوفر حاليًا':'راجع الرسوم والتوافر'):'انتظار السعر'));
+   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?representative.store+' • فحص '+t(representative.checkedAt)+' القاهرة':'انتظار السعر'));
    link.append(element('span','summary-action','تفاصيل المنتج ←'));
    summary.append(link);
   });
