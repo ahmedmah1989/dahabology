@@ -2,11 +2,21 @@ import * as A from "./account.js";
 const $ = (id) => document.getElementById(id);
 let mode = "in";
 const show = (el, text, cls) => { el.hidden = !text; el.textContent = text || ""; el.className = "msg" + (cls ? " " + cls : ""); };
+let gen = 0, shownKey = null, loadedFor = null;
+// Private data must never outlive its user: wipe the list, form and messages on every auth change.
+function wipe() {
+  gen++; loadedFor = null; items = []; editing = null;
+  $("list").innerHTML = ""; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة";
+  $("who").textContent = ""; $("vMail").textContent = "";
+  for (const id of ["msg", "vMsg", "nMsg"]) show($(id), "");
+  $("authForm").reset();
+}
 function view() {
   const u = A.currentUser();
+  if (!(u && u.emailVerified)) { items = []; $("list").innerHTML = ""; }
   $("out").hidden = !!u; $("verify").hidden = !(u && !u.emailVerified); $("inn").hidden = !(u && u.emailVerified);
   if (u && !u.emailVerified) $("vMail").textContent = "البريد: " + u.email;
-  if (u && u.emailVerified) { $("who").textContent = "مسجّل بالبريد: " + u.email; loadItems(); }
+  if (u && u.emailVerified) { $("who").textContent = "مسجّل بالبريد: " + u.email; if (loadedFor !== u.uid) { loadedFor = u.uid; loadItems(); } }
 }
 function setMode(m) {
   mode = m; const up = m === "up";
@@ -15,8 +25,9 @@ function setMode(m) {
   $("forgot").hidden = up; show($("msg"), "");
 }
 async function run(btn, el, fn) {
+  const g = gen;
   btn.disabled = true;
-  try { await fn(); } catch (e) { show(el, e.ar || "حدث خطأ غير متوقع. حاول مرة أخرى.", "err"); } finally { btn.disabled = false; }
+  try { await fn(); } catch (e) { if (g === gen) show(el, e.ar || "حدث خطأ غير متوقع. حاول مرة أخرى.", "err"); } finally { btn.disabled = false; }
 }
 $("tabIn").onclick = () => setMode("in"); $("tabUp").onclick = () => setMode("up");
 $("authForm").onsubmit = (ev) => {
@@ -34,8 +45,8 @@ $("forgot").onclick = () => {
 };
 $("vDone").onclick = () => run($("vDone"), $("vMsg"), async () => { const u = await A.refreshVerification(); if (!u.emailVerified) show($("vMsg"), "لم يظهر التأكيد بعد. اضغط الرابط في الرسالة ثم حاول مرة أخرى.", "err"); else view(); });
 $("vResend").onclick = () => run($("vResend"), $("vMsg"), async () => { await A.resendVerification(); show($("vMsg"), "تم إرسال رسالة جديدة. استخدم أحدث رسالة.", "ok"); });
-$("vOut").onclick = () => { A.signOut(); view(); };
-$("outBtn").onclick = () => { A.signOut(); items = []; render(); resetForm(); view(); };
+$("vOut").onclick = () => A.signOut();
+$("outBtn").onclick = () => A.signOut();
 const TYPES = { bar: "سبيكة", coin: "جنيه / عملة", jewelry: "مصوغات", scrap: "كسر" };
 let items = [], editing = null;
 const newId = () => "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -43,8 +54,12 @@ const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&
 function render() {
   $("list").innerHTML = items.length ? items.map((it) => `<li data-id="${esc(it.id)}"><b>${esc(it.label || TYPES[it.type])}</b><br>${TYPES[it.type]} · عيار ${esc(it.karat)} · ${esc(it.grams)} جم<br>الشراء: ${esc(it.purchaseDate)}${it.type === "jewelry" ? " · " + (it.purpose === "adornment" ? "زينة" : "ادخار") : ""}<div class="row"><button type="button" class="x-btn ghost" data-act="edit">تعديل</button><button type="button" class="x-btn ghost" data-act="del">حذف</button></div></li>`).join("") : '<li>لا توجد قطع محفوظة بعد.</li>';
 }
-async function loadItems() { try { const d = await A.loadDoc("gold/items"); items = d?.items || []; render(); } catch (e) { show($("nMsg"), e.ar, "err"); } }
-async function persist(okText) { await A.saveDoc("gold/items", { v: 1, items }); show($("nMsg"), okText, "ok"); render(); }
+async function loadItems() {
+  const g = gen, uid = A.currentUser()?.uid;
+  try { const d = await A.loadDoc("gold/items"); if (g !== gen || uid !== A.currentUser()?.uid) return; items = d?.items || []; render(); }
+  catch (e) { if (g !== gen) return; loadedFor = null; show($("nMsg"), e.ar, "err"); }
+}
+async function persist(okText) { const g = gen; await A.saveDoc("gold/items", { v: 1, items }); if (g !== gen) return; show($("nMsg"), okText, "ok"); render(); }
 function resetForm() { editing = null; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
 $("iType").onchange = () => { $("iPur").hidden = $("iType").value !== "jewelry"; };
 $("iCancel").onclick = resetForm;
@@ -57,9 +72,9 @@ $("itemForm").onsubmit = (ev) => {
   if (type === "jewelry" && !pur) return show($("nMsg"), "اختر نية شراء المصوغات: زينة أو ادخار.", "err");
   const rec = { id: editing || newId(), label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
   if (type === "jewelry") rec.purpose = pur;
-  const prev = items.slice();
+  const prev = items.slice(), gn = gen;
   items = editing ? items.map((i) => (i.id === editing ? rec : i)) : items.concat(rec);
-  run($("iSave"), $("nMsg"), async () => { try { await persist(editing ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); } catch (e) { items = prev; render(); throw e; } });
+  run($("iSave"), $("nMsg"), async () => { try { await persist(editing ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); } catch (e) { if (gn === gen) { items = prev; render(); } throw e; } });
 };
 $("list").onclick = (ev) => {
   const b = ev.target.closest("button[data-act]"); if (!b) return;
@@ -70,8 +85,13 @@ $("list").onclick = (ev) => {
     $("iPur").hidden = it.type !== "jewelry"; document.querySelectorAll("input[name=iP]").forEach((r) => (r.checked = r.value === it.purpose));
     $("itemForm").scrollIntoView({ block: "center" });
   } else {
-    const prev = items.slice(); items = items.filter((i) => i.id !== id);
-    run(b, $("nMsg"), async () => { try { await persist("تم حذف القطعة."); } catch (e) { items = prev; render(); throw e; } });
+    const prev = items.slice(), g = gen; items = items.filter((i) => i.id !== id);
+    run(b, $("nMsg"), async () => { try { await persist("تم حذف القطعة."); } catch (e) { if (g === gen) { items = prev; render(); } throw e; } });
   }
 };
+// Keep the focused field above the floating dock.
+document.addEventListener("focusin", (e) => { const t = e.target; if (!t.getBoundingClientRect) return; const r = t.getBoundingClientRect(), lim = innerHeight - 160; if (r.bottom > lim) scrollBy(0, r.bottom - lim + 16); });
+const keyOf = (u) => (u ? u.uid + ":" + !!u.emailVerified : "");
+A.onChange((u) => { const k = keyOf(u); if (k === shownKey) return; if ((u?.uid || "") !== (shownKey || "").split(":")[0]) wipe(); shownKey = k; view(); });
+shownKey = keyOf(A.currentUser());
 setMode("in"); view();
