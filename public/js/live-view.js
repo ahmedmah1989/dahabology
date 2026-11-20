@@ -5,9 +5,13 @@ let mode='session';
 const fmt=n=>n.toLocaleString('en-US',{maximumFractionDigits:2});
 function render(){
  const points=mode==='session'?session:history,host=$('nativeChart');host.replaceChildren();
- $('chartSession').setAttribute('aria-pressed',String(mode==='session'));
- $('chartHistory').setAttribute('aria-pressed',String(mode==='history'));
- if(!points.length){$('liveChartStatus').textContent='القراءات غير متاحة حاليًا.';return;}
+ ['session','history'].forEach(view=>{
+  const button=$(view==='session'?'chartSession':'chartHistory'),active=mode===view;
+  button.setAttribute('aria-pressed',String(active));
+  button.classList.toggle('ghost',!active);
+ });
+ $('chartValue').textContent='—';
+ if(!points.length){$('liveChartStatus').textContent=mode==='history'?'القراءات اليومية غير متاحة حاليًا.':'في انتظار أول قراءة للجلسة الحالية.';return;}
  $('chartValue').textContent=fmt(points.at(-1).value);
  if(points.length<2){$('liveChartStatus').textContent='وصلت أول قراءة. يظهر المسار عند وصول القراءة التالية.';return;}
  const values=points.map(p=>p.value),lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.15,1),min=lo-pad,max=hi+pad;
@@ -21,6 +25,7 @@ function render(){
  el('text',{x:12,y:280,fill:'#cdd8e8','font-size':14},label(points[0]));el('text',{x:630,y:280,fill:'#cdd8e8','font-size':14,'text-anchor':'end'},label(points.at(-1)));
  host.append(svg);$('liveChartStatus').textContent=mode==='session'?'حركة الأونصة خلال جلستك • '+points.length+' قراءة':'آخر '+points.length+' قراءة يومية';
 }
+render();
 $('chartSession').onclick=()=>{mode='session';render();};$('chartHistory').onclick=()=>{mode='history';render();};
 window.addEventListener('gold-board-updated',e=>{const q=e.detail.sources.gold,t=Date.parse(q?.sourceTime);if(q?.status!=='available'||!Number.isFinite(q.sell)||q.sell<=0||!Number.isFinite(t)||Date.now()-t>86400000||t-Date.now()>120000)return;if(session.at(-1)?.label!==q.sourceTime){session.push({label:q.sourceTime,value:q.sell});if(session.length>360)session.shift();}render();});
 fetch((window.DHB_DATA||'data/')+'history.json',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error();return r.json();}).then(j=>{const seen=new Set();(j.points||[]).filter(p=>/^\d{4}-\d{2}-\d{2}$/.test(p.d)&&Number.isFinite(p.usd)&&p.usd>0&&p.d<=new Date().toISOString().slice(0,10)).sort((a,b)=>a.d.localeCompare(b.d)).forEach(p=>{if(!seen.has(p.d)){seen.add(p.d);history.push({label:p.d,value:p.usd});}});history.splice(0,Math.max(0,history.length-90));if(mode==='history')render();}).catch(()=>{if(mode==='history')render();});
