@@ -10,7 +10,7 @@ function assess(q,now=Date.now()){
 function when(v){return Number.isFinite(Date.parse(v))?new Date(v).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}):'غير معروف';}
 function describe(q,now=Date.now()){
  const a=assess(q,now);if(!a.usable)return 'التسعيرة غير متاحة أو تجاوزت 24 ساعة؛ لا يوجد تسعير تلقائي.';
- return 'آخر تحديث: '+when(a.time)+' القاهرة';
+ return '';
 }
 function connection(t){
  if(!t)return 'لم يُتحقق من الاتصال بعد.';
