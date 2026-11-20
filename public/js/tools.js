@@ -156,7 +156,7 @@
     x.fillText(window.DHB_QUOTE.assess(a).fresh?'تسعيرة حديثة وقت إنشاء الصورة':'آخر تسعيرة منشورة • متأخرة؛ تحقق قبل الاعتماد عليها',540,1198);
     x.fillStyle='#acbdd2';x.font=F(500,23);
     x.fillText('إنشاء الصورة: '+window.DHB_QUOTE.when(new Date().toISOString())+' القاهرة',540,1235);
-    x.fillText('سعر الجرام بالجنيه بدون مصنعية'+(last.transport?.mode==='cache'?' • بيانات محفوظة':last.transport?.mode!=='network'?' • الاتصال غير متحقق':''),540,1270);
+    x.fillText('سعر الجرام بالجنيه بدون مصنعية'+(last.transport?.mode==='cache'?(last.transport.offline?' • غير متصل؛ بيانات محفوظة':' • بيانات محفوظة'):last.transport?.mode!=='network'?' • الاتصال غير متحقق':''),540,1270);
     x.fillStyle='#e7bf67';x.font=F(700,28);x.fillText(location.host+(B==='/'?'':B.replace(/\/$/,'')),540,1320);
     if(!usable(a))throw Error('Quote expired');
     return (await fetch(c.toDataURL('image/png'))).blob();
