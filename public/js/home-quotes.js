@@ -5,7 +5,7 @@ const $=id=>document.getElementById(id),Q=window.DHB_QUOTE;
 let sources={},transport=null,busy=false;
 const positive=v=>Number.isFinite(v)&&v>0;
 function price(id,q,value,dec=2){$(id).textContent=Q.assess(q).usable&&positive(value)?value.toLocaleString('en-US',{maximumFractionDigits:dec}):'—';}
-function stamp(q){const a=Q.assess(q);return a.usable?'آخر تحديث: '+Q.when(q.sourceTime)+' القاهرة':'التسعيرة غير متاحة أو تجاوزت 24 ساعة';}
+function stamp(q){const a=Q.assess(q);return a.usable?'':'التسعيرة غير متاحة أو تجاوزت 24 ساعة';}
 function render(){
  const g=sources.isagha,m=sources.misr,oz=sources.gold;
  price('p21',g,g?.['21']?.sell,0);price('p24',g,g?.['24']?.sell);price('pUsd',m,m?.sell);price('pOz',oz,oz?.sell);
