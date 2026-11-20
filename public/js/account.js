@@ -42,7 +42,7 @@ async function call(url, body, method = "POST", token) {
   if (!res.ok) {
     const raw = String(data?.error?.message || data?.error?.status || res.status);
     const code = raw.split(" : ")[0].split(" ")[0];
-    throw new AccountError(res.status === 403 ? "PERMISSION_DENIED" : code);
+    throw new AccountError(res.status === 403 ? "PERMISSION_DENIED" : res.status === 404 ? "NOT_FOUND" : code);
   }
   return data;
 }
