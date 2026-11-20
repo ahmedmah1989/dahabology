@@ -13,10 +13,11 @@
   const checked=Date.parse(o.checkedAt);
   return BASIC_KINDS.has(o.kind)&&safeSource(o.url)&&o.status==='observed'&&o.identityVerified===true&&Number.isFinite(o.listedPrice)&&o.listedPrice>0&&typeof o.checkedAt==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(o.checkedAt)&&Number.isFinite(checked)&&now-checked<=86400000&&checked-now<=120000;
  }
+ function observationDelayed(o,now=Date.now()){const checked=Date.parse(o?.checkedAt);return !Number.isFinite(checked)||checked>now+120000||now-checked>600000;}
  function productRows(data,id){const c=(data.catalog||[]).find(c=>c.id===id);return (data.offers||[]).filter(o=>o.productId===id&&c&&BASIC_KINDS.has(c.kind)&&o.kind===c.kind&&o.karat===c.karat&&Math.abs(o.weight-c.weight)<.000001);}
  function groupMerchants(rows){return [...new Set(rows.map(o=>o.store))].map(store=>({store,offers:rows.filter(o=>o.store===store)}));}
  function priceChange(o){const prev=o.previousPrice,at=Date.parse(o.previousCheckedAt),checked=Date.parse(o.checkedAt);return Number.isFinite(prev)&&prev>0&&Number.isFinite(at)&&at<checked?{percent:(o.listedPrice-prev)/prev*100,at:o.previousCheckedAt}:null;}
- if(typeof module!=='undefined')module.exports={validOffer,displayable,productRows,priceChange,safeSource,groupMerchants};
+ if(typeof module!=='undefined')module.exports={validOffer,displayable,productRows,priceChange,safeSource,groupMerchants,observationDelayed};
  if(typeof document==='undefined')return;
  let catalogData=null,selected='pound',refreshBusy=false,selectedStores=null;
  try{const saved=JSON.parse(sessionStorage.getItem('dhb-merchant-selection'));if(Array.isArray(saved))selectedStores=new Set(saved.filter(v=>typeof v==='string'));}catch(_){}
@@ -34,6 +35,7 @@
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
   const selectedRows=productRows(data,c.id).filter(o=>displayable(o)&&selectedStores?.has(o.store)&&(!$('stockOnly').checked||o.inStock===true));
   $('offersStatus').textContent=selectedRows.length?'أسعار المنتج بالجنيه المصري • راجع شمول الرسوم قبل الشراء':'السعر غير متاح حاليًا لهذا المنتج';
+  if(selectedRows.some(o=>observationDelayed(o)))$('offersStatus').textContent+=' • تأخر تحديث بعض الأسعار: لم يصل فحص جديد منذ أكثر من 10 دقائق؛ الأرقام آخر رصد وليست أسعارًا لحظية';
   renderRetailers(data);renderMerchantComparison(selectedRows,c);
   const cards=$('productOfferCards');cards.replaceChildren();
   selectedRows.forEach((o,i)=>{
@@ -45,7 +47,7 @@
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
    if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
    if(Number.isFinite(o.buybackPrice)&&o.buybackPrice>0){const diff=o.listedPrice-o.buybackPrice;card.append(element('div','liquidity-note','فرق التسييل: '+(diff>=0?'نقص ':'زيادة ')+f(Math.abs(diff))+' • الفرق بين السعرين المعلنين قبل أي رسوم إضافية.'));}
-   card.append(element('p','x-note','آخر فحص: '+t(o.checkedAt)+' بتوقيت القاهرة'));
+   card.append(element('p',observationDelayed(o)?'notice':'x-note',(observationDelayed(o)?'تحديث متأخر • ':'')+'آخر فحص: '+t(o.checkedAt)+' بتوقيت القاهرة'+(observationDelayed(o)?' • هذا آخر سعر مرصود، وليس تأكيدًا للسعر الحالي.':'')));
    const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+' • '+o.store+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
@@ -60,7 +62,7 @@
   const head=element('thead'),header=element('tr');header.append(element('th','','المقارنة'));
   groups.forEach(g=>{const th=element('th','',g.store);th.scope='col';header.append(th);});head.append(header);table.append(head);
   const body=element('tbody');
-  const metrics=[['الماركة',o=>o.brand||'غير منشورة'],['السعر المعلن',o=>f(o.listedPrice)],['التغير منذ الفحص السابق',o=>{const ch=priceChange(o);return ch?(ch.percent>0?'ارتفاع ':ch.percent<0?'انخفاض ':'ثابت ')+Math.abs(ch.percent).toFixed(2)+'% منذ '+t(ch.at):'غير متاح؛ لا توجد قراءة سابقة موثقة';}],['وقت آخر فحص (القاهرة)',o=>t(o.checkedAt)],['التوافر',o=>o.inStock===true?'متاح حسب الفحص':o.inStock===false?'غير متاح حسب الفحص':'غير مؤكد'],['الرسوم',o=>o.manufacturingIncluded===true&&o.taxIncluded===true&&o.stampIncluded===true?'المصنعية والضريبة والدمغة مشمولة؛ راجع الشحن':'قد تختلف الرسوم؛ راجع الإجمالي قبل الشراء']];
+  const metrics=[['الماركة',o=>o.brand||'غير منشورة'],['السعر المعلن',o=>f(o.listedPrice)],['التغير منذ الفحص السابق',o=>{const ch=priceChange(o);return ch?(ch.percent>0?'ارتفاع ':ch.percent<0?'انخفاض ':'ثابت ')+Math.abs(ch.percent).toFixed(2)+'% منذ '+t(ch.at):'غير متاح؛ لا توجد قراءة سابقة موثقة';}],['وقت آخر فحص (القاهرة)',o=>t(o.checkedAt)+(observationDelayed(o)?' • تحديث متأخر':'')],['التوافر',o=>o.inStock===true?'متاح حسب الفحص':o.inStock===false?'غير متاح حسب الفحص':'غير مؤكد'],['الرسوم',o=>o.manufacturingIncluded===true&&o.taxIncluded===true&&o.stampIncluded===true?'المصنعية والضريبة والدمغة مشمولة؛ راجع الشحن':'قد تختلف الرسوم؛ راجع الإجمالي قبل الشراء']];
   metrics.forEach(([label,read])=>{const tr=element('tr'),th=element('th','',label);th.scope='row';tr.append(th);groups.forEach(g=>{const td=element('td');g.offers.forEach(o=>{const line=element('div','merchant-offer-value');if(g.offers.length>1)line.append(element('span','merchant-offer-brand',o.brand+' • '));line.append(document.createTextNode(read(o)));td.append(line);});tr.append(td);});body.append(tr);});
   table.append(body);wrap.append(table);host.append(wrap,element('p','x-note','المقارنة لنفس الوزن والعيار؛ الماركة والتغليف والرسوم قد تختلف. نسبة التغير تقارن نفس عرض التاجر بفحصه السابق، وليست فرقًا بين تاجرين.'));
  }
@@ -92,7 +94,7 @@
    const available=productRows(data,id).filter(o=>displayable(o));
    const representative=available.find(o=>o.inStock===true)||available.find(o=>o.inStock!==false)||available[0];
    const link=element('a','product-summary-card');link.href=(window.DHB_BASE||'')+'products/'+id+'/';
-   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?representative.store+' • فحص '+t(representative.checkedAt)+' القاهرة':'انتظار السعر'));
+   link.append(element('span','label',c.name),element('strong','summary-price',representative?f(representative.listedPrice):'غير متاح'),element('span','small',weight(c)+' • عيار '+c.karat),element('span','small',representative?representative.store+' • فحص '+t(representative.checkedAt)+' القاهرة'+(observationDelayed(representative)?' • تحديث متأخر':''):'انتظار السعر'));
    link.append(element('span','summary-action','تفاصيل المنتج ←'));
    summary.append(link);
   });
