@@ -28,6 +28,7 @@
   const state = { mode: 'buy', by: 'money', edited: false, prices: null };
 
   function livePrice() {
+    if(!window.DHB_QUOTE.assess(state.quote).usable)return NaN;
     const p = state.prices, k = $('cKarat').value; if (!p) return NaN;
     const base = k === '18' ? p['24'] : p[k], f = k === '18' ? 18 / 24 : 1;
     return base ? (state.mode === 'buy' ? base.sell : base.buy) * f : NaN;
@@ -36,6 +37,7 @@
   function line(dl, label, value, cls) { const d = document.createElement('div'); if (cls) d.className = cls; const dt = document.createElement('dt'), dd = document.createElement('dd'); dt.textContent = label; dd.textContent = value; d.append(dt, dd); dl.append(d); }
 
   function render() {
+    $('cQuoteStatus').textContent=(state.edited?'سعر أدخلته بنفسك؛ ليس سعرًا حيًا.':window.DHB_QUOTE.describe(state.quote));
     const buy = state.mode === 'buy', by = buy ? $('cBy').value : 'grams';
     document.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mode === state.mode)));
     document.querySelectorAll('.buy-only').forEach(e => e.hidden = !buy);
@@ -71,10 +73,12 @@
   $('cBy').addEventListener('input',()=>{if(state.by!==$('cBy').value){state.by=$('cBy').value;$('cAmount').value='';}render();});
   ['cAmount', 'cMaking', 'cStamp', 'cVat'].forEach(id => $(id).addEventListener('input', render));
   window.addEventListener('gold-board-updated', e => {
-    const a = e.detail.sources.isagha, t = Date.parse(a && a.sourceTime);
-    state.prices = a && a.status === 'available' && Number.isFinite(t) && Date.now() - t <= 86400000 && t-Date.now()<=120000 ? a : null;
+    const a = e.detail.sources.isagha;state.quote=a;
+    state.prices = window.DHB_QUOTE.assess(a).usable ? a : null;
     fillPrice(); render();
   });
   $('cReset').addEventListener('click',()=>{state.mode='buy';state.by='money';state.edited=false;$('cBy').value='money';$('cKarat').value='21';['cAmount','cMaking','cStamp','cVat'].forEach(id=>$(id).value='');fillPrice();render();$('cKarat').dispatchEvent(new Event('input',{bubbles:true}));$('cAmount').focus();});
+  const ageRefresh=()=>{state.prices=window.DHB_QUOTE.assess(state.quote).usable?state.quote:null;fillPrice();render();};
+  setInterval(ageRefresh,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ageRefresh();});
   render();
 })();
