@@ -379,6 +379,7 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  .x-dock>a:not([aria-current=page]),.x-dock>details:not(.on):not([open])>summary{translate:0 0!important}
  .x-dock>[aria-current=page],.x-dock>details.on>summary,.x-dock>details[open]>summary{translate:0 -9px!important}
  .x-dock:has(>details[open])>[aria-current=page]{translate:0 0!important}
+ html:has(#calculator){scroll-behavior:auto}
  .x-dock>a,.x-dock>details>summary{margin-inline:calc(var(--d) * -.03)}
  .x-dock>a::before,.x-dock>details>summary::before{inset:-26%;opacity:.4}
  .x-dock>[aria-current=page]::before,.x-dock>details.on>summary::before{opacity:.65}
