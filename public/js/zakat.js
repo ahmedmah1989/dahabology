@@ -171,6 +171,8 @@
           // Exempt only if every condition of the contemporary zakat issues symposium (1st, Cairo) recommendation holds; user attests each.
           const c = it.adornmentChecks || {};
           if (typeof c.lawful !== 'boolean' || typeof c.immediateUse !== 'boolean' || typeof c.customaryAmount !== 'boolean' || typeof c.wearable !== 'boolean') { r.status = 'blocked'; block(it.id + ': adornment jewelry needs answers: lawful use, for present (not far-future) use, customary amount, still wearable'); continue; }
+          // Symposium item 2(e): an amount beyond the customary measure is zakatable only for the excess. The excess cannot be computed here, so no result is given.
+          if (c.lawful && c.immediateUse && c.wearable && !c.customaryAmount) { r.status = 'blocked'; block(it.id + ': amount beyond the customary measure: the symposium makes only the excess zakatable and the excess is not computed here, no result given'); continue; }
           if (c.lawful && c.immediateUse && c.customaryAmount && c.wearable) {
             counts = false;
             if (it.purposeChangeDate) { const cd = parse(it.purposeChangeDate); if (cd === null || cd < pd) { r.status = 'blocked'; block(it.id + ': change-of-purpose date invalid'); continue; } if (cd <= asOf) { counts = true; start = cd; } }
@@ -179,7 +181,7 @@
       } else if (it.type === 'broken') {
         // Symposium (not Elewa): broken jewelry usable only after re-melting is zakatable, new hawl from the break. Elewa does not address it.
         const bk = parse(it.brokenOn); if (bk === null || bk < pd || bk > asOf) { r.status = 'blocked'; block(it.id + ': broken jewelry needs the date it broke'); continue; }
-        if (it.plan !== 'melt-or-sell') { r.status = 'blocked'; block(it.id + ': broken jewelry kept for repair: Malik (Muwatta 675) says no zakat, the symposium says zakatable; no ruling by Elewa found, no result given'); continue; }
+        if (it.plan !== 'melt-or-sell') { r.status = 'blocked'; block(it.id + ': broken jewelry kept for repair: Malik (Muwatta 675) says no zakat when the owner intends to repair and wear it, the symposium makes jewelry that needs re-melting zakatable; Elewa gives no ruling for repair, no result given'); continue; }
         start = bk;
       } else if (it.purpose) { r.status = 'blocked'; block(it.id + ': purpose applies to jewelry only'); continue; }
       if (!counts) { r.status = 'exempt'; continue; }
