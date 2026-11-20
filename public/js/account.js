@@ -81,7 +81,10 @@ export async function validateSession() {
     const t = await freshToken();
     const u = await lookup(t);
     if (!u) { save(null); return null; }
-    if (!!u.emailVerified !== !!s.emailVerified) save({ ...load(), emailVerified: !!u.emailVerified });
+    // The saved token only carries email_verified from when it was issued. If the server now says verified but the saved
+    // session was not, get a fresh token first, or every write is refused until the old token expires.
+    if (u.emailVerified && !s.emailVerified) { const c = load(); c.expiresAt = 0; save(c); await freshToken(); }
+    else if (!!u.emailVerified !== !!s.emailVerified) save({ ...load(), emailVerified: !!u.emailVerified });
   } catch (e) {
     if (["USER_NOT_FOUND", "INVALID_ID_TOKEN", "TOKEN_EXPIRED", "CREDENTIAL_TOO_OLD_LOGIN_AGAIN", "USER_DISABLED", "PERMISSION_DENIED"].indexOf(e.code) >= 0) save(null);
   }
@@ -130,19 +133,26 @@ function requireVerified() {
   return s;
 }
 // Per-user documents live only under users/{uid}/... (matches firestore.rules).
+// Run a data call with a valid token. If the server refuses (token issued before verification), refresh once and retry.
+async function authed(fn) {
+  const s = requireVerified();
+  try { return await fn(s, await freshToken()); }
+  catch (e) {
+    if (e.code !== "PERMISSION_DENIED") throw e;
+    const c = load(); if (!c) throw e; c.expiresAt = 0; save(c);
+    return await fn(s, await freshToken());
+  }
+}
 export async function saveDoc(path, data) {
-  const s = requireVerified(); const t = await freshToken();
   const fields = { json: { stringValue: JSON.stringify(data) } };
-  await call(`${FS}/users/${s.uid}/${path}`, { fields }, "PATCH", t);
+  await authed((s, t) => call(`${FS}/users/${s.uid}/${path}`, { fields }, "PATCH", t));
 }
 export async function loadDoc(path) {
-  const s = requireVerified(); const t = await freshToken();
   try {
-    const d = await call(`${FS}/users/${s.uid}/${path}`, undefined, "GET", t);
+    const d = await authed((s, t) => call(`${FS}/users/${s.uid}/${path}`, undefined, "GET", t));
     return JSON.parse(d.fields.json.stringValue);
   } catch (e) { if (e.code === "NOT_FOUND" || e.code === "404") return null; throw e; }
 }
 export async function deleteDoc(path) {
-  const s = requireVerified(); const t = await freshToken();
-  await call(`${FS}/users/${s.uid}/${path}`, undefined, "DELETE", t);
+  await authed((s, t) => call(`${FS}/users/${s.uid}/${path}`, undefined, "DELETE", t));
 }
