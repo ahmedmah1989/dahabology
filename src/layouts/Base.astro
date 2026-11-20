@@ -56,6 +56,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
 
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
 <slot name="config" />
+<script is:inline src={asset('js/quote-state.js')}></script>
 {scripts.map(s => <script is:inline src={asset('js/' + s + '.js')}></script>)}
 <slot name="scripts" />
 <script is:inline>
