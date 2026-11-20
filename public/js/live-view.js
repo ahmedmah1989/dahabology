@@ -13,17 +13,19 @@ function render(){
  $('chartValue').textContent='—';
  if(!points.length){$('liveChartStatus').textContent=mode==='history'?'القراءات اليومية غير متاحة حاليًا.':'في انتظار أول قراءة للجلسة الحالية.';return;}
  $('chartValue').textContent=fmt(points.at(-1).value);
- if(points.length<2){$('liveChartStatus').textContent='وصلت أول قراءة. يظهر المسار عند وصول القراءة التالية.';return;}
  const values=points.map(p=>p.value),lo=Math.min(...values),hi=Math.max(...values),pad=Math.max((hi-lo)*.15,1),min=lo-pad,max=hi+pad;
+ const W=Math.max(200,host.clientWidth||720),H=250,L=8,R=W-76,TOP=24,BOTTOM=208,mid=(L+R)/2;
  const ns='http://www.w3.org/2000/svg',svg=document.createElementNS(ns,'svg');
- svg.setAttribute('viewBox','0 0 720 300');svg.setAttribute('role','img');svg.setAttribute('aria-label','حركة سعر الأونصة من '+fmt(values[0])+' إلى '+fmt(values.at(-1))+' دولار');svg.style='width:100%;display:block;direction:ltr';
+ svg.setAttribute('viewBox','0 0 '+W+' '+H);svg.setAttribute('role','img');svg.setAttribute('aria-label',points.length===1?'قراءة واحدة لسعر الأونصة: '+fmt(values[0])+' دولار':'حركة سعر الأونصة من '+fmt(values[0])+' إلى '+fmt(values.at(-1))+' دولار');svg.style='width:100%;display:block;direction:ltr';
  function el(tag,attrs,text){const e=document.createElementNS(ns,tag);Object.entries(attrs).forEach(([k,v])=>e.setAttribute(k,v));if(text)e.textContent=text;svg.append(e);return e;}
- for(let i=0;i<4;i++){const y=24+i*72;el('line',{x1:12,x2:630,y1:y,y2:y,stroke:'#ffffff15'});el('text',{x:642,y:y+5,fill:'#cdd8e8','font-size':14},fmt(max-(max-min)*i/3));}
- const path=points.map((p,i)=>(i?'L':'M')+(12+i/(points.length-1)*618).toFixed(2)+' '+(24+(max-p.value)/(max-min)*216).toFixed(2)).join(' ');
- el('path',{d:path+' L630 240 L12 240 Z',fill:'#efc66c12'});el('path',{d:path,fill:'none',stroke:'#efc66c','stroke-width':3,'stroke-linejoin':'round'});
- const label=p=>mode==='history'?p.label:new Date(p.label).toLocaleTimeString('ar-EG-u-nu-latn',{hour:'2-digit',minute:'2-digit'});
- el('text',{x:12,y:280,fill:'#cdd8e8','font-size':14},label(points[0]));el('text',{x:630,y:280,fill:'#cdd8e8','font-size':14,'text-anchor':'end'},label(points.at(-1)));
- host.append(svg);$('liveChartStatus').textContent=mode==='session'?'حركة الأونصة خلال جلستك • '+points.length+' قراءة':'آخر '+points.length+' قراءة يومية';
+ for(let i=0;i<4;i++){const y=TOP+i*(BOTTOM-TOP)/3;el('line',{x1:L,x2:R,y1:y,y2:y,stroke:'#ffffff15'});el('text',{x:R+8,y:y+4,fill:'#cdd8e8','font-size':12},fmt(max-(max-min)*i/3));}
+ const path=points.map((p,i)=>(i?'L':'M')+((points.length===1?mid:L+i/(points.length-1)*(R-L))).toFixed(2)+' '+(TOP+(max-p.value)/(max-min)*(BOTTOM-TOP)).toFixed(2)).join(' ');
+ if(points.length>1)el('path',{d:path+' L'+R+' '+BOTTOM+' L'+L+' '+BOTTOM+' Z',fill:'#efc66c12'});el('path',{d:path,fill:'none',stroke:'#efc66c','stroke-width':3,'stroke-linejoin':'round'});
+ if(points.length===1)el('circle',{cx:mid,cy:(TOP+BOTTOM)/2,r:5,fill:'#efc66c'});
+ const label=p=>mode==='history'?p.label:new Date(p.label).toLocaleTimeString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit'});
+ if(points.length===1)el('text',{x:mid,y:240,fill:'#cdd8e8','font-size':12,'text-anchor':'middle'},label(points[0]));
+ else{el('text',{x:L,y:240,fill:'#cdd8e8','font-size':12},label(points[0]));el('text',{x:R,y:240,fill:'#cdd8e8','font-size':12,'text-anchor':'end'},label(points.at(-1)));}
+ host.append(svg);$('liveChartStatus').textContent=mode==='session'?(points.length===1?'وصلت قراءة واحدة؛ النقطة تمثل السعر المرصود، وليست مسار حركة.':'حركة الأونصة خلال جلستك • '+points.length+' قراءة')+' • وقت آخر قراءة: '+new Date(points.at(-1).label).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+' القاهرة':'آخر '+points.length+' قراءة يومية';
 }
 render();
 $('chartSession').onclick=()=>{mode='session';render();};$('chartHistory').onclick=()=>{mode='history';render();};
