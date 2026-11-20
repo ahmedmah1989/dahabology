@@ -22,11 +22,11 @@
   const fmt=v=>v.toLocaleString('ar-EG-u-nu-latn',{maximumFractionDigits:3});
   const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
   let rows=[];
-  try{const saved=JSON.parse(sessionStorage.getItem(KEY));if(Array.isArray(saved))rows=saved.filter(o=>metrics(o)&&typeof o.name==='string').slice(0,3);}catch(_){}
+  try{const saved=JSON.parse(sessionStorage.getItem(KEY));if(Array.isArray(saved))rows=saved.filter(o=>metrics(o)&&typeof o.name==='string');}catch(_){}
   function save(){try{sessionStorage.setItem(KEY,JSON.stringify(rows));}catch(_){$('compareMessage').textContent='المقارنة تعمل هنا، لكن المتصفح منع الاحتفاظ بها عند الانتقال لصفحة أخرى.';}}
   function render(){
     const host=$('compareCards');host.replaceChildren();const winners=lowest(rows);
-    $('compareCount').textContent=rows.length+' من 3 منتجات';
+    $('compareCount').textContent=rows.length+' منتجات';
     $('compareEmpty').hidden=rows.length>0;
     $('compareSummary').textContent=rows.length<2?'أضف منتجين لتظهر المقارنة.':winners.length?'التكلفة موحّدة على جرام ذهب صافٍ عيار 24، حتى لو اختلف الوزن أو العيار.':'أكّد شمول إجمالي كل منتج للرسوم قبل ترتيب تكلفة الجرام الصافي.';
     rows.forEach((o,i)=>{
@@ -44,7 +44,6 @@
     e.preventDefault();
     const o={name:$('compareName').value.trim().slice(0,60)||'منتج '+(rows.length+1),weight:num($('compareWeight').value),karat:Number($('compareKarat').value),total:num($('compareTotal').value),buyback:$('compareBuyback').value.trim()?num($('compareBuyback').value):null,final:$('compareFinal').checked};
     if(!metrics(o)||(o.buyback!==null&&(!Number.isFinite(o.buyback)||o.buyback<0))){$('compareMessage').textContent='اكتب وزنًا وسعرًا أكبر من صفر، وسعر إعادة بيع صحيحًا إن أدخلته.';return;}
-    if(rows.length>=3){$('compareMessage').textContent='المقارنة تتسع لثلاثة منتجات. أزل منتجًا لإضافة غيره.';return;}
     rows.push(o);$('compareMessage').textContent='اتضاف المنتج للمقارنة.';save();render();$('compareForm').reset();
   });
   window.addEventListener('dhb-compare-add',e=>{

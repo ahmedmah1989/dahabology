@@ -1,7 +1,7 @@
 const assert=require('node:assert/strict');
-const {validOffer,displayable,productRows}=require('../public/js/services.js');
+const {validOffer,displayable,productRows,priceChange,safeSource,groupMerchants,observationDelayed}=require('../public/js/services.js');
 const now=Date.parse('2026-11-11T12:00:00Z');
-const offer={status:'observed',identityVerified:true,inStock:true,manufacturingIncluded:true,taxIncluded:true,stampIncluded:true,listedPrice:50000,sourceTime:'2026-11-11T11:59:00Z',checkedAt:'2026-11-11T12:00:00Z'};
+const offer={kind:'quarter',url:'https://merchant.example/product',weight:2,karat:21,status:'observed',identityVerified:true,inStock:true,manufacturingIncluded:true,taxIncluded:true,stampIncluded:true,listedPrice:50000,sourceTime:'2026-11-11T11:59:00Z',checkedAt:'2026-11-11T12:00:00Z'};
 assert.equal(validOffer(offer,now),true);
 assert.equal(validOffer({...offer,stampIncluded:null},now),false);
 assert.equal(validOffer({...offer,sourceTime:null},now),false);
@@ -9,6 +9,28 @@ assert.equal(validOffer({...offer,sourceTime:'2026-11-11T11:00:00Z'},now),false)
 assert.equal(validOffer({...offer,sourceTime:'2026-11-11T12:00:00'},now),false);
 assert.equal(displayable({...offer,identityVerified:false},now),false);
 assert.equal(displayable(offer,now+25*3600000),false);
-assert.equal(displayable({...offer,inStock:false},now),true); // A historical listed price is distinct from availability.
-assert.equal(productRows({offers:[{...offer,productId:'quarter'},{...offer,productId:'bar100'}]},'quarter').length,1);
-console.log('Final offer fee, timestamp and freshness gates passed.');
+assert.equal(displayable({...offer,inStock:false},now),true);
+for(const url of ['javascript:alert(1)','http://merchant.example','https://user:pass@merchant.example','garbage'])assert.equal(displayable({...offer,url},now),false);
+assert.equal(safeSource('https://merchant.example/path'),true);
+assert.equal(displayable({...offer,kind:'jewelry'},now),false);
+assert.equal(displayable({...offer,kind:'unknown'},now),false);
+assert.equal(displayable({...offer,checkedAt:'2026-11-11T12:00:00'},now),false);
+assert.equal(displayable({...offer,checkedAt:'2026-11-11T12:03:00Z'},now),false);
+const catalog=[{id:'quarter',kind:'quarter',weight:2,karat:21}];
+assert.equal(productRows({catalog,offers:[{...offer,productId:'quarter'},{...offer,productId:'quarter',weight:4},{...offer,productId:'bar100'}]},'quarter').length,1);
+assert.equal(priceChange(offer),null);
+assert.equal(priceChange({...offer,previousPrice:0,previousCheckedAt:'2026-11-10T12:00:00Z'}),null);
+assert.equal(priceChange({...offer,previousPrice:40000,previousCheckedAt:'2026-11-10T12:00:00Z'}).percent,25);
+assert.equal(priceChange({...offer,previousPrice:40000,previousCheckedAt:offer.checkedAt}),null);
+console.log('Verified basic offers, source safety, identity, freshness and truthful change gates passed.');
+
+// Dynamic merchant columns: no three-shop cap, one column per merchant, all its brands retained.
+const grouped=groupMerchants([{store:'one',brand:'A'},{store:'one',brand:'B'},...['two','three','four','five'].map(store=>({store,brand:'A'}))]);
+assert.equal(grouped.length,5);assert.equal(grouped[0].offers.length,2);
+assert.deepEqual(groupMerchants([]),[]);assert.equal(groupMerchants([{store:'one'}]).length,1);
+
+assert.equal(observationDelayed(offer,now),false);
+assert.equal(observationDelayed(offer,now+600000),false);
+assert.equal(observationDelayed(offer,now+600001),true);
+assert.equal(observationDelayed({...offer,checkedAt:null},now),true);
+assert.equal(observationDelayed({...offer,checkedAt:'2026-11-11T12:03:00Z'},now),true);
