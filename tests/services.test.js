@@ -1,5 +1,5 @@
 const assert=require('node:assert/strict');
-const {validOffer,displayable,productRows,priceChange,safeSource}=require('../public/js/services.js');
+const {validOffer,displayable,productRows,priceChange,safeSource,groupMerchants}=require('../public/js/services.js');
 const now=Date.parse('2026-11-11T12:00:00Z');
 const offer={kind:'quarter',url:'https://merchant.example/product',weight:2,karat:21,status:'observed',identityVerified:true,inStock:true,manufacturingIncluded:true,taxIncluded:true,stampIncluded:true,listedPrice:50000,sourceTime:'2026-11-11T11:59:00Z',checkedAt:'2026-11-11T12:00:00Z'};
 assert.equal(validOffer(offer,now),true);
@@ -23,3 +23,8 @@ assert.equal(priceChange({...offer,previousPrice:0,previousCheckedAt:'2026-11-10
 assert.equal(priceChange({...offer,previousPrice:40000,previousCheckedAt:'2026-11-10T12:00:00Z'}).percent,25);
 assert.equal(priceChange({...offer,previousPrice:40000,previousCheckedAt:offer.checkedAt}),null);
 console.log('Verified basic offers, source safety, identity, freshness and truthful change gates passed.');
+
+// Dynamic merchant columns: no three-shop cap, one column per merchant, all its brands retained.
+const grouped=groupMerchants([{store:'one',brand:'A'},{store:'one',brand:'B'},...['two','three','four','five'].map(store=>({store,brand:'A'}))]);
+assert.equal(grouped.length,5);assert.equal(grouped[0].offers.length,2);
+assert.deepEqual(groupMerchants([]),[]);assert.equal(groupMerchants([{store:'one'}]).length,1);
