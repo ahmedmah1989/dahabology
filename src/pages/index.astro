@@ -156,6 +156,10 @@ body::after{
 .hero-price{width:min(100%,390px);min-height:124px}
 .top,.ticker,.home-shortcuts{min-width:0;max-width:100%}
 .home-hint{position:relative;z-index:2;text-align:center;color:var(--muted);font-size:13px;margin:0 0 14px}
+.home-primary{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(100%,620px);margin:12px 0 0}
+.home-primary a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 8px;border:1.5px solid #efc66c88;border-radius:16px;background:#10213bcc;color:#fff;font-size:16px;font-weight:700;text-decoration:none}
+.home-primary a.go{background:linear-gradient(180deg,#f3d07a,#d4a643);color:#0a1628;border-color:#f3d07a}
+.home-primary a:focus-visible{outline:2px solid var(--gold-hot);outline-offset:3px}
 .home-shortcuts{position:relative;z-index:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:min(100%,620px);margin:12px 0 0}
 .home-shortcuts a{padding:12px 6px;text-align:center;text-decoration:none;border:1px solid #efc66c33;border-radius:16px;background:#10213bb3;color:#fff;font-size:14px}
 .home-shortcuts strong{display:block;color:var(--gold-hot);font-size:15px}.home-shortcuts span{display:block;font-size:12px;color:var(--muted)}
@@ -184,6 +188,10 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <span class="when" id="pSourceTime"></span>
   <span class="when" id="homeConnection" role="status"></span>
 </div>
+<nav class="home-primary" aria-label="أهم الإجراءات">
+  <a class="go" href={B+'calculator/'}>احسب بمبلغك</a>
+  <a href={B+'market/'}>تابع السوق</a>
+</nav>
 
 <main class="stage" id="stage" aria-label="أقسام دهبولوجي">
   <div class="rays"></div>
@@ -206,9 +214,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <div class="chip"><span>الأونصة $</span><b id="pOz">—</b><small id="pOzTime"></small></div>
 </div>
 <nav class="home-shortcuts" aria-label="ابدأ من هنا">
-  <a href={B+'market/'}><strong>تابع السوق</strong><span>بيع وشراء كل عيار</span></a>
   <a href={B+'products/'}><strong>اختار منتجك</strong><span>سبائك وجنيهات</span></a>
-  <a href={B+'calculator/'}><strong>احسب بمبلغك</strong><span>وزن وتكلفة واضحة</span></a>
   <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>
 </nav>
 
