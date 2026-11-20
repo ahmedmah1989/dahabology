@@ -97,7 +97,8 @@ const j = { id: 'j', type: 'jewelry', karat: '21', grams: 120, purchaseDate: '20
 eb(zakatElewa([j], E)); eb(zakatElewa([Object.assign({}, j, { purpose: 'adornment' })], E));
 const okc = { lawful: true, immediateUse: true, customaryAmount: true, wearable: true };
 assert.equal(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: okc })], E).rows[0].status, 'exempt');
-for (const k of ['lawful', 'immediateUse', 'customaryAmount']) assert.equal(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: Object.assign({}, okc, { [k]: false }) })], E).rows[0].status, 'counts');
+assert.equal(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: Object.assign({}, okc, { customaryAmount: false }) })], E).rows[0].status, 'blocked'); // symposium: only the excess is zakatable, not computed, so no number
+for (const k of ['lawful', 'immediateUse']) assert.equal(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: Object.assign({}, okc, { [k]: false }) })], E).rows[0].status, 'counts');
 eb(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: { lawful: true } })], E));
 // broken jewelry: needs the break date; counts from then
 eb(zakatElewa([Object.assign({}, j, { purpose: 'adornment', adornmentChecks: Object.assign({}, okc, { wearable: false }) })], E));
