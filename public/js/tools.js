@@ -156,7 +156,7 @@
     extras.forEach((text,i)=>x.fillText(text,540,1080+i*32));
     x.fillStyle='#e7bf67';x.font=F(600,25);
     x.fillText('وقت تسعيرة الذهب: '+window.DHB_QUOTE.when(a.sourceTime)+' القاهرة',540,1160);
-    x.fillText(window.DHB_QUOTE.assess(a).fresh?'تسعيرة حديثة وقت إنشاء الصورة':'آخر تسعيرة منشورة • متأخرة؛ تحقق قبل الاعتماد عليها',540,1198);
+    x.fillText(window.DHB_QUOTE.describe(a),540,1198);
     x.fillStyle='#acbdd2';x.font=F(500,23);
     x.fillText('إنشاء الصورة: '+window.DHB_QUOTE.when(new Date().toISOString())+' القاهرة',540,1235);
     x.fillText('سعر الجرام بالجنيه بدون مصنعية'+(last.transport?.mode==='cache'?(last.transport.offline?' • غير متصل؛ بيانات محفوظة':' • بيانات محفوظة'):last.transport?.mode!=='network'?' • الاتصال غير متحقق':''),540,1270);
