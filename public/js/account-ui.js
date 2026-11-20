@@ -1,4 +1,5 @@
-import * as A from "./account.js";
+// Load account.js with this file's own ?v= so a cached older account.js can never pair with a newer UI.
+const A = await import("./account.js" + new URL(import.meta.url).search);
 const $ = (id) => document.getElementById(id);
 let mode = "in";
 const show = (el, text, cls) => { el.hidden = !text; el.textContent = text || ""; el.className = "msg" + (cls ? " " + cls : ""); };
