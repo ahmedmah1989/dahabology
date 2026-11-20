@@ -5,13 +5,13 @@ const $=id=>document.getElementById(id),Q=window.DHB_QUOTE;
 let sources={},transport=null,busy=false;
 const positive=v=>Number.isFinite(v)&&v>0;
 function price(id,q,value,dec=2){$(id).textContent=Q.assess(q).usable&&positive(value)?value.toLocaleString('en-US',{maximumFractionDigits:dec}):'—';}
-function stamp(q){const a=Q.assess(q);return a.usable?(a.fresh?'تسعيرة حديثة':'تسعيرة متأخرة')+' • '+Q.when(q.sourceTime)+' القاهرة':'التسعيرة غير متاحة أو تجاوزت 24 ساعة';}
+function stamp(q){const a=Q.assess(q);return a.usable?'آخر تحديث: '+Q.when(q.sourceTime)+' القاهرة':'التسعيرة غير متاحة أو تجاوزت 24 ساعة';}
 function render(){
  const g=sources.isagha,m=sources.misr,oz=sources.gold;
  price('p21',g,g?.['21']?.sell,0);price('p24',g,g?.['24']?.sell);price('pUsd',m,m?.sell);price('pOz',oz,oz?.sell);
  $('pWhen').textContent='السعر للجرام بدون مصنعية';$('pSourceTime').textContent=Q.describe(g);
  $('pUsdTime').textContent=stamp(m);$('pOzTime').textContent=stamp(oz);
- $('homeConnection').textContent='ملف أسعار الجرام والبنك: '+Q.connection(transport);
+ {const c=Q.connection(transport);$('homeConnection').textContent=c?'ملف أسعار الجرام والبنك: '+c:'';}
 }
 async function json(url){const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return {body:await r.json(),mode:r.headers.get('X-DHB-Transport')||(navigator.serviceWorker?.controller?'unverified':'network'),online:r.headers.get('X-DHB-Online-At')};}finally{clearTimeout(timer);}}
 async function refresh(){
