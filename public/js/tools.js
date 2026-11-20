@@ -43,7 +43,10 @@
       grams: rows.reduce((s, r) => s + r.g, 0), pure: rows.reduce((s, r) => s + r.g * PURITY[r.k], 0),
     };
   }
-  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet };
+  function percentageSuffix(value, format) {
+    return Number.isFinite(value) ? ' (' + format(value) + '%)' : ' (النسبة غير متاحة)';
+  }
+  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet, percentageSuffix };
   if (typeof document === 'undefined') return;
 
   const $ = id => document.getElementById(id);
@@ -98,14 +101,14 @@
       b.addEventListener('click', () => { if (confirm('حذف هذه القطعة من دهبي؟')) { save(load().filter(i => i.id !== r.id)); walletRender(); } });
       it.append(
         piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k), piece('span', 'v', r.now === null ? '—' : egp(r.now)),
-        piece('span', 'w', nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)), piece('span', 'd' + (r.diff === null ? '' : r.diff >= 0 ? ' up' : ' dn'), r.diff === null ? '' : signed(r.diff) + ' (' + signed(r.percent, 1) + '%)'),
+        piece('span', 'w', nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)), piece('span', 'd' + (r.diff === null ? '' : r.diff >= 0 ? ' up' : ' dn'), r.diff === null ? '' : signed(r.diff) + percentageSuffix(r.percent, v => signed(v, 1))),
         piece('span', 'p', ''), b);
       body.append(it);
     });
     set('walNow', items.length ? (w.now === null ? '—' : egp(w.now)) : '0 جنيه');
     set('walPaid', items.length ? egp(w.paid) : '—');
     set('walWeight', items.length ? nf(w.grams, 3) + ' جم' : '—');
-    const d = $('walDiff'); d.textContent = w.diff === null ? '' : signed(w.diff) + ' (' + signed(w.percent, 1) + '%)'; d.className = 'chg' + (w.diff === null ? '' : w.diff >= 0 ? ' up' : ' dn');
+    const d = $('walDiff'); d.textContent = w.diff === null ? '' : signed(w.diff) + percentageSuffix(w.percent, v => signed(v, 1)); d.className = 'chg' + (w.diff === null ? '' : w.diff >= 0 ? ' up' : ' dn');
     set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
   }
   if ($('walRows')) {
