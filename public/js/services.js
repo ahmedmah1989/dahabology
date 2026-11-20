@@ -43,7 +43,7 @@
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
    if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
    if(Number.isFinite(o.buybackPrice)&&o.buybackPrice>0){const diff=o.listedPrice-o.buybackPrice;card.append(element('div','liquidity-note','فرق التسييل: '+(diff>=0?'نقص ':'زيادة ')+f(Math.abs(diff))+' • الفرق بين السعرين المعلنين قبل أي رسوم إضافية.'));}
-   const source=element('a','offer-source','المصدر: '+o.store+' ↗');source.href=o.url;source.target='_blank';source.rel='noopener noreferrer';card.append(source,element('p','x-note','آخر فحص: '+t(o.checkedAt)+' بتوقيت القاهرة'),element('p','x-note',o.sourceTime?'وقت تسعير المصدر: '+t(o.sourceTime):'وقت تسعير التاجر غير منشور؛ آخر فحص ليس وقت تغيير السعر.'));
+   card.append(element('p','x-note','آخر فحص: '+t(o.checkedAt)+' بتوقيت القاهرة'));
    const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+' • '+o.store+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
@@ -59,7 +59,7 @@
   const body=element('tbody');
   const metrics=[['الماركة',o=>o.brand||'غير منشورة'],['السعر المعلن',o=>f(o.listedPrice)],['التغير منذ الفحص السابق',o=>{const ch=priceChange(o);return ch?(ch.percent>0?'ارتفاع ':ch.percent<0?'انخفاض ':'ثابت ')+Math.abs(ch.percent).toFixed(2)+'% منذ '+t(ch.at):'غير متاح؛ لا توجد قراءة سابقة موثقة';}],['وقت آخر فحص (القاهرة)',o=>t(o.checkedAt)],['التوافر',o=>o.inStock===true?'متاح حسب الفحص':o.inStock===false?'غير متاح حسب الفحص':'غير مؤكد'],['الرسوم',o=>o.manufacturingIncluded===true&&o.taxIncluded===true&&o.stampIncluded===true?'المصنعية والضريبة والدمغة مشمولة؛ راجع الشحن':'قد تختلف الرسوم؛ راجع الإجمالي قبل الشراء']];
   metrics.forEach(([label,read])=>{const tr=element('tr'),th=element('th','',label);th.scope='row';tr.append(th);rows.forEach(o=>tr.append(element('td','',read(o))));body.append(tr);});
-  const tr=element('tr'),th=element('th','','المصدر');th.scope='row';tr.append(th);rows.forEach(o=>{const td=element('td'),a=element('a','','صفحة التاجر ↗');a.href=o.url;a.target='_blank';a.rel='noopener noreferrer';td.append(a);tr.append(td);});body.append(tr);table.append(body);wrap.append(table);host.append(wrap,element('p','x-note','المقارنة لنفس الوزن والعيار؛ الماركة والتغليف والرسوم قد تختلف. نسبة التغير تقارن نفس عرض التاجر بفحصه السابق، وليست فرقًا بين تاجرين.'));
+  table.append(body);wrap.append(table);host.append(wrap,element('p','x-note','المقارنة لنفس الوزن والعيار؛ الماركة والتغليف والرسوم قد تختلف. نسبة التغير تقارن نفس عرض التاجر بفحصه السابق، وليست فرقًا بين تاجرين.'));
  }
 
  function renderRetailers(data){
