@@ -354,3 +354,16 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
 
 .retailer-section{margin-top:28px;scroll-margin-top:90px}.retailer-section>h2{text-align:center;color:#f5d58f}.retailer-status-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.retailer-status{min-width:0;padding:16px 12px;border:1px solid #ffffff1c;border-radius:18px;background:#10213b99;text-align:center}.retailer-status.available{border-color:#efc66c55;background:linear-gradient(140deg,#263b59,#0c1a2f)}.retailer-status h3{font-size:18px;color:#fff;margin:0}.retailer-status p{font-size:14px;color:#e9c979;margin:8px 0}.retailer-status .x-note{font-size:12px;display:block;line-height:1.8}.retailer-section .retail-card h3{font-size:19px;line-height:1.7}.retailer-section .retail-facts{overflow-wrap:anywhere}
 @media(min-width:760px){.retailer-status-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+/* ---------- visible sideways-scroll cues ---------- */
+.hs-target{--hs-fade:34px}
+.hs-target.hs-more-end:not(.hs-more-start){-webkit-mask-image:linear-gradient(to left,#000 calc(100% - var(--hs-fade)),transparent);mask-image:linear-gradient(to left,#000 calc(100% - var(--hs-fade)),transparent)}
+.hs-target.hs-more-start:not(.hs-more-end){-webkit-mask-image:linear-gradient(to right,#000 calc(100% - var(--hs-fade)),transparent);mask-image:linear-gradient(to right,#000 calc(100% - var(--hs-fade)),transparent)}
+.hs-target.hs-more-start.hs-more-end{-webkit-mask-image:linear-gradient(to right,transparent,#000 var(--hs-fade),#000 calc(100% - var(--hs-fade)),transparent);mask-image:linear-gradient(to right,transparent,#000 var(--hs-fade),#000 calc(100% - var(--hs-fade)),transparent)}
+.hs-bar{display:flex;align-items:center;gap:12px;margin:2px 4px 10px;color:#efc66c;font-size:13px;font-weight:600}
+.hs-bar[hidden]{display:none}
+.hs-hint{white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.hs-hint:before{content:'\2194';font-size:17px;line-height:1}
+.hs-track{position:relative;flex:1;height:8px;border-radius:99px;background:#efc66c2e;border:1px solid #efc66c55;overflow:hidden}
+.hs-thumb{position:absolute;top:0;bottom:0;border-radius:99px;background:linear-gradient(90deg,#f5d58f,#d7aa51)}
+.hs-target::-webkit-scrollbar{display:none}
