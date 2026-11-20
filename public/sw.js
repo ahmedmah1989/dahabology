@@ -2,7 +2,7 @@
    Always tries the network first, so prices and pages are never served stale while online.
    Offline, it falls back to the last copy it saw: pages, styles, scripts, and the last price
    snapshots (which keep their original source times, so nothing old is shown as new). */
-const CACHE = 'dhb-v5';
+const CACHE = 'dhb-v6';
 const isData = u => /\/data\/[\w-]+\.json$/.test(u.pathname);
 
 self.addEventListener('install', () => self.skipWaiting());
@@ -23,13 +23,20 @@ self.addEventListener('fetch', e => {
     fresh.searchParams.set('_dhb_page', Date.now().toString());
     networkRequest = new Request(fresh.href, { cache: 'no-store', credentials: 'same-origin', redirect: 'follow' });
   }
+  function tagged(res,mode){
+    if(!data||!res||res.type==='opaque')return res;
+    const headers=new Headers(res.headers);headers.set('X-DHB-Transport',mode);
+    if(mode==='network')headers.set('X-DHB-Online-At',new Date().toISOString());
+    return new Response(res.body,{status:res.status,statusText:res.statusText,headers});
+  }
   const response = fetch(networkRequest).then(async res => {
+    res=tagged(res,'network');
     if (res.ok) {
       const copy = res.clone();
       await caches.open(CACHE).then(c => c.put(key, copy)).catch(() => {});
     }
     return res;
-  }).catch(() => caches.match(key).then(hit => hit || Response.error()));
+  }).catch(() => caches.match(key).then(hit => hit ? tagged(hit,'cache') : Response.error()));
   e.respondWith(
     response
   );
