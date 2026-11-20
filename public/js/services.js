@@ -35,7 +35,6 @@
   $('productPermalink').href=(window.DHB_BASE||'')+'products/'+c.id+'/';
   const selectedRows=productRows(data,c.id).filter(o=>displayable(o)&&selectedStores?.has(o.store)&&(!$('stockOnly').checked||o.inStock===true));
   $('offersStatus').textContent=selectedRows.length?'أسعار المنتج بالجنيه المصري • راجع شمول الرسوم قبل الشراء':'السعر غير متاح حاليًا لهذا المنتج';
-  if(selectedRows.some(o=>observationDelayed(o)))$('offersStatus').textContent+=' • تأخر تحديث بعض الأسعار: لم يصل فحص جديد منذ أكثر من 10 دقائق؛ الأرقام آخر رصد وليست أسعارًا لحظية';
   renderRetailers(data);renderMerchantComparison(selectedRows,c);
   const cards=$('productOfferCards');cards.replaceChildren();
   selectedRows.forEach((o,i)=>{
@@ -47,7 +46,7 @@
    lines.forEach(([label,value])=>{const item=element('div');item.append(element('dt','',label),element('dd','',value));facts.append(item);});card.append(facts);
    if(Number.isFinite(o.buybackPrice))card.append(element('p','x-note','إعادة الشراء: '+f(o.buybackPrice)+' • وفق الفحص وشروط التغليف'));
    if(Number.isFinite(o.buybackPrice)&&o.buybackPrice>0){const diff=o.listedPrice-o.buybackPrice;card.append(element('div','liquidity-note','فرق التسييل: '+(diff>=0?'نقص ':'زيادة ')+f(Math.abs(diff))+' • الفرق بين السعرين المعلنين قبل أي رسوم إضافية.'));}
-   card.append(element('p',observationDelayed(o)?'notice':'x-note',(observationDelayed(o)?'تحديث متأخر • ':'')+'آخر فحص: '+t(o.checkedAt)+' بتوقيت القاهرة'+(observationDelayed(o)?' • هذا آخر سعر مرصود، وليس تأكيدًا للسعر الحالي.':'')));
+   card.append(element('p','x-note','آخر تحديث: '+t(o.checkedAt)+' بتوقيت القاهرة'));
    const compare=element('button','x-btn ghost','أضف للمقارنة');compare.type='button';compare.addEventListener('click',()=>window.dispatchEvent(new CustomEvent('dhb-compare-add',{detail:{name:c.name+' • '+o.store+(o.brand&&o.brand!=='El Galla'?' • '+o.brand:''),weight:c.weight,karat:c.karat,total:o.listedPrice,buyback:Number.isFinite(o.buybackPrice)?o.buybackPrice:null,final:false}})));card.append(compare);
    cards.append(card);
   });
