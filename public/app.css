@@ -378,6 +378,7 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  .x-dock::before{inset:-34px calc(50% - 50vw) calc(-12px - env(safe-area-inset-bottom)) calc(50% - 50vw);background:#0a1628cc;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);-webkit-mask-image:linear-gradient(to top,#000 0,#000 52%,#0000);mask-image:linear-gradient(to top,#000 0,#000 52%,#0000)}
  .x-dock>a:not([aria-current=page]),.x-dock>details:not(.on):not([open])>summary{translate:0 0!important}
  .x-dock>[aria-current=page],.x-dock>details.on>summary,.x-dock>details[open]>summary{translate:0 -9px!important}
+ .x-dock:has(>details[open])>[aria-current=page]{translate:0 0!important}
  .x-dock>a,.x-dock>details>summary{margin-inline:calc(var(--d) * -.03)}
  .x-dock>a::before,.x-dock>details>summary::before{inset:-26%;opacity:.4}
  .x-dock>[aria-current=page]::before,.x-dock>details.on>summary::before{opacity:.65}
