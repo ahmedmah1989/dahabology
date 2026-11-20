@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import { ASSET_VERSION } from '../lib/site.js';
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 ---
 <Base page="wallet" path="account-preview/" informational={true} heading="حسابي"
@@ -78,5 +79,5 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <li>لا يوجد حالياً دعم مباشر بالهاتف أو الدردشة. الخطوات أعلاه هي ما نقدمه الآن.</li>
 </ul></details>
 </section>
-<script type="module" src={base + '/js/account-ui.js'}></script>
+<script type="module" src={base + '/js/account-ui.js?v=' + ASSET_VERSION}></script>
 </Base>
