@@ -73,6 +73,20 @@ async function freshToken() {
   return session.idToken;
 }
 
+// A saved session can outlive its account (deleted in the console, disabled, token revoked). Ask the server on page load;
+// only a definite "no such user / bad token" answer clears it. A network failure keeps it.
+export async function validateSession() {
+  const s = load(); if (!s) return currentUser();
+  try {
+    const t = await freshToken();
+    const u = await lookup(t);
+    if (!u) { save(null); return null; }
+    if (!!u.emailVerified !== !!s.emailVerified) save({ ...load(), emailVerified: !!u.emailVerified });
+  } catch (e) {
+    if (["USER_NOT_FOUND", "INVALID_ID_TOKEN", "TOKEN_EXPIRED", "CREDENTIAL_TOO_OLD_LOGIN_AGAIN", "USER_DISABLED", "PERMISSION_DENIED"].indexOf(e.code) >= 0) save(null);
+  }
+  return currentUser();
+}
 export function currentUser() { load(); return publicUser(); }
 export function onChange(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 
