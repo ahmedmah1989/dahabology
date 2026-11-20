@@ -5,7 +5,8 @@ import Head from '../components/Head.astro';
 import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
 import { B, DATA, PAGES, page, ASSET_VERSION } from '../lib/site.js';
-const HOME_PAGES = [...PAGES, page('about')];
+// The account preview is home-only for now (not in PAGES, so not in the dock, nav or sitemap).
+const HOME_PAGES = [...PAGES, page('about'), { k: 'account-preview', t: 'حسابي', d: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0' }];
 const logo = `url(${B}assets/logo-900.webp?v=${ASSET_VERSION})`;
 const emblem = `url(${B}assets/emblem.webp?v=${ASSET_VERSION})`;
 ---
@@ -216,7 +217,6 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 <nav class="home-shortcuts" aria-label="ابدأ من هنا">
   <a href={B+'products/'}><strong>اختار منتجك</strong><span>سبائك وجنيهات</span></a>
   <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>
-  <a href={B+'account-preview/'} style="grid-column:1/-1"><strong>حسابي (تجريبي)</strong><span>سجّل الدخول واحفظ قطع الذهب</span></a>
 </nav>
 
 <AssistantWelcome compact />
