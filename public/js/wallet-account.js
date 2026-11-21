@@ -165,8 +165,14 @@
       }, 'walMsg', 'walLogin');
       } catch (e) {
         // The row was not saved. An image written only for this attempt must not be left behind.
-        if (wroteImage) { try { (await lib()).deleteDoc('gold/inv_' + wroteImage); INV.session().saved = null; } catch (_) {} }
+        if (wroteImage) { try { await dropImageIfUnused(wroteImage); INV.session().saved = null; } catch (_) {} }
         throw e;
+      }
+      if (r && photo && !wroteImage && b.rec.invoiceImage) {
+        // Reused image: confirm it still exists after the row was saved; if another tab removed it meanwhile, drop the dangling pointer.
+        let ex = null; try { ex = await (await lib()).loadDoc('gold/inv_' + b.rec.invoiceImage.id); } catch (_) { ex = true; }
+        if (!ex) { try { await writeAccount(items => { const cur = Array.isArray(items) ? items : []; return { items: cur.map(i => { if (!i || i.id !== b.rec.id || !i.invoiceImage) return i; const n = Object.assign({}, i); delete n.invoiceImage; return n; }) }; }, 'walMsg', 'walLogin'); } catch (_) {}
+          INV.session().saved = null; say('walMsg', 'القطعة اتحفظت لكن صورة الفاتورة كانت اتحذفت من مكان تاني، فاتحفظت من غير صورة.', 'err'); resetForm(); INV.afterSave(); return; }
       }
       if (r) {
         say('walMsg', was ? 'اتعدّلت في حسابك.' : (photo ? 'تمت الإضافة بنجاح.' : 'اتحفظت في حسابك.'), 'ok'); resetForm();
@@ -190,6 +196,12 @@
   };
 
   // ---- invoice image at row level: view, download, delete image (the row stays) ----
+  // Remove a stored image only if, on the NEWEST list, no row points at it. Returns true if removed or already gone.
+  async function dropImageIfUnused(iid) {
+    const L = await lib(), d = await L.loadDoc('gold/items');
+    if (refs(d && d.items, iid, null)) return 'kept';
+    await L.deleteDoc('gold/inv_' + iid); return 'removed';
+  }
   const refs = (items, iid, exceptRow) => (Array.isArray(items) ? items : []).some(i => i && i.id !== exceptRow && i.invoiceImage && i.invoiceImage.id === iid);
   async function loadImage(iid) {
     const L = await lib(), d = await L.loadDoc('gold/inv_' + iid);
@@ -221,7 +233,7 @@
       }, 'walMsg', 'walLogin');
       if (!r) return;
       if (r.gone) { await refresh(); say('walMsg', 'مفيش صورة على السطر ده.', 'ok'); return; }
-      if (last) { try { await (await lib()).deleteDoc('gold/inv_' + iid); say('walMsg', 'اتحذفت صورة الفاتورة. السطر زي ما هو.', 'ok'); } catch (e) { say('walMsg', 'اتشالت الصورة من السطر لكن تعذّر مسحها من التخزين. جرّب تحذف تاني بعدين.', 'err'); } }
+      if (last) { try { const k = await dropImageIfUnused(iid); say('walMsg', k === 'kept' ? 'اتشالت الصورة من السطر. الصورة لسه مستخدمة في قطعة تانية فاتسابت.' : 'اتحذفت صورة الفاتورة. السطر زي ما هو.', 'ok'); } catch (e) { say('walMsg', 'اتشالت الصورة من السطر لكن تعذّر مسحها من التخزين. جرّب تحذف تاني بعدين.', 'err'); } }
       else say('walMsg', 'اتشالت الصورة من السطر. نفس الصورة لسه مرتبطة بقطعة تانية من نفس الفاتورة.', 'ok');
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر حذف الصورة. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };
@@ -235,7 +247,7 @@
         if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
         if (now.invoiceImage) { gone = now.invoiceImage.id; lastRef = !refs(cur, gone, id); }
         return { items: removeItem(cur, id) }; }, 'walMsg', 'walLogin');
-      if (r && !r.already && gone && lastRef) { try { await (await lib()).deleteDoc('gold/inv_' + gone); } catch (_) { say('walMsg', 'اتحذف السطر لكن تعذّر مسح صورة الفاتورة من التخزين.', 'err'); return; } }
+      if (r && !r.already && gone && lastRef) { try { await dropImageIfUnused(gone); } catch (_) { say('walMsg', 'اتحذف السطر لكن تعذّر مسح صورة الفاتورة من التخزين.', 'err'); return; } }
       if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
     catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };

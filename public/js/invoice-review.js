@@ -18,7 +18,11 @@ async function ocrFile(file) {
     workerPath: ENGINE + "worker.min.js", corePath: ENGINE, langPath: ENGINE + "lang", gzip: false, workerBlobURL: false,
   });
   try {
-    const r = await w.recognize(file, {}, { text: true, blocks: true });
+    // Big phone photos read worse than a mid-size copy of the same photo (text far above ~30 px tall confuses the reader), so read a downscaled copy.
+    let src = file;
+    try { const bm = await createImageBitmap(file), k = Math.min(1, 1200 / Math.max(bm.width, bm.height));
+      if (k < 1) { const c = document.createElement("canvas"); c.width = Math.round(bm.width * k); c.height = Math.round(bm.height * k); c.getContext("2d").drawImage(bm, 0, 0, c.width, c.height); src = await new Promise((r) => c.toBlob(r, "image/png")) || file; } } catch (_) { src = file; }
+    const r = await w.recognize(src, {}, { text: true, blocks: true });
     const words = (r.data.blocks || []).flatMap((b) => b.paragraphs).flatMap((p) => p.lines).flatMap((l) => l.words).filter((x) => /\d/.test(x.text));
     return { text: r.data.text || "", minDigitConfidence: words.length ? Math.min(...words.map((x) => x.confidence)) : 0 };
   } finally { await w.terminate(); }
