@@ -19,7 +19,15 @@ function connection(t){
  if(t.mode==='cache')return (t.offline?'غير متصل؛ نعرض بيانات محفوظة':'تعذر جلب أحدث ملف؛ نعرض بيانات محفوظة')+stamp;
  return (t.offline?'غير متصل؛ تعذر فحص الأسعار':'تعذر التحقق من أحدث الأسعار')+stamp;
 }
-const api={assess,when,describe,connection};
+// Last published figure of a quote that is too old to use. Display only: callers must not feed it into any calculation.
+function lastPublished(q,label,unit,now=Date.now()){
+ const t=typeof q?.sourceTime==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(q.sourceTime)?Date.parse(q.sourceTime):NaN;
+ const v=Number(q?.sell);
+ if(q?.status!=='available'||!Number.isFinite(t)||!(v>0)||assess(q,now).usable||t>now+120000)return '';
+ const d=new Date(t).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
+ return 'آخر سعر منشور ('+label+'): '+v.toLocaleString('en-US',{maximumFractionDigits:2})+' '+unit+'، '+d+' بتوقيت القاهرة. أقدم من 24 ساعة، فمش داخل في أي حساب.';
+}
+const api={assess,when,describe,connection,lastPublished};
 if(typeof module!=='undefined')module.exports=api;
 if(typeof window!=='undefined')window.DHB_QUOTE=api;
 })();

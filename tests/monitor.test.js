@@ -30,3 +30,12 @@ assert.equal(assess(sources,now).usable,false);
 console.log('Timestamp, stale bank quote, missing time, future time and invalid price gates passed.');
 sources.misr.sell=53;sources.misr.sourceTime='2026-11-11T12:00:00';
 assert.equal(assess(sources,now).usable,false);
+{
+  const {impliedFromGold} = require('../public/js/monitor.js');
+  const now = Date.now(), iso = t => new Date(t).toISOString();
+  const S = {isagha:{status:'available',sourceTime:iso(now-1000),'24':{sell:6251.5}}, gold:{status:'available',sourceTime:iso(now-1000),sell:3538.58}, misr:{status:'available',sourceTime:iso(now-30*3600e3),sell:53.87}};
+  equal(impliedFromGold(S, now), 6251.5/(3538.58/OUNCE));
+  assert.equal(require('../public/js/monitor.js').assess(S, now).usable, false);
+  S.gold.sourceTime = iso(now-30*3600e3); assert.equal(impliedFromGold(S, now), null);
+  S.gold.sourceTime = iso(now-1000); S.isagha['24'].sell = 0; assert.equal(impliedFromGold(S, now), null);
+}

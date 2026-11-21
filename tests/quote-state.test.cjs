@@ -11,3 +11,13 @@ assert.match(Q.connection({mode:'cache',offline:false}),/تعذر جلب/);
 assert.equal(Q.connection({mode:'network'}),'');
 assert.match(Q.connection({mode:'unavailable',offline:false}),/تعذر التحقق/);
 });
+test('last published stale quote is display only: labelled, absent when usable or invalid',()=>{
+const old={status:'available',sell:53.87,sourceTime:new Date(now-30*3600000).toISOString()};
+const t=Q.lastPublished(old,'بنك مصر','جنيه للدولار',now);
+assert.match(t,/53\.87/);assert.match(t,/بنك مصر/);assert.match(t,/أقدم من 24 ساعة/);assert.match(t,/مش داخل في أي حساب/);
+assert.equal(Q.assess(old,now).usable,false);
+assert.equal(Q.lastPublished({...old,sourceTime:new Date(now-1000).toISOString()},'x','y',now),'');
+assert.equal(Q.lastPublished({...old,sell:0},'x','y',now),'');
+assert.equal(Q.lastPublished({...old,status:'unavailable'},'x','y',now),'');
+assert.equal(Q.lastPublished({...old,sourceTime:'2026-11-19T11:20:47'},'x','y',now),'');
+});

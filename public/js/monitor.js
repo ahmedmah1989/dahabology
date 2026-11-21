@@ -12,6 +12,12 @@
       fxPercent: (local24 / gramUSD / bankSell - 1) * 100 };
   }
 
+  // Implied dollar uses only the local 24k price and the global ounce. It does not use the bank rate.
+  function impliedFromGold(sources, now = Date.now()) {
+    const a = sources?.isagha, g = sources?.gold, l = a?.['24']?.sell, o = g?.sell;
+    if (!quoteUsableAt(a, now) || !quoteUsableAt(g, now) || !(l > 0) || !(o > 0)) return null;
+    return l / (o / OUNCE);
+  }
   function assess(sources, now = Date.now()) {
     const quotes = [sources?.isagha, sources?.misr, sources?.gold];
     const times = quotes.map(q => validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN);
@@ -22,8 +28,9 @@
     const fresh = times.every(t => now-t <= 300000) && Math.max(...times)-Math.min(...times) <= 300000;
     return {usable:true, fresh, reason:'الحساب قبل رسوم المنتج النهائي.'};
   }
+  function quoteUsableAt(q,now){return quoteUsable(q,now);}
   function quoteUsable(q,now=Date.now()) {const t=validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN;return q?.status==='available' && Number.isFinite(t) && t<=now+120000 && now-t<=86400000;}
-  if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable};
+  if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable,impliedFromGold};
   if (typeof document === 'undefined') return;
   const $ = id => (document.getElementById(id)||document.createElement('div'));
   const state = {sources:{}, generatedAt:null, lastCheck:null, busy:false, dealerEdited:false, transport:null};
@@ -53,6 +60,7 @@
     const result=quality.usable?calculate(g.sell,b.sell,a['24'].sell,a['21'].sell):null;
     const map={gapEGP:[result?.gapEGP],gapPercent:[result?.gapPercent,'%'],gapUSD:[result?.gapUSD,' دولار'],implied:[result?.implied],fxGap:[result?.fxGap],fxPercent:[result?.fxPercent,'%'],global24:[result?.globalEGP],global21:[result?.global21]};
     Object.entries(map).forEach(([id,args])=>$(id).textContent=fmt(...args));
+    {const imp=result?result.implied:impliedFromGold(state.sources);$('implied').textContent=fmt(imp);$('impliedNote').textContent=Number.isFinite(imp)?'محسوب من سعر الصاغة عيار 24 (آي صاغة) والأونصة العالمية فقط، من غير سعر البنك. مش سعر مُعلن لدولار.':'';}
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
     $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
