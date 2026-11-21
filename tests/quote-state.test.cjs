@@ -30,6 +30,14 @@ assert.equal(Q.lastPublished({...old,sourceTime:'2026-11-19T11:20:47'},'x','y',n
   assert.equal(Q2.assess(cbe,now).usable,false);
   assert.equal(Q2.official({...cbe,status:'unavailable'},now),null);
   assert.equal(Q2.official({...cbe,quoteDate:'2026-12-30'},now),null);
+  assert.equal(Q2.official({...cbe,quoteDate:'2026-11-22'},now),null); // tomorrow in Cairo
+  assert.ok(Q2.official({...cbe,quoteDate:'2026-11-21'},now)); // today
+  assert.equal(Q2.official({...cbe,quoteDate:'1970-01-01'},now),null);
+  assert.equal(Q2.official({...cbe,quoteDate:'2025-11-19'},now),null);
+  assert.equal(Q2.official({...cbe,quoteDate:'2026-11-09'},now),null); // 12 days old
+  assert.ok(Q2.official({...cbe,quoteDate:'2026-11-12'},now)); // 9 days, long holiday
+  assert.match(o.text,/2026/);
+  assert.equal(Q2.official({...cbe,quoteDate:'2026-02-31'},now),null);
   assert.equal(Q2.official({...cbe,quoteDate:'bad'},now),null);
   assert.equal(Q2.official({...cbe,sell:0},now),null);
 }

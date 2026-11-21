@@ -52,7 +52,7 @@
     if (blockers.length) return { status: 'blocked', blockers };
 
     const rows = [];
-    for (const it of items) {
+    for (const it of items.filter((i) => !(i && i.metal === 'silver'))) { // silver pieces are not part of the gold calculation
       const r = { id: it.id, pure: 0, start: null, status: '', note: '' }; rows.push(r);
       const pur = KARAT[it.karat], g = Number(it.grams), pd = parse(it.purchaseDate);
       if (!pur || !(g > 0) || pd === null) { r.status = 'blocked'; block(it.id + ': karat, weight or purchase date missing or invalid'); continue; }
@@ -158,7 +158,7 @@
     if (!Array.isArray(items) || (!items.length && !(o.otherZakatableNet > 0))) block('No items.');
     if (blockers.length) return { status: 'blocked', blockers, method: 'elewa-annual-date' };
     const rows = []; let pure = 0; const starts = [];
-    for (const it of items) {
+    for (const it of items.filter((i) => !(i && i.metal === 'silver'))) { // silver pieces are not part of the gold calculation
       const r = { id: it.id, pure: 0, status: '' }; rows.push(r);
       const k = KARAT[it.karat], g = Number(it.grams), pd = parse(it.purchaseDate);
       if (!k || !(g > 0) || pd === null || pd > asOf) { r.status = 'blocked'; block(it.id + ': karat, weight or purchase date missing or invalid'); continue; }

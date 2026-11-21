@@ -31,8 +31,12 @@ function lastPublished(q,label,unit,now=Date.now()){
 function official(q,now=Date.now()){
  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(q?.quoteDate||'');const v=Number(q?.sell);
  if(q?.status!=='available'||!m||!(v>0))return null;
- const t=Date.UTC(+m[1],+m[2]-1,+m[3],12);if(!Number.isFinite(t)||t>now+86400000)return null;
- const d=new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long'});
+ const t=Date.UTC(+m[1],+m[2]-1,+m[3],12);
+ const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now).split('-').map(Number);
+ const today=Date.UTC(parts[0],parts[1]-1,parts[2],12),days=Math.round((today-t)/86400000);
+ // Never a future date. Too old (more than 10 days, enough for a long holiday) is not shown as the current official rate.
+ if(!Number.isFinite(t)||new Date(t).getUTCMonth()!==+m[2]-1||days<0||days>10)return null;
+ const d=new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'});
  return {value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'متوسط الدولار بالمركزي',text:'سعر البيع، '+d};
 }
 const api={assess,when,describe,connection,lastPublished,official};
