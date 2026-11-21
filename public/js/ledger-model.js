@@ -63,7 +63,7 @@
     const paidCovered = covered.reduce((s, r) => s + r.paid, 0);
     const now = covered.reduce((s, r) => s + netGrams(r) * prices[r.karat].buy, 0);
     return {
-      count: list.length, grams: list.reduce((s, r) => s + (r.grams || 0), 0),
+      count: list.length, grams: Math.round(list.reduce((s, r) => s + (r.grams || 0), 0) * 1000) / 1000,
       paidAll, paidCovered, now, diff: covered.length ? now - paidCovered : null, percent: paidCovered > 0 ? (now - paidCovered) / paidCovered * 100 : null,
       covered: covered.length, unpriced: list.length - priced.length, noGoldWeight: priced.length - covered.length,
       partial: covered.length < list.length,
@@ -71,7 +71,41 @@
   }
 
   // ---- record building and editing (record shape extends the existing {id,label,type,karat,grams,purchaseDate,paid,purpose}) ----
-  const optionalNum = v => { if (v === undefined || v === null || String(v).trim() === '') return { value: undefined }; const n = Number(String(v).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(',', '.').trim()); return Number.isFinite(n) && n >= 0 ? { value: n } : { error: true }; };
+  // Strict number reading for typed fields. Arabic-Indic and Persian digits, Arabic decimal and thousands marks are accepted.
+  // Letters, exponents, hex, spaces inside the number and unclear separators are errors, never a guessed value.
+  // kind 'grams': one separator is the decimal mark (3,125 and 3.125 and ٣٫١٢٥ are 3 g 125 mg) and at most 3 decimals (milligram) are allowed.
+  // kind 'money': a comma followed by exactly 3 digits after 1 to 3 digits is a thousands mark (46,000 is 46000); otherwise a decimal mark.
+  function parseNumber(v, kind) {
+    if (v === undefined || v === null) return { blank: true };
+    let t = String(v).replace(/^[\s\u00a0]+|[\s\u00a0]+$/g, '');
+    if (t === '') return { blank: true };
+    t = t.replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0))
+      .replace(/\u066b/g, '.').replace(/[\u066c\u060c]/g, ',');
+    if (!/^[0-9.,]+$/.test(t) || !/[0-9]/.test(t)) return { error: 'format' };
+    const commas = (t.match(/,/g) || []).length, dots = (t.match(/\./g) || []).length;
+    let intPart, frac = '';
+    if (commas && dots) {
+      const dec = t.lastIndexOf('.') > t.lastIndexOf(',') ? '.' : ',', th = dec === '.' ? ',' : '.';
+      const parts = t.split(dec); if (parts.length !== 2 || !parts[1]) return { error: 'format' };
+      if (!new RegExp('^\\d{1,3}(\\' + th + '\\d{3})+$').test(parts[0])) return { error: 'format' };
+      intPart = parts[0].split(th).join(''); frac = parts[1];
+      if (!/^\d+$/.test(frac)) return { error: 'format' };
+    } else if (dots > 1) return { error: 'format' };
+    else if (dots === 1 || commas === 1) {
+      const sep = dots ? '.' : ',', parts = t.split(sep);
+      if (!/^\d*$/.test(parts[0]) || !/^\d+$/.test(parts[1]) ) return { error: 'format' };
+      if (kind !== 'grams' && sep === '.' && parts[1].length === 3 && /^[1-9]\d{0,2}$/.test(parts[0])) return { error: 'ambiguous' };
+      if (kind !== 'grams' && sep === ',' && parts[1].length === 3 && /^[1-9]\d{0,2}$/.test(parts[0])) { intPart = parts[0] + parts[1]; }
+      else { intPart = parts[0] || '0'; frac = parts[1]; }
+    } else if (commas > 1) {
+      if (kind === 'grams' || !/^\d{1,3}(,\d{3})+$/.test(t)) return { error: 'format' };
+      intPart = t.split(',').join('');
+    } else intPart = t;
+    if (kind === 'grams' && frac.length > 3) return { error: 'precision' };
+    const n = Number(intPart + (frac ? '.' + frac : ''));
+    return Number.isFinite(n) ? { value: n } : { error: 'format' };
+  }
+  const optionalNum = (v, kind) => { const r = parseNumber(v, kind); if (r.blank) return { value: undefined }; if (r.error) return { error: r.error }; return r.value >= 0 ? { value: r.value } : { error: 'format' }; };
   // Reads the optional ledger fields from a form object. Blank = not recorded (undefined), explicit 0 is kept.
   function readDetails(f) {
     const out = {}, errs = [];
@@ -79,7 +113,7 @@
     if (f.stones === 'with' || f.stones === 'without') out.stones = f.stones; else if (f.stones) errs.push('stones');
     if (out.stones === 'with') {
       if (f.basis === 'total' || f.basis === 'net') out.basis = f.basis; else if (f.basis) errs.push('basis');
-      if (out.basis === 'total') { const r = optionalNum(f.stoneG); if (r.error || r.value === 0) errs.push('stoneG'); else if (r.value !== undefined) out.stoneG = r.value; }
+      if (out.basis === 'total') { const r = optionalNum(f.stoneG, 'grams'); if (r.error || r.value === 0) errs.push('stoneG'); else if (r.value !== undefined) out.stoneG = r.value; }
       if (f.promise === 'full') out.promise = 'full'; else if (f.promise) errs.push('promise');
     }
     return errs.length ? { error: errs } : { details: out };
@@ -91,7 +125,7 @@
     const list = Array.isArray(existing) ? existing : [];
     const i = list.findIndex(x => x && x.id === id);
     if (i < 0) return { items: list, ok: false, error: ['missing'] };
-    const g = optionalNum(form.grams), paid = optionalNum(form.paid);
+    const g = optionalNum(form.grams, 'grams'), paid = optionalNum(form.paid);
     if (g.error || !(g.value > 0)) return { items: list, ok: false, error: ['grams'] };
     if (paid.error) return { items: list, ok: false, error: ['paid'] };
     const d = readDetails(form);
@@ -129,6 +163,6 @@
   }
   const CHANGED_AR = 'القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني.';
   const GONE_AR = 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.';
-  const api = { sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  const api = { parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();

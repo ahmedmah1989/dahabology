@@ -133,3 +133,38 @@ test('sameRow: detects any change to a row, ignores key order', () => {
   assert.equal(L.sameRow({ id: 'a', grams: 8, x: undefined }, { id: 'a', grams: 8 }), true);
   assert.equal(L.sameRow(null, { id: 'a' }), false);
 });
+
+test('grams: one weight field reads 3.125 as 3 g 125 mg in every spelling, never loses a milligram', () => {
+  for (const s of ['3.125', '3,125', '٣.١٢٥', '٣٫١٢٥', '٣،١٢٥', '۳٫۱۲۵', ' 3.125 ']) assert.equal(L.parseNumber(s, 'grams').value, 3.125, s);
+  assert.equal(L.parseNumber('0.001', 'grams').value, 0.001);
+  assert.equal(L.parseNumber('3.1255', 'grams').error, 'precision');
+  assert.equal(L.parseNumber('٣٫١٢٥٥', 'grams').error, 'precision');
+});
+test('numbers: letters, exponent, hex, inner spaces, bad separators and negatives are errors, blank is blank', () => {
+  for (const s of ['0x10', '1e2', '3.125 g', '٣ ١٢٥', '3..1', '5.', '-3', 'abc', '.', ',']) assert.ok(L.parseNumber(s, 'grams').error, s);
+  assert.equal(L.parseNumber('', 'grams').blank, true);
+  assert.equal(L.parseNumber('   ', 'money').blank, true);
+});
+test('money: 46,000 is 46000 (not 46), decimals stay, 46.000 is refused as unclear', () => {
+  assert.equal(L.parseNumber('٤٦,٠٠٠', 'money').value, 46000);
+  assert.equal(L.parseNumber('46,000', 'money').value, 46000);
+  assert.equal(L.parseNumber('1,234,567', 'money').value, 1234567);
+  assert.equal(L.parseNumber('46,5', 'money').value, 46.5);
+  assert.equal(L.parseNumber('1,234.50', 'money').value, 1234.5);
+  assert.equal(L.parseNumber('46.000', 'money').error, 'ambiguous');
+  assert.ok(L.parseNumber('12,34,567', 'money').error);
+});
+test('edit keeps milligrams end to end and refuses sub-milligram or unclear weight', () => {
+  const list = [{ id: 'x', karat: 21, grams: 3.125, paid: 19304, purchaseDate: '2025-01-02', legacyKey: 'keep' }];
+  const ok = L.editItem(list, 'x', { grams: '٣٫١٢٥', paid: '١٩٬٣٠٤', stones: 'without' });
+  assert.equal(ok.ok, true); assert.equal(ok.items[0].grams, 3.125); assert.equal(ok.items[0].paid, 19304); assert.equal(ok.items[0].legacyKey, 'keep');
+  assert.equal(JSON.parse(JSON.stringify(ok.items))[0].grams, 3.125);
+  for (const g of ['3.1255', '3 g', '0', '1e1']) { const r = L.editItem(list, 'x', { grams: g, paid: '19304' }); assert.equal(r.ok, false, g); assert.equal(r.items, list); }
+  const r2 = L.editItem(list, 'x', { grams: '10', paid: '1', stones: 'with', basis: 'total', stoneG: '0.0005' });
+  assert.equal(r2.ok, false);
+});
+test('totals add milligram weights without float drift', () => {
+  const recs = [0.1, 0.2, 3.125, 0.001].map((g, i) => ({ id: String(i), karat: 21, grams: g }));
+  assert.equal(L.aggregate(recs, {}).grams, 3.426);
+  assert.equal(L.aggregate([{ id: 'a', karat: 21, grams: 0.1 }, { id: 'b', karat: 21, grams: 0.2 }], {}).grams, 0.3);
+});

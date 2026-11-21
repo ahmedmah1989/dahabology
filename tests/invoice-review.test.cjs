@@ -60,3 +60,10 @@ test('arabic-indic typing is accepted for manual entry and suppressed OCR offers
   r.setInput('purchaseDate', '٢٠٢٥-٠٣-١٤'); assert.ok(r.confirm('purchaseDate'));
   assert.deepEqual(r.confirmedValues(), { paid: 31250, grams: 8.45, purchaseDate: '2025-03-14' });
 });
+
+test('wallet photo flow ships with automatic reading OFF: no OCR call and no suggestions are reachable', () => {
+  const src = require('node:fs').readFileSync(require('node:path').join(__dirname, '../public/js/invoice-review.js'), 'utf8');
+  assert.match(src, /const OCR_SUGGESTIONS = false;/);
+  assert.match(src, /if \(!OCR_SUGGESTIONS\) msg\([^)]*\);\s*\n\s*else try \{ const o = await ocrFile\(file\)/);
+  assert.equal((src.match(/ocrFile\(/g) || []).length, 2); // the definition and the single guarded call
+});

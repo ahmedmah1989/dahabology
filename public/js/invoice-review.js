@@ -1,4 +1,6 @@
-// Wallet add-piece helper: photo of an invoice -> OCR on this device -> suggestions the owner checks against the photo.
+// Wallet add-piece helper: photo of an invoice shown next to manual entry, each value typed and confirmed by the owner.
+// Automatic reading is OFF: it made confident wrong digits in tests, so no value or suggestion is ever produced from the photo.
+// OCR_SUGGESTIONS is a kill switch kept false until a reader is proven on real invoices.
 // The photo stays in memory (never uploaded, never saved) and is dropped when the panel closes or a piece is saved.
 // Sibling modules load with this file's own ?v= so one deploy never mixes old and new versions.
 const V = new URL(import.meta.url).search;
@@ -9,6 +11,7 @@ const $ = (id) => document.getElementById(id);
 const LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم، بيتكتب في يوم / شهر / سنة)", paid: "إجمالي ما دفعته" };
 const TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDD" };
 const ENGINE = new URL("../vendor/tesseract/", import.meta.url).href;
+const OCR_SUGGESTIONS = false;
 let objectUrl = null, review = null, busy = false, lastNote = "", curFile = null, curParsed = null, session = null;
 const MAX_B64 = 700000; // one Firestore field must stay well under 1 MiB
 
@@ -45,7 +48,7 @@ function render() {
   const img = document.createElement("img"); img.src = objectUrl; img.alt = "صورة الفاتورة"; img.id = "invImg"; img.style.cssText = "width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#0001;cursor:zoom-in";
   img.onclick = () => { const z = img.style.maxHeight === "none"; img.style.maxHeight = z ? "46vh" : "none"; img.style.cursor = z ? "zoom-in" : "zoom-out"; };
   body.append(img);
-  const note = document.createElement("p"); note.className = "x-note"; note.textContent = "القراءة الآلية قد تغلط في رقم وتطلع رقم معقول. قارن كل قيمة بالصورة، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل.";
+  const note = document.createElement("p"); note.className = "x-note"; note.textContent = OCR_SUGGESTIONS ? "القراءة الآلية قد تغلط في رقم وتطلع رقم معقول. قارن كل قيمة بالصورة، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل." : "اكتب كل قيمة من الصورة بنفسك، وراجع الجرامات والمللي بالظبط، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل.";
   body.append(note);
   for (const f of FIELDS) {
     const r = review.rows[f], wrap = document.createElement("div"); wrap.className = "x-card"; wrap.style.margin = "10px 0"; wrap.dataset.field = f;
@@ -57,7 +60,7 @@ function render() {
     if (r.suggestions.length) {
       const t = document.createElement("span"); t.className = "x-note"; t.textContent = "مقترح (غير مؤكد):"; sug.append(t);
       r.suggestions.forEach((s, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "x-btn ghost"; b.textContent = s; b.onclick = () => { inp.value = review.suggest(f, i); rowState(wrap, f); }; sug.append(b); });
-    } else { const t = document.createElement("span"); t.className = "x-note"; t.dataset.hint = f; t.textContent = (r.note || "لم يُقرأ") + ". اكتبه من الصورة."; sug.append(t); }
+    } else { const t = document.createElement("span"); t.className = "x-note"; t.dataset.hint = f; t.textContent = OCR_SUGGESTIONS ? (r.note || "لم يُقرأ") + ". اكتبه من الصورة." : "اكتبه من الصورة."; sug.append(t); }
     wrap.append(sug);
     const act = document.createElement("div"); act.className = "x-actions";
     const ok = document.createElement("button"); ok.type = "button"; ok.className = "x-btn"; ok.textContent = "أكّد"; ok.dataset.confirm = f;
@@ -78,10 +81,11 @@ function rowState(wrap, f) {
 async function onPick() {
   const file = $("invFile").files && $("invFile").files[0]; if (!file || busy) return;
   if (!/^image\//.test(file.type)) return msg("اختر صورة.", "err");
-  drop(); busy = true; msg("بقرأ الصورة على جهازك، ممكن ياخد وقت…");
+  drop(); busy = true; if (OCR_SUGGESTIONS) msg("بقرأ الصورة على جهازك، ممكن ياخد وقت…");
   objectUrl = URL.createObjectURL(file); $("invPanel").hidden = false; curFile = file; session = { id: null, saved: null }; gate(true);
   let parsed = null;
-  try { const o = await ocrFile(file); parsed = parseInvoice(o.text, { minDigitConfidence: o.minDigitConfidence }); lastNote = parsed.suppressed ? parsed.karat.note : ""; msg(parsed.suppressed ? lastNote + ". اكتب القيم من الصورة بنفسك." : "القراءة خلصت. راجع كل قيمة بالصورة.", parsed.suppressed ? "err" : "ok"); }
+  if (!OCR_SUGGESTIONS) msg("الصورة جاهزة للمراجعة. اكتب القيم من الصورة بنفسك.");
+  else try { const o = await ocrFile(file); parsed = parseInvoice(o.text, { minDigitConfidence: o.minDigitConfidence }); lastNote = parsed.suppressed ? parsed.karat.note : ""; msg(parsed.suppressed ? lastNote + ". اكتب القيم من الصورة بنفسك." : "القراءة خلصت. راجع كل قيمة بالصورة.", parsed.suppressed ? "err" : "ok"); }
   catch (e) { msg("القراءة الآلية ما اشتغلتش على جهازك. اكتب القيم من الصورة بنفسك.", "err"); }
   busy = false;
   if (curFile !== file) return; // the photo was closed while the reader was still working

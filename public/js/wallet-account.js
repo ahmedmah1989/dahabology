@@ -4,7 +4,9 @@
  * the user moves them one at a time. Firebase code (account.js) loads only when a session exists or a button needs it. */
 (function () {
   const TYPES = ['bar', 'coin', 'jewelry', 'scrap'];
-  const num = v => { const t = String(v == null ? '' : v).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(',', '.').trim(); return t === '' ? NaN : Number(t); };
+  // Strict reader shared with the ledger model (loaded first). Returns NaN when blank or unclear; gramsErr tells why for the weight field.
+  const PN = (v, kind) => { const f = (typeof window !== 'undefined' && window.DHB_LEDGER) ? window.DHB_LEDGER.parseNumber : (typeof require === 'function' ? require('./ledger-model.js').parseNumber : null); return f ? f(v, kind) : { error: 'format' }; };
+  const num = (v, kind) => { const r = PN(v, kind); return r.value === undefined ? NaN : r.value; };
   // Build the cloud record. base: {id, k, g, paid, note}. Returns {error} or {rec}.
   function buildRecord(base, o) {
     if (!base || ![18, 21, 24].includes(Number(base.k)) || !Number.isFinite(base.g) || !(base.g > 0)) return { error: 'اكتب الوزن بأرقام صحيحة واختر العيار.' };
@@ -126,8 +128,9 @@
     if (!date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
     if (!radio('walS')) return say('walMsg', 'اختر: القطعة بفصوص ولا بدون فصوص.', 'err');
     const dt = formDetails(); if (dt.error) return say('walMsg', 'راجع التفاصيل الاختيارية (أرقام صحيحة، ووزن الفصوص أقل من الوزن الكلي).', 'err');
+    { const gr = PN($('walGramsIn').value, 'grams'); if (gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي.', 'err'); }
     const id = editingId || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-    const b = buildRecord({ id, k: $('walKarat').value, g: num($('walGramsIn').value), paid: num($('walPaidIn').value), note: $('walNoteIn').value.trim() },
+    const b = buildRecord({ id, k: $('walKarat').value, g: num($('walGramsIn').value, 'grams'), paid: num($('walPaidIn').value, 'money'), note: $('walNoteIn').value.trim() },
       { type: $('walType').value, date, purpose: radio('walP'), details: dt.details });
     if (b.error) return say('walMsg', b.error, 'err');
     if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
