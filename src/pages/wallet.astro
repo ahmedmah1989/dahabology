@@ -2,8 +2,8 @@
 import Base from '../layouts/Base.astro';
 import html from '../panels/wallet.html?raw';
 ---
-<Base page="wallet" scripts={['monitor', 'tools', 'ui']}
+<Base page="wallet" scripts={['monitor', 'tools', 'ui', 'wallet-account']}
   title="دهبي: احسب قيمة ذهبك اليوم ومكسبك — دهبولوجي"
-  description="سجّل ما تملكه من ذهب بالوزن والعيار وما دفعته، واعرف قيمته الآن لو بعته ومكسبك أو خسارتك. البيانات محفوظة على جهازك فقط.">
+  description="سجّل ما تملكه من ذهب بالوزن والعيار وما دفعته، واعرف قيمته الآن لو بعته ومكسبك أو خسارتك. البيانات محفوظة على جهازك، ولا تُحفظ في حسابك إلا إذا اخترت ذلك.">
   <Fragment set:html={html} />
 </Base>
