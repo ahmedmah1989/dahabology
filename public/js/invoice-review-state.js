@@ -4,7 +4,8 @@ export const FIELDS = ["karat", "grams", "purchaseDate", "paid"];
 const WALLET_KARATS = [18, 21, 24]; // the wallet form offers these three only
 
 export function validate(field, raw, today = new Date()) {
-  const s = String(raw ?? "").trim();
+  // People type Arabic-Indic digits on an Arabic keyboard; read them as the numbers they are.
+  const s = String(raw ?? "").trim().replace(/[٠-٩]/g, (c) => "٠١٢٣٤٥٦٧٨٩".indexOf(c)).replace(/[۰-۹]/g, (c) => "۰۱۲۳۴۵۶۷۸۹".indexOf(c)).replace(/٫/g, ".").replace(/٬/g, ",");
   if (!s) return { ok: false, error: "اكتب القيمة أو اختر المقترح أولاً." };
   if (field === "karat") {
     const n = Number(s);
@@ -36,6 +37,7 @@ export function createReview(parsed, opts = {}) {
     const p = parsed && parsed[f];
     const cand = p ? (p.status === "ok" ? [p.value] : (p.candidates || [])) : [];
     rows[f] = { suggestions: cand.map(String), note: p ? p.note : "", input: "", confirmed: null, error: "" };
+    if (parsed && parsed.suppressed) rows[f].suggestions = [];
   }
   const api = {
     rows,

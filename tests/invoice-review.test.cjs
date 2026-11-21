@@ -51,3 +51,12 @@ test('review module makes no network calls and exposes no save', async () => {
   const r = S.createReview(P.parseInvoice('عيار 21', { today }), { today }); r.suggest('karat'); r.confirm('karat');
   assert.deepEqual(Object.keys(r).sort(), ['allConfirmed', 'confirm', 'confirmedValues', 'rows', 'setInput', 'suggest', 'unconfirm']);
 });
+
+test('arabic-indic typing is accepted for manual entry and suppressed OCR offers no chips', async () => {
+  const [S, P] = await mods();
+  const r = S.createReview(P.parseInvoice('الإجمالي: ٣١٬٢٥٠', { today }), { today });
+  for (const f of S.FIELDS) assert.deepEqual(r.rows[f].suggestions, []);
+  r.setInput('paid', '٣١٬٢٥٠'); assert.ok(r.confirm('paid')); r.setInput('grams', '٨٫٤٥'); assert.ok(r.confirm('grams'));
+  r.setInput('purchaseDate', '٢٠٢٥-٠٣-١٤'); assert.ok(r.confirm('purchaseDate'));
+  assert.deepEqual(r.confirmedValues(), { paid: 31250, grams: 8.45, purchaseDate: '2025-03-14' });
+});

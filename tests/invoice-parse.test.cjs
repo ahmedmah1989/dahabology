@@ -9,10 +9,20 @@ test('clean western-digit invoice (real OCR output) prefills all four fields', a
   assert.deepEqual(prefill(p), { karat: 18, grams: 5.1, purchaseDate: '2025-03-14', paid: 21480 });
 });
 
-test('arabic-indic digits are read', async () => {
+test('arabic-indic digits: every numeric field is suppressed (measured: 31,250 was read as 10,600)', async () => {
   const { parseInvoice, prefill } = await load();
-  const p = parseInvoice('التاريخ: ١٤/٠٣/٢٠٢٥\nخاتم ذهب عيار ٢١\nالوزن: ٨٫٤٥ جرام\nالإجمالي: ٣١٬٢٥٠ جنيه', { today });
-  assert.deepEqual(prefill(p), { karat: 21, grams: 8.45, purchaseDate: '2025-03-14', paid: 31250 });
+  const p = parseInvoice('التاريخ: ١٤/٠٣/٢٠٢٥\nخاتم ذهب عيار ٢١\nالوزن: ٨٫٤٥ جرام\nالإجمالي: ‎"1060٠‏ جنيه', { today });
+  assert.deepEqual(prefill(p), {}); assert.equal(p.suppressed, 'arabic-indic-digits');
+  for (const k of ['karat', 'grams', 'purchaseDate', 'paid']) { assert.equal(p[k].status, 'missing'); assert.equal(p[k].value, null); assert.equal(p[k].candidates, undefined); }
+  assert.equal((await load()).normalizeDigits('٨٫٤٥'), '8.45');
+});
+
+test('low OCR confidence on digits suppresses all numeric suggestions', async () => {
+  const { parseInvoice, prefill } = await load();
+  const t = 'عيار 21\nالوزن: 8.45 جم\nالإجمالي: 31,250';
+  assert.deepEqual(prefill(parseInvoice(t, { today, minDigitConfidence: 55 })), {});
+  assert.equal(parseInvoice(t, { today, minDigitConfidence: 55 }).suppressed, 'low-confidence');
+  assert.equal(prefill(parseInvoice(t, { today, minDigitConfidence: 93 })).paid, 31250);
 });
 
 test('real garbled OCR output leaves fields empty instead of guessing', async () => {
@@ -62,5 +72,5 @@ test('every field always requires owner confirmation and nothing here can save',
   const M = await load();
   const p = M.parseInvoice('عيار 21\n8.45 جم\n14/03/2025\nالإجمالي: 31,250', { today });
   for (const k of ['karat', 'grams', 'purchaseDate', 'paid']) assert.equal(p[k].confirm, true);
-  assert.deepEqual(Object.keys(M).sort(), ['normalizeDigits', 'parseInvoice', 'prefill']);
+  assert.deepEqual(Object.keys(M).sort(), ['MIN_DIGIT_CONFIDENCE', 'UNSUPPORTED_DIGITS', 'normalizeDigits', 'parseInvoice', 'prefill']);
 });

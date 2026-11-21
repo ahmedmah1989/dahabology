@@ -98,7 +98,21 @@ function paid(text) {
   return missing("لم يظهر السطر المكتوب عليه الإجمالي بوضوح");
 }
 
+// Measured: Arabic-Indic digits (٠-٩, ۰-۹) are misread by the on-device OCR into plausible wrong numbers
+// (a total of 31,250 came back as 10,600). For that class every numeric field is suppressed and entered by hand.
+export const UNSUPPORTED_DIGITS = /[٠-٩۰-۹]/;
+const UNSUPPORTED_NOTE = "الفاتورة فيها أرقام عربية (٠١٢)، والقراءة الآلية للأرقام دي مش موثوقة";
+// Low OCR confidence on a digit-bearing word means the digits are not trustworthy either.
+export const MIN_DIGIT_CONFIDENCE = 80;
+
 export function parseInvoice(rawText, opts = {}) {
+  if (UNSUPPORTED_DIGITS.test(String(rawText || ""))) {
+    return { karat: missing(UNSUPPORTED_NOTE), grams: missing(UNSUPPORTED_NOTE), purchaseDate: missing(UNSUPPORTED_NOTE), paid: missing(UNSUPPORTED_NOTE), suppressed: "arabic-indic-digits" };
+  }
+  if (typeof opts.minDigitConfidence === "number" && opts.minDigitConfidence < MIN_DIGIT_CONFIDENCE) {
+    const n = "الصورة مش واضحة كفاية لقراءة الأرقام بثقة";
+    return { karat: missing(n), grams: missing(n), purchaseDate: missing(n), paid: missing(n), suppressed: "low-confidence" };
+  }
   const text = normalizeDigits(rawText);
   return { karat: karat(text), grams: grams(text), purchaseDate: date(text, opts.today), paid: paid(text) };
 }
