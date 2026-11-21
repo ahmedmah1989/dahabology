@@ -55,7 +55,7 @@
       c.append(amount, reference);
     }
     const s = last ? last.sources : {};
-    $('bankTime').textContent = usable(s.misr)?'':(window.DHB_QUOTE.lastPublished(s.misr,'بنك مصر','جنيه للدولار')||'السعر غير متاح');
+    { const o = window.DHB_QUOTE.official(s.cbe); $('bankTime').textContent = o ? o.text : (usable(s.misr)?'':( (window.DHB_QUOTE.lastPublished(s.misr,'بنك مصر','جنيه للدولار')||'السعر غير متاح'))); }
     $('ounceTime').textContent = usable(s.gold)?'':'السعر غير متاح';
     const r = last && last.result;
     $('gaugeNeedle').style.transform = 'rotate(' + (r ? -90 + D.pin(r.gapPercent) * 1.8 : -90) + 'deg)';

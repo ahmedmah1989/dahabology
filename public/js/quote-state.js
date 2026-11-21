@@ -27,7 +27,15 @@ function lastPublished(q,label,unit,now=Date.now()){
  const d=new Date(t).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
  return 'آخر سعر منشور ('+label+'): '+v.toLocaleString('en-US',{maximumFractionDigits:2})+' '+unit+'، '+d+' بتوقيت القاهرة. أقدم من 24 ساعة، فمش داخل في أي حساب.';
 }
-const api={assess,when,describe,connection,lastPublished};
+// Official daily reference (date only, no time of day). Display only: it never passes the 24-hour usability gate and feeds no calculation.
+function official(q,now=Date.now()){
+ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(q?.quoteDate||'');const v=Number(q?.sell);
+ if(q?.status!=='available'||!m||!(v>0))return null;
+ const t=Date.UTC(+m[1],+m[2]-1,+m[3],12);if(!Number.isFinite(t)||t>now+86400000)return null;
+ const d=new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long'});
+ return {value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'متوسط الدولار بالمركزي',text:'سعر البيع، '+d};
+}
+const api={assess,when,describe,connection,lastPublished,official};
 if(typeof module!=='undefined')module.exports=api;
 if(typeof window!=='undefined')window.DHB_QUOTE=api;
 })();

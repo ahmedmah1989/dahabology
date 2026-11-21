@@ -8,9 +8,9 @@ function price(id,q,value,dec=2){$(id).textContent=Q.assess(q).usable&&positive(
 function stamp(q){const a=Q.assess(q);return a.usable?'':'التسعيرة غير متاحة أو تجاوزت 24 ساعة';}
 function render(){
  const g=sources.isagha,m=sources.misr,oz=sources.gold;
- price('p21',g,g?.['21']?.sell,0);price('p24',g,g?.['24']?.sell);price('pUsd',m,m?.sell);price('pOz',oz,oz?.sell);
+ price('p21',g,g?.['21']?.sell,0);price('p24',g,g?.['24']?.sell);price('pUsd',m,m?.sell);{const o=Q.official(sources.cbe);$('pUsdLabel').textContent=o?o.label:'الدولار في البنك';if(o)$('pUsd').textContent=o.value;}price('pOz',oz,oz?.sell);
  $('pWhen').textContent='السعر للجرام بدون مصنعية';$('pSourceTime').textContent=Q.describe(g);
- $('pUsdTime').textContent=Q.assess(m).usable?'':(Q.lastPublished(m,'بنك مصر','جنيه للدولار')||stamp(m));$('pOzTime').textContent=stamp(oz);
+ {const o=Q.official(sources.cbe);$('pUsdTime').textContent=o?o.text:(Q.assess(m).usable?'':(Q.lastPublished(m,'بنك مصر','جنيه للدولار')||stamp(m)));}$('pOzTime').textContent=stamp(oz);
  {const c=Q.connection(transport);$('homeConnection').textContent=c?'ملف أسعار الجرام والبنك: '+c:'';}
 }
 async function json(url){const c=new AbortController(),timer=setTimeout(()=>c.abort(),15000);try{const r=await fetch(url,{cache:'no-store',signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return {body:await r.json(),mode:r.headers.get('X-DHB-Transport')||(navigator.serviceWorker?.controller?'unverified':'network'),online:r.headers.get('X-DHB-Online-At')};}finally{clearTimeout(timer);}}

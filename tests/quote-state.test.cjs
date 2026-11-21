@@ -21,3 +21,15 @@ assert.equal(Q.lastPublished({...old,sell:0},'x','y',now),'');
 assert.equal(Q.lastPublished({...old,status:'unavailable'},'x','y',now),'');
 assert.equal(Q.lastPublished({...old,sourceTime:'2026-11-19T11:20:47'},'x','y',now),'');
 });
+
+{ // official CBE daily reference: display-only, date label, never usable for the 24h gate
+  const Q2=require('../public/js/quote-state.js'), now=Date.parse('2026-11-21T15:40:00Z');
+  const cbe={status:'available',buy:53.7629,sell:53.8629,quoteDate:'2026-11-19'};
+  const o=Q2.official(cbe,now);
+  assert.equal(o.value,'53.86');assert.equal(o.label,'متوسط الدولار بالمركزي');assert.match(o.text,/سعر البيع/);assert.match(o.text,/الخميس/);assert.match(o.text,/19/);
+  assert.equal(Q2.assess(cbe,now).usable,false);
+  assert.equal(Q2.official({...cbe,status:'unavailable'},now),null);
+  assert.equal(Q2.official({...cbe,quoteDate:'2026-12-30'},now),null);
+  assert.equal(Q2.official({...cbe,quoteDate:'bad'},now),null);
+  assert.equal(Q2.official({...cbe,sell:0},now),null);
+}

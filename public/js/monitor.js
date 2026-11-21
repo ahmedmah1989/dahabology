@@ -66,7 +66,7 @@
     const a=state.sources.isagha,b=state.sources.misr,g=state.sources.gold;
     cardPrice('price24',a,a?.['24']?.sell,'جنيه / جرام');
     cardPrice('price21',a,a?.['21']?.sell,'جنيه / جرام');
-    cardPrice('priceBank',b,b?.sell,'جنيه / دولار');
+    cardPrice('priceBank',b,b?.sell,'جنيه / دولار');{const o=window.DHB_QUOTE&&window.DHB_QUOTE.official(state.sources.cbe);if($('bankLabel'))$('bankLabel').textContent=o?o.label:'الدولار في البنك';if(o){const e=$('priceBank');e.replaceChildren(document.createTextNode(o.value));const sm=document.createElement('small');sm.className='price-unit';sm.textContent='جنيه / دولار';e.appendChild(sm);}}
     cardPrice('priceOunce',g,g?.sell,'دولار / أونصة');
     const quality=assess(state.sources);
     const result=quality.usable?calculate(g.sell,b.sell,a['24'].sell,a['21'].sell):null;
@@ -82,7 +82,7 @@
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
     $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
-    $('qualityText').textContent=quality.reason;
+    $('qualityText').textContent=result?'المقارنة محسوبة بسعر بيع بنك مصر وقت قراءته، وهو أحدث من 24 ساعة.':quality.reason;
     $('fetchStatus').textContent=(state.busy?'تحميل الأسعار… • ':'')+window.DHB_QUOTE.connection(state.transport);
     if (!state.dealerEdited) $('dealer').value=usable(a)?a['21'].sell:'';
     calculator();
