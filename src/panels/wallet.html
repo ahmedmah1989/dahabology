@@ -8,7 +8,7 @@
 <div id="walTable" hidden><div class="x-items" id="walRows"></div></div>
 <p class="x-note" id="walEmpty">لم تضف أي قطعة بعد. أضف أول قطعة من هنا.</p>
 
-<form class="x-card" id="walForm" style="margin-top:20px"><h2>أضف قطعة</h2>
+<form class="x-card" id="walForm" style="margin-top:20px;scroll-margin-top:84px"><h2>أضف قطعة</h2>
 <div class="x-karats" role="group" aria-label="اختر العيار" style="margin-top:14px">
 <button type="button" class="x-karat" data-set="walKarat" data-value="21" aria-pressed="true"><span>عيار<b>21</b></span></button>
 <button type="button" class="x-karat" data-set="walKarat" data-value="24" aria-pressed="false"><span>عيار<b>24</b></span></button>
@@ -20,21 +20,30 @@
 <label class="x-field">إجمالي ما دفعته<input id="walPaidIn" inputmode="decimal" placeholder="49500" autocomplete="off" required></label>
 </div>
 <label class="x-field sm">وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
-<div class="x-actions"><button type="submit" class="x-btn">أضف إلى دهبي</button></div><p class="x-msg" id="walMsg" role="status"></p></form>
+<div class="x-grid2">
+<label class="x-field">النوع<select id="walType"><option value="">اختر</option><option value="bar">سبيكة</option><option value="coin">جنيه / عملة</option><option value="jewelry">مصوغات</option><option value="scrap">كسر</option></select></label>
+<label class="x-field">تاريخ الشراء<input id="walDate" type="date"></label>
+</div>
+<fieldset id="walPur" hidden style="border:0;padding:0;margin:10px 0"><legend class="x-note">نية شراء المصوغات</legend>
+<div style="display:flex;gap:22px;justify-content:center;margin-top:8px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walP" value="adornment" style="width:22px;height:22px;margin:0"> زينة</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walP" value="saving" style="width:22px;height:22px;margin:0"> ادخار</label></div></fieldset>
+<div class="x-actions"><button type="submit" class="x-btn" id="walAdd">احفظ في حسابي</button></div><p class="x-msg" id="walMsg" role="status"></p>
+<p class="x-note">تقدر تشوف الصفحة والأسعار من غير تسجيل. الحفظ بس محتاج حساب، علشان قطعك تتحفظ في حسابك الخاص وقواعد الحماية تمنع أي مستخدم آخر من قراءتها.</p>
+<p class="x-note" id="walLogin" hidden><a href="../account-preview/">سجّل الدخول أو أنشئ حساب</a> ثم ارجع لهذه الصفحة.</p></form>
+<p class="x-note" id="walUnpriced" hidden></p>
 
-<section class="x-card" id="waBox" style="margin-top:20px" hidden><h2>احفظ قطعة في حسابك (اختياري)</h2>
-<p class="x-note">دهبي شغال من غير تسجيل ويحفظ على جهازك. التسجيل مطلوب فقط لو عايز تحفظ قطعة في حسابك الخاص، وقواعد الحماية بتمنع أي مستخدم آخر من قراءة بياناتك. مفيش رفع تلقائي، وقطعك على الجهاز تفضل زي ما هي.</p>
+<section class="x-card" id="waBox" style="margin-top:20px;scroll-margin-top:84px" hidden><h2>انقل قطعة من جهازك إلى حسابك</h2>
+<p class="x-note">عندك قطع محفوظة على الجهاز من قبل. هنا تنقل القطعة اللي تختارها إلى حسابك، مع السعر الذي دفعته. مفيش نقل تلقائي، وقطعتك على الجهاز ما بتتحذفش.</p>
 <label class="x-field">القطعة<select id="waPiece"></select></label>
 <div class="x-grid2">
 <label class="x-field">النوع<select id="waType"><option value="">اختر</option><option value="bar">سبيكة</option><option value="coin">جنيه / عملة</option><option value="jewelry">مصوغات</option><option value="scrap">كسر</option></select></label>
 <label class="x-field">تاريخ الشراء<input id="waDate" type="date"></label>
 </div>
 <fieldset id="waPur" hidden style="border:0;padding:0;margin:10px 0"><legend class="x-note">نية شراء المصوغات</legend>
-<label><input type="radio" name="waP" value="adornment"> زينة</label> <label><input type="radio" name="waP" value="saving"> ادخار</label></fieldset>
-<div class="x-actions"><button type="button" class="x-btn" id="waSave">احفظ هذه القطعة في حسابي</button></div>
+<div style="display:flex;gap:22px;justify-content:center;margin-top:8px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="waP" value="adornment" style="width:22px;height:22px;margin:0"> زينة</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="waP" value="saving" style="width:22px;height:22px;margin:0"> ادخار</label></div></fieldset>
+<div class="x-actions"><button type="button" class="x-btn" id="waSave">انقل هذه القطعة إلى حسابي</button></div>
 <p class="x-msg" id="waMsg" role="status"></p>
 <p class="x-note" id="waLogin" hidden><a href="../account-preview/">سجّل الدخول أو أنشئ حساب</a> ثم ارجع لهذه الصفحة.</p>
 </section>
 
-<p class="x-note">القيمة بسعر شراء التاجر للجرام المعروض، والسعر الفعلي يحدده التاجر بعد فحص القطعة. استرداد جزء من المصنعية يخضع لشروط المنتج والتغليف؛ التقدير هنا لقيمة الذهب فقط. البيانات محفوظة في متصفحك ولا تُرسل لأي خادم، إلا القطعة التي تختار بنفسك حفظها في حسابك.</p>
+<p class="x-note">القيمة بسعر شراء التاجر للجرام المعروض، والسعر الفعلي يحدده التاجر بعد فحص القطعة. استرداد جزء من المصنعية يخضع لشروط المنتج والتغليف؛ التقدير هنا لقيمة الذهب فقط. القطع المحفوظة في حسابك تُخزَّن في حسابك الخاص، أما القطع القديمة على جهازك فتبقى في متصفحك ولا تُرسل لأي خادم إلا لو اخترت نقلها.</p>
 </section>
