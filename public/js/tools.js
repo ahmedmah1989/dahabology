@@ -159,7 +159,7 @@
       });
       // Whole-invoice footer: tax, making, stamp as recorded. Unknown is never shown or summed as zero.
       const rs = g.ix.map(ix => recs[ix]), cover = k => { const vals = rs.map(x => x[k]), nums = vals.filter(x => Number.isFinite(x)); if (!nums.length) return '<b class="u0">غير مسجلة</b>'; if (nums.every(x => x === 0) && nums.length === vals.length) return '<b>بدون</b>'; return '<b>' + f2(nums.reduce((a, x) => a + Math.round(x * 100), 0) / 100) + '</b> جنيه (' + nums.length + ' من ' + vals.length + ' سطور)'; };
-      let taxL; if (meta && meta.vatMode === 'has') taxL = 'قبل الضريبة <b>' + f2(meta.subtotal) + '</b> · الضريبة <b>' + f2(meta.vat) + '</b> · بعد الضريبة <b>' + f2(meta.total) + '</b> جنيه'; else if (meta && meta.vatMode === 'none') taxL = 'الضريبة: <b>بدون ضريبة</b>'; else taxL = 'الضريبة: ' + (rs.some(x => Number.isFinite(x.tax)) ? cover('tax') : '<b class="u0">غير مسجلة</b>');
+      let taxL; if (meta && meta.vatMode === 'has') taxL = 'قبل الضريبة: <b>' + f2(meta.subtotal) + '</b> جنيه<br>الضريبة: <b>' + f2(meta.vat) + '</b> جنيه<br>بعد الضريبة: <b>' + f2(meta.total) + '</b> جنيه'; else if (meta && meta.vatMode === 'none') taxL = 'الضريبة: <b>بدون ضريبة</b>'; else taxL = 'الضريبة: ' + (rs.some(x => Number.isFinite(x.tax)) ? cover('tax') : '<b class="u0">غير مسجلة</b>');
       const ft = document.createElement('p'); ft.className = 'invf'; ft.innerHTML = '<span class="sh2">الفاتورة كلها</span><br>' + taxL + '<br>المصنعية: ' + cover('making') + '<br>الدمغة: ' + cover('stamp'); card.append(ft);
       body.append(card);
     });
