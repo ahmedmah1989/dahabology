@@ -22,6 +22,7 @@ export const MESSAGES_AR = {
   NETWORK: "تعذّر الاتصال بالإنترنت. تحقق من الاتصال وحاول مرة أخرى.",
   EMAIL_NOT_VERIFIED: "لم يتم تأكيد بريدك بعد. افتح رسالة التأكيد (وراجع البريد المزعج) ثم اضغط الرابط، أو اطلب رسالة جديدة.",
   PERMISSION_DENIED: "غير مسموح. سجّل الدخول بحساب مؤكَّد البريد.",
+  SERVICE_UNAVAILABLE: "خدمة الحسابات متوقفة مؤقتًا من جهتنا، فلا يمكن التسجيل أو الحفظ الآن. جرّب بعد قليل. الصفحات والأسعار شغّالة بدون حساب.",
   DEFAULT: "حدث خطأ غير متوقع. حاول مرة أخرى بعد قليل."
 };
 
@@ -29,6 +30,13 @@ export class AccountError extends Error {
   constructor(code) { super(code); this.code = code; this.ar = MESSAGES_AR[code] || MESSAGES_AR.DEFAULT; }
 }
 
+// The backend project itself refuses service (suspended or access denied at the service level). This is not a user or rules
+// error: say so, and never treat it as "sign in again" (it must not clear a saved session).
+const unavailable = (data) => {
+  const e = data?.error; if (!e) return false;
+  const reasons = (e.details || []).map((d) => d.reason);
+  return reasons.includes("CONSUMER_SUSPENDED") || /has been suspended|Permission denied on the service/i.test(String(e.message || ""));
+};
 async function call(url, body, method = "POST", token) {
   let res;
   try {
@@ -40,6 +48,7 @@ async function call(url, body, method = "POST", token) {
   } catch { throw new AccountError("NETWORK"); }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
+    if (unavailable(data)) throw new AccountError("SERVICE_UNAVAILABLE");
     const raw = String(data?.error?.message || data?.error?.status || res.status);
     const code = raw.split(" : ")[0].split(" ")[0];
     throw new AccountError(res.status === 403 ? "PERMISSION_DENIED" : res.status === 404 ? "NOT_FOUND" : code);
@@ -66,7 +75,7 @@ async function freshToken() {
   let res;
   try { res = await fetch(`${TOKEN}?key=${FIREBASE.apiKey}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: `grant_type=refresh_token&refresh_token=${encodeURIComponent(s.refreshToken)}` }); } catch { throw new AccountError("NETWORK"); }
   const j = await res.json();
-  if (!res.ok) { save(null); throw new AccountError("PERMISSION_DENIED"); }
+  if (!res.ok) { if (unavailable(j)) throw new AccountError("SERVICE_UNAVAILABLE"); save(null); throw new AccountError("PERMISSION_DENIED"); }
   // Re-read verification state: the token claim must be refreshed after the user verifies.
   const u = await lookup(j.id_token);
   save({ ...toSession(j, s), emailVerified: !!u?.emailVerified });
