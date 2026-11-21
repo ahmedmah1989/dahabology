@@ -15,3 +15,10 @@ test('local silver needs a valid recent file entry and never derives from global
   assert.equal(S.localSilver(undefined, now), null);
   assert.equal(S.localSilver({ status: 'available', sourceTime: iso(0) }, now), null);
 });
+test('catalog sizes: bars 24k, coins 21k, others ignored', () => {
+  const L = require('../public/js/ledger-model.js');
+  const z = L.sizesFromCatalog([{ kind: 'bars', weight: 5, karat: 24 }, { kind: 'bars', weight: 1, karat: 24 }, { kind: 'bars', weight: 250, karat: 22 }, { kind: 'bars', weight: 'x', karat: 24 }, { kind: 'pound', weight: 8, karat: 21, name: 'جنيه' }, { kind: 'ounce', weight: 31.1, karat: 24 }]);
+  assert.deepEqual(z.bars, [1, 5]); assert.deepEqual(z.coins, [{ w: 8, name: 'جنيه' }]);
+  assert.equal(L.sizesFromCatalog([]), null); assert.equal(L.sizesFromCatalog(null), null);
+  assert.equal(L.BAR_PRESETS, undefined);
+});

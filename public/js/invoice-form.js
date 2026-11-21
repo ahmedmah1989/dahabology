@@ -3,6 +3,10 @@
 (function () {
   if (typeof document === 'undefined') return;
   const LG = window.DHB_LEDGER, $ = id => document.getElementById(id);
+  // Sizes: live catalog when readable, else the dated bundled snapshot (labelled as such).
+  let sizes = { bars: LG.CATALOG_SNAPSHOT.bars, coins: LG.CATALOG_SNAPSHOT.coins, live: false };
+  const sizeNote = () => sizes.live ? '' : '<p class="hint">الأحجام من قائمة محفوظة بتاريخ ' + LG.CATALOG_SNAPSHOT.asOf + ' لأن كتالوج المنتجات الحالي غير متاح الآن. اكتب الوزن بنفسك لو حجمك مختلف.</p>';
+  const chipsHTML = (arr, label) => '<div class="chips" role="group" aria-label="' + label + '">' + arr.map(c => '<button type="button" class="chip" data-w="' + c.w + '" aria-pressed="false">' + c.t + '</button>').join('') + '</div>';
   const root = $('invForm'); if (!root || !LG) return;
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const fm = n => (Number.isFinite(n) ? n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—');
@@ -34,7 +38,7 @@
     return '<div class="row" data-i="' + i + '"><div class="rh"><span>' + (edit ? 'تعديل القطعة' : 'القطعة ' + (i + 1)) + (mq ? ' · ' + q.value + ' قطع' : '') + '</span>' + (rows.length > 1 && !edit ? '<button type="button" class="del" data-del="' + i + '" aria-label="احذف القطعة ' + (i + 1) + '">احذف</button>' : '') + '</div>' +
       '<div class="g4"><div><span class="lab">النوع</span><select class="in" data-f="type"><option value="">اختر</option>' + Object.keys(typeName).map(v => '<option value="' + v + '"' + (r.type === v ? ' selected' : '') + '>' + typeName[v] + '</option>').join('') + '</select></div>' +
       (bar && !r.legacyKarat ? '<div><span class="lab">العيار</span><div class="in fixk" aria-label="عيار السبيكة ثابت 24">24 (ثابت)</div></div>' : '<div><span class="lab">العيار</span><select class="in" data-f="k"><option value="">اختر</option>' + ['21', '24', '18'].map(v => '<option' + (r.k === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>') +
-      (bar ? '<div class="wgt"><span class="cl" style="margin-top:0">حجم السبيكة الواحدة (جرام)، بيتكتب في الوزن تحت</span><div class="chips" role="group" aria-label="حجم السبيكة بالجرام">' + LG.BAR_PRESETS.map(v => '<button type="button" class="chip" data-w="' + v + '" aria-pressed="' + presetOn(v) + '">' + v + '</button>').join('') + '</div></div>' : '') +
+      ((bar || r.type === 'coin') ? '<div class="wgt"><span class="cl" style="margin-top:0">' + (bar ? 'حجم السبيكة الواحدة (جرام)' : 'حجم الجنيه الذهب') + '، أو اكتب الوزن تحت</span>' + chipsHTML(bar ? sizes.bars.map(v => ({ w: v, t: v })) : sizes.coins.map(c => ({ w: c.w, t: c.name + ' (' + c.w + ')' })), bar ? 'حجم السبيكة بالجرام' : 'حجم الجنيه الذهب') + sizeNote() + '</div>' : '') +
       '<div class="qty"><span class="lab">العدد</span><div class="qs"><button type="button" class="qb" data-q="-1" aria-label="قلّل العدد">−</button><input class="in" data-f="qty" inputmode="numeric" maxlength="3" value="' + esc(r.qty) + '" aria-label="عدد القطع المتطابقة، القطعة ' + (i + 1) + '"><button type="button" class="qb" data-q="1" aria-label="زوّد العدد">+</button></div><p class="hint" style="margin:4px 0 0">' + (mq ? 'نفس النوع والعيار والوزن. اللي بتكتبه تحت للـ ' + q.value + ' كلهم مع بعض.' : 'لو اشتريت أكتر من واحدة بنفس الوزن، زوّد العدد.') + '</p></div>' +
       '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" maxlength="5" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" maxlength="3" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
 '</div>' +
@@ -50,6 +54,10 @@
         '<label class="gate" style="min-height:44px;font-size:14px"><input type="checkbox" data-f="promise"' + (r.promise ? ' checked' : '') + '> البائع وعد باسترداد الفصوص بسعر الذهب (الوعد مش مضمون)</label></div>' : '') + '</div>';
   }
   const paintRows = () => { $('invRows').innerHTML = rows.map(rowHTML).join(''); };
+  fetch((window.DHB_DATA || 'data/') + 'offers.json', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(j => {
+    const z = j && LG.sizesFromCatalog(j.catalog);
+    if (z) { sizes = { bars: z.bars, coins: z.coins.length ? z.coins : LG.CATALOG_SNAPSHOT.coins, live: true }; paintRows(); }
+  }).catch(() => {});
   const paintFin = rowEl => { const r = rows[rowEl.dataset.i]; rowEl.querySelector('[data-fin]').innerHTML = fin(r); const w = wOf(r); rowEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(!w.error && !w.blank && !w.keep && w.mg === Math.round(+c.dataset.w * 1000)))); };
 
   // ---- invoice-level tax: with two figures given, the third is a real calculated value, tagged ----
@@ -153,7 +161,7 @@
     else if (b.dataset.q) { const q = qOf(r); r.qty = String(Math.min(999, Math.max(1, (q.error ? 1 : q.value) + +b.dataset.q))); }
     else if (b.dataset.ms !== undefined) r.mso = !r.mso;
     else if (b.dataset.none) { const k = b.dataset.none; r[k + 'N'] = !r[k + 'N']; if (r[k + 'N']) r[k] = ''; }
-    else if (b.dataset.w) { const [a, c] = String(b.dataset.w).split('.'); r.gw = a; r.gf = c || ''; }
+    else if (b.dataset.w) { const [a, c] = String(b.dataset.w).split('.'); r.gw = a; r.gf = c || ''; if (r.type === 'coin' && !r.k) r.k = '21'; }
     else if (b.dataset.s) { r.s = b.dataset.s; if (r.s === 'without') { r.basis = ''; r.stoneG = ''; r.promise = false; } }
     else if (b.dataset.pp) r.pp = b.dataset.pp; else return;
     paintRows(); rows.forEach((_r, i) => 0); touch(); update();

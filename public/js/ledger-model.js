@@ -190,7 +190,17 @@
   const gramsOfMg = mg => mg / 1000; // exact for every integer milligram value that fits, e.g. 30000 -> 30, 6280 -> 6.28
   // Total weight of a line with q identical pieces. Integer milligrams, no float multiplication.
   const totalMg = (unitMg, q) => unitMg * q;
-  const BAR_PRESETS = [1, 2.5, 5, 10, 20, 50, 100, 250, 500, 1000];
+  // Product sizes come from the published product catalog. Bars are 24k and gold coins are 21k in that catalog.
+  // The bundled snapshot is used only when the live catalog cannot be read, and it is shown with its date.
+  const CATALOG_SNAPSHOT = { asOf: '2026-11-21', bars: [1, 2.5, 5, 10, 20, 50, 100], coins: [{ w: 2, name: 'ربع جنيه' }, { w: 4, name: 'نصف جنيه' }, { w: 8, name: 'جنيه' }] };
+  // Sizes from a catalog array. Returns null unless it holds at least one valid bar. Only 24k bars and 21k coins are accepted.
+  function sizesFromCatalog(list) {
+    if (!Array.isArray(list)) return null;
+    const ok = c => c && Number.isFinite(c.weight) && c.weight > 0 && c.weight <= 1000;
+    const bars = list.filter(c => ok(c) && c.kind === 'bars' && c.karat === 24).map(c => c.weight).sort((a, b) => a - b);
+    const coins = list.filter(c => ok(c) && /^(quarter|half|pound)$/.test(c.kind) && c.karat === 21).map(c => ({ w: c.weight, name: c.name })).sort((a, b) => a.w - b.w);
+    return bars.length ? { bars: [...new Set(bars)], coins } : null;
+  }
   // Invoice-level tax. mode: 'unknown' | 'none' | 'has'. With 'has', two of (subtotal, vat, total) give the third.
   // Inputs are numbers in pounds or undefined. Returns piastres, which of the three were calculated, and a mismatch flag when all three are given and disagree.
   function invoiceFigures(mode, sub, vat, tot) {
@@ -281,6 +291,6 @@
   // Display helpers for rows (old rows have no qty and read exactly as before).
   const qtyOf = r => (Number.isInteger(r && r.qty) && r.qty > 1 ? r.qty : 1);
   const unitGramsOf = r => (qtyOf(r) > 1 && finite(r.unitGrams) ? r.unitGrams : (r && r.grams));
-  const api = { readQty, composeWeight, gramsOfMg, totalMg, BAR_PRESETS, invoiceFigures, reconcile, buildInvoice, buildInvoiceMeta, applyInvoiceEdit, pruneInvoices, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  const api = { readQty, composeWeight, gramsOfMg, totalMg, CATALOG_SNAPSHOT, sizesFromCatalog, invoiceFigures, reconcile, buildInvoice, buildInvoiceMeta, applyInvoiceEdit, pruneInvoices, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();
