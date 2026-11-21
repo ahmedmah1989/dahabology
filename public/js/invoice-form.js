@@ -38,7 +38,7 @@
     return '<div class="row" data-i="' + i + '"><div class="rh"><span>' + (edit ? 'تعديل القطعة' : 'القطعة ' + (i + 1)) + (mq ? ' · ' + q.value + ' قطع' : '') + '</span>' + (rows.length > 1 && !edit ? '<button type="button" class="del" data-del="' + i + '" aria-label="احذف القطعة ' + (i + 1) + '">احذف</button>' : '') + '</div>' +
       '<div class="g4"><div><span class="lab">النوع</span><select class="in" data-f="type"><option value="">اختر</option>' + Object.keys(typeName).map(v => '<option value="' + v + '"' + (r.type === v ? ' selected' : '') + '>' + typeName[v] + '</option>').join('') + '</select></div>' +
       (bar && !r.legacyKarat ? '<div><span class="lab">العيار</span><div class="in fixk" aria-label="عيار السبيكة ثابت 24">24 (ثابت)</div></div>' : '<div><span class="lab">العيار</span><select class="in" data-f="k"><option value="">اختر</option>' + ['21', '24', '18'].map(v => '<option' + (r.k === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>') +
-      ((bar || r.type === 'coin') ? '<div class="wgt"><span class="cl" style="margin-top:0">' + (bar ? 'حجم السبيكة الواحدة (جرام)' : 'حجم الجنيه الذهب') + '، أو اكتب الوزن تحت</span>' + chipsHTML(bar ? sizes.bars.map(v => ({ w: v, t: v })) : sizes.coins.map(c => ({ w: c.w, t: c.name + ' (' + c.w + ')' })), bar ? 'حجم السبيكة بالجرام' : 'حجم الجنيه الذهب') + sizeNote() + '</div>' : '') +
+      ((bar || r.type === 'coin') ? '<div class="wgt"><span class="cl" style="margin-top:0">' + (bar ? 'حجم السبيكة الواحدة (جرام)' : 'حجم الجنيه الذهب') + '، أو اكتب الوزن تحت</span>' + chipsHTML(bar ? sizes.bars.map(v => ({ w: v, t: v })) : sizes.coins.map(c => ({ w: c.w, t: c.name + ' (' + c.w + ')' })), bar ? 'حجم السبيكة بالجرام' : 'حجم الجنيه الذهب') + (r.sizeWarn ? '<p class="hint" role="alert">أحجام الكتالوج دي لعيار ' + r.sizeWarn + '. العيار المختار عندك مختلف، فما اتطبقش حجم. غيّر العيار أو اكتب الوزن بنفسك.</p>' : '') + sizeNote() + '</div>' : '') +
       '<div class="qty"><span class="lab">العدد</span><div class="qs"><button type="button" class="qb" data-q="-1" aria-label="قلّل العدد">−</button><input class="in" data-f="qty" inputmode="numeric" maxlength="3" value="' + esc(r.qty) + '" aria-label="عدد القطع المتطابقة، القطعة ' + (i + 1) + '"><button type="button" class="qb" data-q="1" aria-label="زوّد العدد">+</button></div><p class="hint" style="margin:4px 0 0">' + (mq ? 'نفس النوع والعيار والوزن. اللي بتكتبه تحت للـ ' + q.value + ' كلهم مع بعض.' : 'لو اشتريت أكتر من واحدة بنفس الوزن، زوّد العدد.') + '</p></div>' +
       '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" maxlength="5" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" maxlength="3" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
 '</div>' +
@@ -161,7 +161,12 @@
     else if (b.dataset.q) { const q = qOf(r); r.qty = String(Math.min(999, Math.max(1, (q.error ? 1 : q.value) + +b.dataset.q))); }
     else if (b.dataset.ms !== undefined) r.mso = !r.mso;
     else if (b.dataset.none) { const k = b.dataset.none; r[k + 'N'] = !r[k + 'N']; if (r[k + 'N']) r[k] = ''; }
-    else if (b.dataset.w) { const [a, c] = String(b.dataset.w).split('.'); r.gw = a; r.gf = c || ''; if (r.type === 'coin' && !r.k) r.k = '21'; }
+    else if (b.dataset.w) {
+      // Catalog sizes are for 24k bars and 21k coins. A different karat already chosen is never overwritten or relabelled: the size is not applied.
+      const need = r.type === 'coin' ? '21' : '24';
+      if (r.k && r.k !== need) r.sizeWarn = need;
+      else { const [a, c] = String(b.dataset.w).split('.'); r.gw = a; r.gf = c || ''; r.sizeWarn = ''; if (!r.k) r.k = need; }
+    }
     else if (b.dataset.s) { r.s = b.dataset.s; if (r.s === 'without') { r.basis = ''; r.stoneG = ''; r.promise = false; } }
     else if (b.dataset.pp) r.pp = b.dataset.pp; else return;
     paintRows(); rows.forEach((_r, i) => 0); touch(); update();
