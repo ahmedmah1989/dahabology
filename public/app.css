@@ -312,7 +312,7 @@ details.x-fold .table-wrap{background:none;border:0}
 .x-dock>a::after,.x-dock>details>summary::after{content:"";position:absolute;inset:5px;border:1px solid #efc66c32;border-radius:50%;pointer-events:none}
 .x-dock>a:focus-visible,.x-dock summary:focus-visible{outline:2px solid #fff3c9}
 .x-dock>.x-dock-home{width:calc(var(--d)*1.16);height:calc(var(--d)*1.16);translate:0 0;box-shadow:0 0 28px #ffd84a55}
-.x-dock>[aria-current=page],.x-dock>details.on>summary{translate:0 -5px;background:radial-gradient(circle at 35% 20%,#48628a,#192f4e 65%);box-shadow:0 0 26px #ffd84a88,inset 0 0 18px #efc66c26}
+.x-dock>[aria-current=page],.x-dock>details.on>summary{translate:0 0;background:radial-gradient(circle at 35% 20%,#48628a,#192f4e 65%);box-shadow:0 0 26px #ffd84a88,inset 0 0 18px #efc66c26}
 .x-top{border-bottom:1px solid #efc66c18}
 .x-lead{max-width:600px;margin-inline:auto;text-wrap:pretty;line-height:1.95}
 .x-card{border-color:#efc66c30;box-shadow:0 16px 42px #0003,inset 0 1px 0 #ffffff09}
@@ -377,7 +377,7 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  #calculator input{scroll-margin-top:140px;scroll-margin-bottom:120px}
  .x-dock::before{inset:-34px calc(50% - 50vw) calc(-12px - env(safe-area-inset-bottom)) calc(50% - 50vw);background:#0a1628cc;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);-webkit-mask-image:linear-gradient(to top,#000 0,#000 52%,#0000);mask-image:linear-gradient(to top,#000 0,#000 52%,#0000)}
  .x-dock>a:not([aria-current=page]),.x-dock>details:not(.on):not([open])>summary{translate:0 0!important}
- .x-dock>[aria-current=page],.x-dock>details.on>summary,.x-dock>details[open]>summary{translate:0 -9px!important}
+ .x-dock>[aria-current=page],.x-dock>details.on>summary,.x-dock>details[open]>summary{translate:0 0!important}
  .x-dock:has(>details[open])>[aria-current=page]{translate:0 0!important}
  html:has(#calculator){scroll-behavior:auto}
  .x-dock>a,.x-dock>details>summary{margin-inline:calc(var(--d) * -.03)}
