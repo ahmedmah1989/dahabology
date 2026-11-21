@@ -1,5 +1,6 @@
 ---
 import Head from '../components/Head.astro';
+import AssistantPanel from '../components/AssistantPanel.astro';
 import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
 import { B, DATA, ASSET_VERSION, page as find } from '../lib/site.js';
@@ -62,6 +63,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
 {[...scripts.filter(s => s !== 'monitor'), ...scripts.filter(s => s === 'monitor')].map(s => <script is:inline src={asset('js/' + s + '.js')}></script>)}
 <script is:inline src={asset('js/hscroll.js')}></script>
 <slot name="scripts" />
+<AssistantPanel />
 <script is:inline>
 (()=>{const menu=document.querySelector('.x-dock details');if(!menu)return;
 document.addEventListener('click',e=>{if(menu.open&&!menu.contains(e.target))menu.open=false;});

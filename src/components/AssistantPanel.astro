@@ -1,0 +1,24 @@
+---
+import { B, ASSET_VERSION } from '../lib/site.js';
+const { home = false } = Astro.props;
+const asset = p => B + p + '?v=' + ASSET_VERSION;
+---
+<link rel="stylesheet" href={asset('assistant.css')} />
+<div class:list={['dhb-help', { 'dhb-help-home': home }]}>
+  <button id="helpLauncher" class="help-launcher" type="button" aria-label="افتح مساعد دهبولوجي" aria-haspopup="dialog" aria-controls="helpDialog" aria-expanded="false">
+    <img src={asset('assets/tut-welcome-160.webp')} alt="" width="56" height="56" />
+    <span>اسأل توت</span>
+  </button>
+  <dialog id="helpDialog" aria-labelledby="helpTitle" aria-describedby="helpPrivacy">
+    <header class="help-head"><img src={asset('assets/tut-welcome-160.webp')} alt="" width="44" height="44" /><div><h2 id="helpTitle">مساعد دهبولوجي</h2><small>دليل متخصص على جهازك، مش ChatGPT</small></div><button id="helpClose" type="button" aria-label="إغلاق المساعد">×</button></header>
+    <p id="helpPrivacy">لا أقرأ حسابك أو ممتلكاتك ولا أرسل أسئلتك لخدمة ذكاء اصطناعي. بدون حفظ تلقائي.</p>
+    <div id="helpLog" class="help-log" role="log" aria-label="المحادثة" aria-live="polite" aria-relevant="additions"></div>
+    <div class="help-suggestions" aria-label="أسئلة سريعة">
+      <button type="button" data-help="إزاي أضيف قطعة؟">أضيف قطعة</button><button type="button" data-help="أسعار الذهب والدولار">الأسعار</button><button type="button" data-help="إزاي أفهم الفاتورة؟">الفاتورة</button><button type="button" data-help="سبب توقف المؤشر؟">المؤشر</button>
+    </div>
+    <form id="helpForm"><label class="help-sr" for="helpQuestion">سؤالك عن البرنامج</label><input id="helpQuestion" type="text" maxlength="600" autocomplete="off" enterkeyhint="send" placeholder="اسأل عن خطوة أو رقم في البرنامج…" required /><button type="submit">اسأل</button></form>
+    <div class="help-bottom"><span>الدردشة مؤقتة في هذه الصفحة فقط.</span><button id="helpClear" type="button">مسح المحادثة</button></div>
+  </dialog>
+</div>
+<script is:inline src={asset('js/assistant-help.js')}></script>
+<script is:inline src={asset('js/assistant-ui.js')}></script>

@@ -1,6 +1,6 @@
 ---
 import Motto from '../components/Motto.astro';
-import AssistantWelcome from '../components/AssistantWelcome.astro';
+import AssistantPanel from '../components/AssistantPanel.astro';
 import Head from '../components/Head.astro';
 import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
@@ -230,7 +230,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>
 </nav>
 
-<AssistantWelcome compact />
+
 <button class="install" id="install" type="button" hidden>ثبّت دهبولوجي على جهازك</button>
 <div class="home-controls"><button class="replay" id="motionToggle" type="button" aria-pressed="false">إيقاف الحركة</button><button class="replay" id="replay" type="button">إعادة عرض الحركة ↻</button></div>
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
@@ -354,5 +354,6 @@ addEventListener('appinstalled', () => { installBtn.hidden = true; });
 <script is:inline src={B + 'js/silver-view.js?v=' + ASSET_VERSION}></script>
 <script is:inline src={B + 'js/number-fit.js?v=' + ASSET_VERSION}></script>
 <script is:inline src={B + 'js/home-quotes.js?v=' + ASSET_VERSION}></script>
+<AssistantPanel home />
 </body>
 </html>
