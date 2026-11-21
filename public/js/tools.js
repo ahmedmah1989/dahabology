@@ -91,18 +91,27 @@
   const load = () => { try { const v = JSON.parse(localStorage.getItem(KEY)); return Array.isArray(v) ? v.filter(i => i && PURITY[i.k] && Number.isFinite(i.g) && i.g > 0 && Number.isFinite(i.paid) && i.paid >= 0) : []; } catch (_) { return []; } };
   const save = items => { try { localStorage.setItem(KEY, JSON.stringify(items)); return true; } catch (_) { return false; } };
   function piece(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; e.textContent = text; return e; }
+  // Pieces saved in the account come from wallet-account.js. Device pieces already moved to the account are shown once.
+  function allItems() {
+    const cloud = Array.isArray(window.DHB_CLOUD_ITEMS) ? window.DHB_CLOUD_ITEMS : [], ids = new Set(cloud.map(i => i.id));
+    return cloud.map(i => Object.assign({}, i, { where: 'account' })).concat(load().filter(i => !ids.has(i.id)).map(i => Object.assign({}, i, { where: 'device' })));
+  }
   function walletRender() {
     if (!$('walRows')) return;
     set('walQuoteStatus','تقدير قيمة دهبك بسعر شراء التاجر منك • '+window.DHB_QUOTE.describe(last?.sources?.isagha));
-    const items = load(), w = wallet(items, local()), body = $('walRows');
+    const items = allItems(), w = wallet(items, local()), body = $('walRows');
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
     w.rows.forEach(r => {
       const it = document.createElement('div'); it.className = 'x-item';
       const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = 'حذف'; b.setAttribute('aria-label', 'حذف هذه القطعة');
-      b.addEventListener('click', () => { if (confirm('حذف هذه القطعة من دهبي؟')) { save(load().filter(i => i.id !== r.id)); walletRender(); } });
+      b.addEventListener('click', () => {
+        if (!confirm(r.where === 'account' ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
+        if (r.where === 'account') { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id); return; }
+        save(load().filter(i => i.id !== r.id)); walletRender();
+      });
       it.append(
-        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k), piece('span', 'v', r.now === null ? '—' : egp(r.now)),
+        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (r.where === 'account' ? ' • في حسابك' : ' • على جهازك')), piece('span', 'v', r.now === null ? '—' : egp(r.now)),
         piece('span', 'w', nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)), piece('span', 'd' + (r.diff === null ? '' : r.diff >= 0 ? ' up' : ' dn'), r.diff === null ? '' : signed(r.diff) + percentageSuffix(r.percent, v => signed(v, 1))),
         piece('span', 'p', ''), b);
       body.append(it);
@@ -114,14 +123,8 @@
     set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
   }
   if ($('walRows')) {
-    $('walForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const g = num($('walGramsIn').value), paid = num($('walPaidIn').value);
-      if (!Number.isFinite(g)||!Number.isFinite(paid)||!(g > 0) || !(paid >= 0)) { set('walMsg', 'اكتب الوزن والمبلغ المدفوع بأرقام صحيحة.'); return; }
-      const items = load(); items.push({ id: typeof crypto.randomUUID==='function'?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2), k: $('walKarat').value, g, paid, note: $('walNoteIn').value.trim().slice(0, 40) });
-      set('walMsg', save(items) ? 'اتحفظت على هذا الجهاز.' : 'المتصفح منع الحفظ؛ القطعة لن تبقى بعد إغلاق الصفحة.');
-      ['walGramsIn', 'walPaidIn', 'walNoteIn'].forEach(id => $(id).value = ''); walletRender();
-    });
+    window.DHB_WALLET_RENDER = walletRender; // the add form is handled by wallet-account.js: saving needs an account
+    $('walForm').addEventListener('submit', e => e.preventDefault());
     walletRender();
   }
 
