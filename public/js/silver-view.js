@@ -36,7 +36,7 @@
         l.append(t, n);
       } else l.textContent = 'سعر الفضة في السوق المصري لسه مش في ملف الأسعار، فمش هنحوّل السعر العالمي ونسميه سعر محلي.';
     }
-    window.addEventListener('gold-board-updated', e => { local = e.detail && e.detail.sources && e.detail.sources.isaghaSilver; render(); });
+    window.addEventListener('gold-board-updated', e => { local = e.detail && e.detail.sources && e.detail.sources.isagha_silver; render(); });
     const load = () => fetch('https://api.gold-api.com/price/XAG', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(b => { glob = globalSilver(b); }).catch(() => { glob = null; }).then(() => { tried = true; render(); });
     load(); setInterval(load, 60000); render();
   }
