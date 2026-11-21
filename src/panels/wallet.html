@@ -37,6 +37,11 @@
 <div id="walSOnly" hidden><label class="x-field">وزن الذهب المعتمد للبيع<select id="walBasis"><option value="">غير معروف</option><option value="total">الوزن الكلي شامل الفصوص</option><option value="net">الوزن صافي ذهب</option></select></label>
 <label class="x-field" id="walSG" hidden>وزن الفصوص بالجرام<input id="walStoneG" inputmode="decimal" autocomplete="off"></label>
 <label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="walPromise" style="width:22px;height:22px;margin:0"> البائع وعد باسترداد الفصوص بسعر الذهب (الوعد مش مضمون، راجع سياسة الشركة المكتوبة)</label></div></details>
+<div id="walGate" class="x-card" hidden style="margin:12px 0"><p class="x-note" role="alert" style="color:#f0ca78">برجاء مراجعة البيانات والتأكد من صحتها قبل الإضافة.</p>
+<label style="display:flex;align-items:center;gap:10px;margin:8px 0"><input type="checkbox" id="walRev" style="width:24px;height:24px;margin:0"> تمت المراجعة</label>
+<fieldset style="border:0;padding:0;margin:8px 0"><legend class="x-note">هل تريد إرفاق صورة الفاتورة بالسطر كأرشيف؟</legend>
+<div style="display:flex;gap:22px;margin-top:6px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="yes" style="width:22px;height:22px;margin:0"> نعم، أرفقها</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="no" style="width:22px;height:22px;margin:0"> لا</label></div></fieldset>
+<p class="x-note">الصورة (لو اخترت إرفاقها) بتتحفظ في حسابك بس، وتقدر تعرضها أو تنزّلها أو تحذفها من السطر في أي وقت. لو اخترت «لا» القيم اللي كتبتها بتفضل زي ما هي.</p></div>
 <div class="x-actions"><button type="submit" class="x-btn" id="walAdd">احفظ في حسابي</button><button type="button" class="x-btn" id="walCancel" hidden>إلغاء التعديل</button></div><p class="x-msg" id="walMsg" role="status"></p>
 <p class="x-note">تقدر تشوف الصفحة والأسعار من غير تسجيل. الحفظ بس محتاج حساب، علشان قطعك تتحفظ في حسابك الخاص وقواعد الحماية تمنع أي مستخدم آخر من قراءتها.</p>
 <p class="x-note" id="walLogin" hidden><a href="../account-preview/">سجّل الدخول أو أنشئ حساب</a> ثم ارجع لهذه الصفحة.</p></form>

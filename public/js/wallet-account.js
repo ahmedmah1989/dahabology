@@ -90,6 +90,7 @@
   $('walZero').addEventListener('click', () => ['walMk', 'walTx', 'walSt'].forEach(i => { if ($(i).value.trim() === '') $(i).value = '0'; }));
   $('walType').addEventListener('change', () => { $('walPur').hidden = $('walType').value !== 'jewelry'; });
   let editingId = null, editBase = null;
+  window.DHB_WAL_EDITING = () => !!editingId;
   function resetForm() {
     editingId = null; editBase = null;
     ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDD', 'walMM', 'walYY', 'walMk', 'walTx', 'walSt', 'walStoneG'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true; $('walBasis').value = ''; $('walPromise').checked = false;
@@ -115,6 +116,12 @@
   };
   $('walForm').addEventListener('submit', async () => {
     const btn = $('walAdd'); if (btn.disabled) return;
+    const INV = window.DHB_INVOICE, photo = !editingId && INV && INV.active();
+    if (photo) {
+      // Photo flow: the owner must tick "تمت المراجعة" (an alert reminds them until they do) and answer the attach question.
+      if (!$('walRev').checked) { say('walMsg', 'لازم تراجع البيانات وتعلّم على «تمت المراجعة» قبل التأكيد.', 'err'); alert('برجاء مراجعة البيانات والتأكد من صحتها، ثم علّم على «تمت المراجعة» قبل تأكيد الإضافة.'); return; }
+      if (!radio('walAtt')) { say('walMsg', 'اختر: هل تريد إرفاق صورة الفاتورة بالسطر ولا لا؟', 'err'); return; }
+    }
     const date = LG().parseDMY($('walDD').value, $('walMM').value, $('walYY').value);
     if (!date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
     if (!radio('walS')) return say('walMsg', 'اختر: القطعة بفصوص ولا بدون فصوص.', 'err');
@@ -125,20 +132,46 @@
     if (b.error) return say('walMsg', b.error, 'err');
     if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
     btn.disabled = true; say('walMsg', '');
+    let wroteImage = null;
     try {
       const was = editingId, base = editBase;
-      const r = await writeAccount(items => {
+      if (photo && radio('walAtt') === 'yes') {
+        // Archive first: if the image cannot be stored, nothing is added and every field stays as typed.
+        const ses = INV.session();
+        if (ses.saved) { try { const ex = await (await lib()).loadDoc('gold/inv_' + ses.saved.id); if (!ex) ses.saved = null; } catch (_) { ses.saved = null; } } // the stored image may have been removed with an earlier row
+        if (!ses.saved) {
+          let pr; try { pr = await INV.prepareArchive(); } catch (e) { throw Object.assign(new Error('img'), { ar: e && e.code === 'TOO_BIG' ? 'الصورة كبيرة قوي حتى بعد التصغير. ما اتحفظش أي حاجة. ممكن تختار «لا» وتضيف القطعة من غير صورة.' : 'تعذّر تجهيز الصورة للحفظ. ما اتحفظش أي حاجة، والقيم زي ما هي. ممكن تختار «لا» وتضيف من غير صورة.' }); }
+          const L0 = await lib(), u0 = L0.currentUser();
+          if (!u0 || !u0.emailVerified) throw Object.assign(new Error('auth'), { ar: 'لازم تكون مسجّل الدخول بحساب مؤكد علشان الصورة تتحفظ. ما اتحفظش أي حاجة.' });
+          const iid = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+          try { await L0.saveDoc('gold/inv_' + iid, { v: 1, type: pr.type, bytes: pr.bytes, data: pr.data, created: new Date().toISOString() }); }
+          catch (e) { throw Object.assign(new Error('img'), { ar: 'تعذّر حفظ الصورة في حسابك. ما اتحفظش أي حاجة، والقيم زي ما هي. جرّب تاني أو اختر «لا».' }); }
+          ses.saved = { id: iid, type: pr.type, bytes: pr.bytes }; wroteImage = iid;
+        }
+        b.rec.invoiceImage = Object.assign({}, ses.saved);
+      }
+      let r;
+      try {
+        r = await writeAccount(items => {
         if (!was) return mergeItem(items, b.rec);
         const cur = Array.isArray(items) ? items : [];
         const now = cur.find(i => i && i.id === was);
         if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
         if (!LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
-        // Only fields this form owns change on the newest copy; anything else on the row (legacy additions, unknown fields) is kept.
+        // Only fields this form owns change on the newest copy; anything else on the row (legacy additions, invoice image, unknown fields) is kept.
         return { items: cur.map(i => { if (!i || i.id !== was) return i; const n = Object.assign({}, i, { label: b.rec.label, type: b.rec.type, karat: b.rec.karat, grams: b.rec.grams, purchaseDate: b.rec.purchaseDate, paid: b.rec.paid });
           if (b.rec.type === 'jewelry') n.purpose = b.rec.purpose; else delete n.purpose;
           ['stones', 'basis', 'stoneG', 'promise', 'making', 'tax', 'stamp'].forEach(k => { delete n[k]; }); return Object.assign(n, dt.details); }) };
       }, 'walMsg', 'walLogin');
-      if (r) { say('walMsg', was ? 'اتعدّلت في حسابك.' : 'اتحفظت في حسابك.', 'ok'); resetForm(); }
+      } catch (e) {
+        // The row was not saved. An image written only for this attempt must not be left behind.
+        if (wroteImage) { try { (await lib()).deleteDoc('gold/inv_' + wroteImage); INV.session().saved = null; } catch (_) {} }
+        throw e;
+      }
+      if (r) {
+        say('walMsg', was ? 'اتعدّلت في حسابك.' : (photo ? 'تمت الإضافة بنجاح.' : 'اتحفظت في حسابك.'), 'ok'); resetForm();
+        if (photo) INV.afterSave();
+      }
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتحفظش أي حاجة، حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
     finally { btn.disabled = false; }
   });
@@ -155,13 +188,55 @@
       if (r) say('walMsg', skipped ? 'القطعة دي اتحدد لها اختيار من مكان تاني، سيبناه زي ما هو.' : 'اتحفظ اختيارك.', 'ok');
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتغيّرش أي حاجة، حاول مرة أخرى.', 'err'); }
   };
+
+  // ---- invoice image at row level: view, download, delete image (the row stays) ----
+  const refs = (items, iid, exceptRow) => (Array.isArray(items) ? items : []).some(i => i && i.id !== exceptRow && i.invoiceImage && i.invoiceImage.id === iid);
+  async function loadImage(iid) {
+    const L = await lib(), d = await L.loadDoc('gold/inv_' + iid);
+    if (!d || typeof d.data !== 'string' || !/^image\/(jpeg|png|webp)$/.test(d.type || '')) throw Object.assign(new Error('noimg'), { ar: 'الصورة مش موجودة في حسابك.' });
+    const bin = atob(d.data), u8 = new Uint8Array(bin.length); for (let k = 0; k < bin.length; k++) u8[k] = bin.charCodeAt(k);
+    return { blob: new Blob([u8], { type: d.type }), type: d.type };
+  }
+  window.DHB_INV_VIEW = async (iid, download, name) => {
+    try {
+      say('walMsg', 'بحمّل الصورة…'); const { blob, type } = await loadImage(iid), url = URL.createObjectURL(blob);
+      if (download) { const a = document.createElement('a'); a.href = url; a.download = (name || 'invoice') + (type === 'image/png' ? '.png' : type === 'image/webp' ? '.webp' : '.jpg'); document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000); say('walMsg', 'اتنزّلت الفاتورة.', 'ok'); return; }
+      const ov = document.createElement('div'); ov.id = 'invView'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'عرض الفاتورة'); ov.style.cssText = 'position:fixed;inset:0;z-index:99;background:#000d;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;gap:12px';
+      const im = document.createElement('img'); im.src = url; im.alt = 'صورة الفاتورة'; im.style.cssText = 'max-width:100%;max-height:78vh;object-fit:contain;border-radius:12px;background:#fff1';
+      const cl = document.createElement('button'); cl.type = 'button'; cl.className = 'x-btn'; cl.textContent = 'إغلاق'; cl.onclick = () => { ov.remove(); URL.revokeObjectURL(url); };
+      ov.append(im, cl); document.body.append(ov); say('walMsg', '');
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر تحميل الصورة. جرّب تاني.', 'err'); }
+  };
+  // Delete only the image from a row. The row, its numbers and other rows from the same invoice stay. The stored image goes only when no row uses it.
+  window.DHB_INV_DELETE = async (rowId, base) => {
+    try {
+      let iid = null, last = false;
+      const r = await writeAccount(items => {
+        const cur = Array.isArray(items) ? items : [], now = cur.find(i => i && i.id === rowId);
+        if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
+        if (!now.invoiceImage) return { gone: true };
+        if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
+        iid = now.invoiceImage.id; last = !refs(cur, iid, rowId);
+        return { items: cur.map(i => { if (!i || i.id !== rowId) return i; const n = Object.assign({}, i); delete n.invoiceImage; return n; }) };
+      }, 'walMsg', 'walLogin');
+      if (!r) return;
+      if (r.gone) { await refresh(); say('walMsg', 'مفيش صورة على السطر ده.', 'ok'); return; }
+      if (last) { try { await (await lib()).deleteDoc('gold/inv_' + iid); say('walMsg', 'اتحذفت صورة الفاتورة. السطر زي ما هو.', 'ok'); } catch (e) { say('walMsg', 'اتشالت الصورة من السطر لكن تعذّر مسحها من التخزين. جرّب تحذف تاني بعدين.', 'err'); } }
+      else say('walMsg', 'اتشالت الصورة من السطر. نفس الصورة لسه مرتبطة بقطعة تانية من نفس الفاتورة.', 'ok');
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر حذف الصورة. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
+  };
+
   // ---- delete a piece from the account ----
   window.DHB_CLOUD_DELETE = async (id, base) => {
+    let gone = null, lastRef = false;
     try { const r = await writeAccount(items => {
         const cur = Array.isArray(items) ? items : [], now = cur.find(i => i && i.id === id);
         if (!now) return { already: true }; // already deleted elsewhere: nothing to remove, nothing resurrected
         if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
-        return { items: removeItem(cur, id) }; }, 'walMsg', 'walLogin'); if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
+        if (now.invoiceImage) { gone = now.invoiceImage.id; lastRef = !refs(cur, gone, id); }
+        return { items: removeItem(cur, id) }; }, 'walMsg', 'walLogin');
+      if (r && !r.already && gone && lastRef) { try { await (await lib()).deleteDoc('gold/inv_' + gone); } catch (_) { say('walMsg', 'اتحذف السطر لكن تعذّر مسح صورة الفاتورة من التخزين.', 'err'); return; } }
+      if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
     catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };
 

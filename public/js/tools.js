@@ -127,6 +127,10 @@
       if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) {
         acts.append(mk('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mk('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
       }
+      if (cloud && rec.invoiceImage && window.DHB_INV_VIEW) {
+        acts.append(mk('عرض الفاتورة', 'عرض صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, false)), mk('تنزيل الفاتورة', 'تنزيل صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, true, 'invoice-' + (rec.purchaseDate || ''))),
+          mk('حذف الصورة', 'حذف صورة الفاتورة من السطر', () => { if (confirm('حذف صورة الفاتورة من السطر؟ القطعة نفسها هتفضل.')) window.DHB_INV_DELETE(r.id, JSON.parse(JSON.stringify(r.rec))); }));
+      }
       if (cloud && r.rec && window.DHB_CLOUD_EDIT) acts.append(mk('تعديل', 'تعديل هذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
       acts.append(del); it.append(acts); body.append(it);
     });

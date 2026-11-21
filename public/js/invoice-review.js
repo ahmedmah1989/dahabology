@@ -9,7 +9,8 @@ const $ = (id) => document.getElementById(id);
 const LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم، بيتكتب في يوم / شهر / سنة)", paid: "إجمالي ما دفعته" };
 const TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDD" };
 const ENGINE = new URL("../vendor/tesseract/", import.meta.url).href;
-let objectUrl = null, review = null, busy = false, lastNote = "";
+let objectUrl = null, review = null, busy = false, lastNote = "", curFile = null, curParsed = null, session = null;
+const MAX_B64 = 700000; // one Firestore field must stay well under 1 MiB
 
 async function ocrFile(file) {
   const T = await import(ENGINE + "tesseract.esm.min.js");
@@ -23,10 +24,12 @@ async function ocrFile(file) {
   } finally { await w.terminate(); }
 }
 
-function drop() { if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; } review = null; $("invBody").innerHTML = ""; $("invPanel").hidden = true; $("invFile").value = ""; }
+function gate(on) { const g = $("walGate"); if (!g) return; g.hidden = !on; if (!on) { $("walRev").checked = false; document.querySelectorAll("input[name=walAtt]").forEach((x) => { x.checked = false; }); } const b = $("walAdd"); if (b && !(window.DHB_WAL_EDITING && window.DHB_WAL_EDITING())) b.textContent = on ? "تأكيد الإضافة" : "احفظ في حسابي"; }
+function drop() { if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; } review = null; curFile = null; curParsed = null; session = null; gate(false); $("invBody").innerHTML = ""; $("invPanel").hidden = true; $("invFile").value = ""; }
 function msg(t, kind) { const m = $("invMsg"); m.textContent = t || ""; m.className = "x-msg" + (kind ? " " + kind : ""); }
 
 function applyConfirmed(f) {
+  $("walRev").checked = false; // any change after the review resets it
   const v = review.rows[f].confirmed;
   if (f === "karat") { const b = document.querySelector(`.x-karat[data-set="walKarat"][data-value="${v}"]`); if (b) b.click(); }
   else if (f === "purchaseDate") { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); if (m) { [["walDD", m[3]], ["walMM", m[2]], ["walYY", m[1]]].forEach(([i, x]) => { $(i).value = String(Number(x)); }); } }
@@ -72,17 +75,45 @@ async function onPick() {
   const file = $("invFile").files && $("invFile").files[0]; if (!file || busy) return;
   if (!/^image\//.test(file.type)) return msg("اختر صورة.", "err");
   drop(); busy = true; msg("بقرأ الصورة على جهازك، ممكن ياخد وقت…");
-  objectUrl = URL.createObjectURL(file); $("invPanel").hidden = false;
+  objectUrl = URL.createObjectURL(file); $("invPanel").hidden = false; curFile = file; session = { id: null, saved: null }; gate(true);
   let parsed = null;
   try { const o = await ocrFile(file); parsed = parseInvoice(o.text, { minDigitConfidence: o.minDigitConfidence }); lastNote = parsed.suppressed ? parsed.karat.note : ""; msg(parsed.suppressed ? lastNote + ". اكتب القيم من الصورة بنفسك." : "القراءة خلصت. راجع كل قيمة بالصورة.", parsed.suppressed ? "err" : "ok"); }
   catch (e) { msg("القراءة الآلية ما اشتغلتش على جهازك. اكتب القيم من الصورة بنفسك.", "err"); }
-  review = createReview(parsed); render(); busy = false;
+  busy = false;
+  if (curFile !== file) return; // the photo was closed while the reader was still working
+  curParsed = parsed; review = createReview(parsed); render();
 }
 
+// Shrink the photo to a JPEG that fits one Firestore field. Returns {data (base64), type, bytes} or throws {code}.
+async function prepareArchive() {
+  if (!curFile) throw Object.assign(new Error("no photo"), { code: "NO_PHOTO" });
+  let bmp; try { bmp = await createImageBitmap(curFile); } catch { throw Object.assign(new Error("decode"), { code: "DECODE" }); }
+  for (const side of [1600, 1280, 1024, 800, 640]) {
+    const k = Math.min(1, side / Math.max(bmp.width, bmp.height)), c = document.createElement("canvas");
+    c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+    c.getContext("2d").drawImage(bmp, 0, 0, c.width, c.height);
+    for (const q of [0.82, 0.68, 0.54]) {
+      const blob = await new Promise((r) => c.toBlob(r, "image/jpeg", q)); if (!blob) continue;
+      const data = await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.readAsDataURL(blob); });
+      if (data && data.length <= MAX_B64) return { data, type: "image/jpeg", bytes: blob.size };
+    }
+  }
+  throw Object.assign(new Error("too big"), { code: "TOO_BIG" });
+}
 export function init() {
   if (!$("invFile")) return;
   $("invFile").addEventListener("change", onPick);
-  $("walForm").addEventListener("submit", () => { if (objectUrl) drop(); }); // confirmed values are already in the form; the photo is not kept
+  // Any edit to the form after "تمت المراجعة" was ticked clears it, so the owner reviews what is actually being saved.
+  $("walForm").addEventListener("input", (e) => { if (e.target && e.target.id !== "walRev" && e.target.name !== "walAtt") $("walRev").checked = false; });
+  $("walForm").addEventListener("change", (e) => { if (e.target && e.target.id !== "walRev" && e.target.name !== "walAtt") $("walRev").checked = false; });
   addEventListener("pagehide", () => { if (objectUrl) drop(); });
+  window.DHB_INVOICE = {
+    active: () => !!objectUrl && !!curFile,
+    session: () => session,
+    prepareArchive,
+    // After a piece was saved from this photo: keep the photo for another piece from the same invoice, clear what was confirmed.
+    afterSave() { if (!objectUrl) return; review = createReview(curParsed); render(); $("walRev").checked = false; document.querySelectorAll("input[name=walAtt]").forEach((x) => { x.checked = false; }); msg("اتحفظت. لو في قطعة تانية في نفس الفاتورة راجعها من الصورة وأضفها، أو اضغط «إغلاق وحذف الصورة».", "ok"); },
+    close() { drop(); msg(""); },
+  };
 }
 init();
