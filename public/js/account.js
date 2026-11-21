@@ -177,12 +177,20 @@ export async function loadDocVersioned(path) {
     return { data: JSON.parse(d.fields.json.stringValue), version: d.updateTime || null, exists: true };
   } catch (e) { if (e.code === "NOT_FOUND" || e.code === "404") return { data: null, version: null, exists: false }; throw e; }
 }
-export async function saveDocIf(path, data, version) {
+// Stored invoice images are changed in the SAME atomic commit as the list, so the last-reference check cannot go stale:
+// {op:"delete", id} removes the image doc together with the list change (the list precondition proves nobody changed it meanwhile);
+// {op:"require", id} makes the commit fail unless the image doc still exists (a tiny field is touched, the image data is not rewritten).
+function imageDocWrites(uid, ops) {
+  const base = `projects/${FIREBASE.projectId}/databases/(default)/documents/users/${uid}/gold/inv_`;
+  return (Array.isArray(ops) ? ops : []).map((o) => o.op === "delete" ? { delete: base + o.id }
+    : { update: { name: base + o.id, fields: { guard: { stringValue: new Date().toISOString() } } }, updateMask: { fieldPaths: ["guard"] }, currentDocument: { exists: true } });
+}
+export async function saveDocIf(path, data, version, imageOps) {
   // documents:commit with a precondition (the single-document PATCH takes its precondition less reliably).
   await authed((s, t) => call(`${FS}:commit`, { writes: [{
     update: { name: `projects/${FIREBASE.projectId}/databases/(default)/documents/users/${s.uid}/${path}`, fields: { json: { stringValue: JSON.stringify(data) } } },
     currentDocument: version ? { updateTime: version } : { exists: false },
-  }] }, "POST", t));
+  }].concat(imageDocWrites(s.uid, imageOps)) }, "POST", t));
 }
 
 // Optimistic read-modify-write. load() -> {data, version}; save(data, version) throws a CONFLICT error if the document changed since the read.
@@ -194,7 +202,7 @@ export async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
     const d = cur && cur.data;
     const r = mutate(d && d.items);
     if (!r.items) return r;
-    try { await save({ v: (d && d.v) || 1, items: r.items }, cur && cur.version); return r; }
+    try { await save({ v: (d && d.v) || 1, items: r.items }, cur && cur.version, r.imageOps); return r; }
     catch (e) { if (!e || e.code !== "CONFLICT") throw e; }
   }
   throw new AccountError("CONFLICT");
@@ -203,7 +211,7 @@ export async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
 export function updateGoldItems(mutate, uid) {
   return commitWithRetry({
     load: async () => { const x = await loadDocVersioned("gold/items"); if (uid && currentUser()?.uid !== uid) throw Object.assign(new Error("user changed"), { ar: "تغيّر الحساب. حاول مرة أخرى." }); return x; },
-    save: (data, version) => saveDocIf("gold/items", data, version),
+    save: (data, version, imageOps) => saveDocIf("gold/items", data, version, imageOps),
     mutate,
   });
 }

@@ -132,7 +132,7 @@
     if (b.error) return say('walMsg', b.error, 'err');
     if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
     btn.disabled = true; say('walMsg', '');
-    let wroteImage = null;
+    let wroteImage = null, reusedId = null;
     try {
       const was = editingId, base = editBase;
       if (photo && radio('walAtt') === 'yes') {
@@ -148,12 +148,12 @@
           catch (e) { throw Object.assign(new Error('img'), { ar: 'تعذّر حفظ الصورة في حسابك. ما اتحفظش أي حاجة، والقيم زي ما هي. جرّب تاني أو اختر «لا».' }); }
           ses.saved = { id: iid, type: pr.type, bytes: pr.bytes }; wroteImage = iid;
         }
-        b.rec.invoiceImage = Object.assign({}, ses.saved);
+        b.rec.invoiceImage = Object.assign({}, ses.saved); if (!wroteImage) reusedId = ses.saved.id;
       }
       let r;
       try {
         r = await writeAccount(items => {
-        if (!was) return mergeItem(items, b.rec);
+        if (!was) { const m = mergeItem(items, b.rec); if (reusedId) m.imageOps = [{ op: 'require', id: reusedId }]; return m; }
         const cur = Array.isArray(items) ? items : [];
         const now = cur.find(i => i && i.id === was);
         if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
@@ -166,13 +166,8 @@
       } catch (e) {
         // The row was not saved. An image written only for this attempt must not be left behind.
         if (wroteImage) { try { await dropImageIfUnused(wroteImage); INV.session().saved = null; } catch (_) {} }
+        if (reusedId) { let ex = true; try { ex = await (await lib()).loadDoc('gold/inv_' + reusedId); } catch (_) {} if (!ex) { INV.session().saved = null; throw Object.assign(new Error('imggone'), { ar: 'صورة الفاتورة اتحذفت من مكان تاني، فما اتحفظش أي حاجة. دوس «تأكيد الإضافة» تاني علشان الصورة تتحفظ من جديد.' }); } }
         throw e;
-      }
-      if (r && photo && !wroteImage && b.rec.invoiceImage) {
-        // Reused image: confirm it still exists after the row was saved; if another tab removed it meanwhile, drop the dangling pointer.
-        let ex = null; try { ex = await (await lib()).loadDoc('gold/inv_' + b.rec.invoiceImage.id); } catch (_) { ex = true; }
-        if (!ex) { try { await writeAccount(items => { const cur = Array.isArray(items) ? items : []; return { items: cur.map(i => { if (!i || i.id !== b.rec.id || !i.invoiceImage) return i; const n = Object.assign({}, i); delete n.invoiceImage; return n; }) }; }, 'walMsg', 'walLogin'); } catch (_) {}
-          INV.session().saved = null; say('walMsg', 'القطعة اتحفظت لكن صورة الفاتورة كانت اتحذفت من مكان تاني، فاتحفظت من غير صورة.', 'err'); resetForm(); INV.afterSave(); return; }
       }
       if (r) {
         say('walMsg', was ? 'اتعدّلت في حسابك.' : (photo ? 'تمت الإضافة بنجاح.' : 'اتحفظت في حسابك.'), 'ok'); resetForm();
@@ -229,11 +224,11 @@
         if (!now.invoiceImage) return { gone: true };
         if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
         iid = now.invoiceImage.id; last = !refs(cur, iid, rowId);
-        return { items: cur.map(i => { if (!i || i.id !== rowId) return i; const n = Object.assign({}, i); delete n.invoiceImage; return n; }) };
+        return { imageOps: last ? [{ op: 'delete', id: iid }] : [], items: cur.map(i => { if (!i || i.id !== rowId) return i; const n = Object.assign({}, i); delete n.invoiceImage; return n; }) };
       }, 'walMsg', 'walLogin');
       if (!r) return;
       if (r.gone) { await refresh(); say('walMsg', 'مفيش صورة على السطر ده.', 'ok'); return; }
-      if (last) { try { const k = await dropImageIfUnused(iid); say('walMsg', k === 'kept' ? 'اتشالت الصورة من السطر. الصورة لسه مستخدمة في قطعة تانية فاتسابت.' : 'اتحذفت صورة الفاتورة. السطر زي ما هو.', 'ok'); } catch (e) { say('walMsg', 'اتشالت الصورة من السطر لكن تعذّر مسحها من التخزين. جرّب تحذف تاني بعدين.', 'err'); } }
+      if (last) say('walMsg', 'اتحذفت صورة الفاتورة من حسابك. السطر زي ما هو.', 'ok');
       else say('walMsg', 'اتشالت الصورة من السطر. نفس الصورة لسه مرتبطة بقطعة تانية من نفس الفاتورة.', 'ok');
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر حذف الصورة. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };
@@ -246,8 +241,7 @@
         if (!now) return { already: true }; // already deleted elsewhere: nothing to remove, nothing resurrected
         if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
         if (now.invoiceImage) { gone = now.invoiceImage.id; lastRef = !refs(cur, gone, id); }
-        return { items: removeItem(cur, id) }; }, 'walMsg', 'walLogin');
-      if (r && !r.already && gone && lastRef) { try { await dropImageIfUnused(gone); } catch (_) { say('walMsg', 'اتحذف السطر لكن تعذّر مسح صورة الفاتورة من التخزين.', 'err'); return; } }
+        return { items: removeItem(cur, id), imageOps: gone && lastRef ? [{ op: 'delete', id: gone }] : [] }; }, 'walMsg', 'walLogin');
       if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
     catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };

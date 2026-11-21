@@ -106,7 +106,16 @@
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
     const WHY = { 'stones-unset': 'لسه ما حددتش بفصوص ولا بدون، فمش داخلة في القيمة', 'gold-weight-unknown': 'وزن الذهب الصافي غير معروف، فمش داخلة في القيمة', 'stones-cost-unknown': 'تكلفة الفصوص غير معروفة', 'legacy-additions': 'فيها مبلغ "إضافات" قديم محفوظ، فالمقارنة بسعر الذهب فقط مش متاحة', 'fees-missing': 'مصنعية أو ضريبة أو دمغة غير مسجلة', 'no-market-price': 'في انتظار السعر', 'no-price': 'سعر الشراء غير مسجل', 'non-positive-gold': 'الأرقام المسجلة مش منطقية، راجعها' };
-    items.forEach((r, ix) => {
+    // Newest purchase date first; undated last. A heading with totals opens each year and each purchase date (pieces bought the same day sit together).
+    const dateOf = ix => (/^\d{4}-\d{2}-\d{2}$/.test(recs[ix].purchaseDate || '') ? recs[ix].purchaseDate : '');
+    const order = items.map((_, ix) => ix).sort((a, b) => { const da = dateOf(a), db = dateOf(b); return da === db ? a - b : !da ? 1 : !db ? -1 : da < db ? 1 : -1; });
+    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return nf(a.grams, 3) + ' جم • دفعت ' + egp(a.paidAll) + ' • ' + (a.covered === 0 ? 'القيمة لسه ما اتحسبتش' : 'قيمتها الآن ' + egp(a.now) + (a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة بس)' : '')); };
+    const heading = (cls, title, sel) => { const h = document.createElement('div'); h.className = 'x-grp ' + cls; h.append(piece('b', '', title), piece('span', '', sumLine(sel))); body.append(h); };
+    let curYear = null, curDate = null;
+    order.forEach(ix => {
+      const r = items[ix], dt = dateOf(ix), yr = dt ? dt.slice(0, 4) : '';
+      if (yr !== curYear) { curYear = yr; curDate = null; heading('yr', yr ? 'إجمالي سنة ' + yr : 'من غير تاريخ شراء', order.filter(i => (dateOf(i) ? dateOf(i).slice(0, 4) : '') === yr)); }
+      if (dt && dt !== curDate) { curDate = dt; const same = order.filter(i => dateOf(i) === dt); heading('dy', 'إجمالي ' + L.dmy(dt) + (same.length > 1 ? ' (' + same.length + ' قطع)' : ''), same); }
       const rec = recs[ix], v = L.valuation(rec, pm), cloud = r.where === 'account';
       const it = document.createElement('div'); it.className = 'x-item wl';
       const mk = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
