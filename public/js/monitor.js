@@ -60,7 +60,7 @@
     const result=quality.usable?calculate(g.sell,b.sell,a['24'].sell,a['21'].sell):null;
     const map={gapEGP:[result?.gapEGP],gapPercent:[result?.gapPercent,'%'],gapUSD:[result?.gapUSD,' دولار'],implied:[result?.implied],fxGap:[result?.fxGap],fxPercent:[result?.fxPercent,'%'],global24:[result?.globalEGP],global21:[result?.global21]};
     Object.entries(map).forEach(([id,args])=>$(id).textContent=fmt(...args));
-    {const imp=result?result.implied:impliedFromGold(state.sources);$('implied').textContent=fmt(imp);$('impliedNote').textContent=Number.isFinite(imp)?'محسوب من سعر الصاغة عيار 24 (آي صاغة) والأونصة العالمية فقط، من غير سعر البنك. مش سعر مُعلن لدولار.':'';}
+    {const imp=result?result.implied:impliedFromGold(state.sources);$('implied').textContent=fmt(imp);$('impliedNote').textContent=Number.isFinite(imp)?'رقم محسوب: سعر بيع جرام 24 عند الصاغة (آي صاغة) ÷ قيمة الجرام العالمي بالدولار. ده المعروف بين الناس بدولار الصاغة، وهو مش سعر دولار مُعلن من أي جهة، وبيتأثر بعرض وطلب سوق الذهب نفسه. مش داخل فيه سعر البنك.':'';}
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
     $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
