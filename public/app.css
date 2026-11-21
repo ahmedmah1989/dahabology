@@ -550,3 +550,4 @@ body:has(.ivx)::after{display:none}
 body:has(.ivx) header.x-top{background:#0a1628;-webkit-backdrop-filter:none;backdrop-filter:none}
 body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(safe-area-inset-bottom)) calc(50% - 50vw);background:#0a1628;border-top:1px solid var(--x-line);-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask-image:none;mask-image:none}
 #h14[hidden]+#h14note{display:none}
+.silver-t{width:100%;border-collapse:collapse;margin:8px 0}.silver-t th,.silver-t td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,.12);font-size:15px}#silverCard h3{font-size:15px;margin:12px 0 4px;color:#e5c76b}
