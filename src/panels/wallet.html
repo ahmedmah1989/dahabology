@@ -22,5 +22,19 @@
 <label class="x-field sm">وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
 <div class="x-actions"><button type="submit" class="x-btn">أضف إلى دهبي</button></div><p class="x-msg" id="walMsg" role="status"></p></form>
 
-<p class="x-note">القيمة بسعر شراء التاجر للجرام المعروض، والسعر الفعلي يحدده التاجر بعد فحص القطعة. استرداد جزء من المصنعية يخضع لشروط المنتج والتغليف؛ التقدير هنا لقيمة الذهب فقط. البيانات محفوظة في متصفحك فقط ولا تُرسل لأي خادم.</p>
+<section class="x-card" id="waBox" style="margin-top:20px" hidden><h2>احفظ قطعة في حسابك (اختياري)</h2>
+<p class="x-note">دهبي شغال من غير تسجيل ويحفظ على جهازك. التسجيل مطلوب فقط لو عايز تحفظ قطعة في حسابك الخاص، وقواعد الحماية بتمنع أي مستخدم آخر من قراءة بياناتك. مفيش رفع تلقائي، وقطعك على الجهاز تفضل زي ما هي.</p>
+<label class="x-field">القطعة<select id="waPiece"></select></label>
+<div class="x-grid2">
+<label class="x-field">النوع<select id="waType"><option value="">اختر</option><option value="bar">سبيكة</option><option value="coin">جنيه / عملة</option><option value="jewelry">مصوغات</option><option value="scrap">كسر</option></select></label>
+<label class="x-field">تاريخ الشراء<input id="waDate" type="date"></label>
+</div>
+<fieldset id="waPur" hidden style="border:0;padding:0;margin:10px 0"><legend class="x-note">نية شراء المصوغات</legend>
+<label><input type="radio" name="waP" value="adornment"> زينة</label> <label><input type="radio" name="waP" value="saving"> ادخار</label></fieldset>
+<div class="x-actions"><button type="button" class="x-btn" id="waSave">احفظ هذه القطعة في حسابي</button></div>
+<p class="x-msg" id="waMsg" role="status"></p>
+<p class="x-note" id="waLogin" hidden><a href="../account-preview/">سجّل الدخول أو أنشئ حساب</a> ثم ارجع لهذه الصفحة.</p>
+</section>
+
+<p class="x-note">القيمة بسعر شراء التاجر للجرام المعروض، والسعر الفعلي يحدده التاجر بعد فحص القطعة. استرداد جزء من المصنعية يخضع لشروط المنتج والتغليف؛ التقدير هنا لقيمة الذهب فقط. البيانات محفوظة في متصفحك ولا تُرسل لأي خادم، إلا القطعة التي تختار بنفسك حفظها في حسابك.</p>
 </section>
