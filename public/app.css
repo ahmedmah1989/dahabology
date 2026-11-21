@@ -473,10 +473,10 @@ html{scroll-padding-bottom:150px}
 .ivx .err{font-size:13px;color:#f0a2aa;margin:6px 0 0}
 .ivx /* list */
 .yr{font-size:15px;font-weight:700;color:var(--x-gold-hot);margin:14px 2px 4px}
-.ivx .inv{margin-top:8px;border:1px solid #ffffff1c;border-radius:14px;overflow:hidden;background:#0a162866}
+.ivx .inv{margin-top:8px;border:1px solid #ffffff1c;border-radius:14px;overflow:clip;background:#0c1a2f}
 .ivx .inv>header{display:flex;justify-content:space-between;gap:8px;padding:8px 12px;font-size:13px;color:#a9b8d0;background:#ffffff08}
 .ivx .cols,.ivx .pr{display:grid;grid-template-columns:minmax(0,1.1fr) 44px minmax(0,1fr) minmax(0,1.2fr);gap:6px;align-items:center;padding:0 12px}
-.ivx .cols{font-size:12px;font-weight:700;color:#93a4bd;padding-top:8px}
+.ivx .cols{font-size:12px;font-weight:700;color:#93a4bd;padding-top:8px;padding-bottom:6px;position:sticky;top:var(--x-hdr,66px);z-index:5;background:#0f1f36;border-bottom:1px solid #ffffff1c}
 .ivx .pr{min-height:52px;border-top:1px solid #ffffff14;font-size:16px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;cursor:pointer;background:none;border-left:0;border-right:0;border-bottom:0;width:100%;text-align:start;font-family:inherit}
 .ivx .pr:first-of-type{border-top:0}
 .ivx .pr .n{font-weight:600;font-size:15px}
@@ -543,3 +543,6 @@ html{scroll-padding-bottom:150px}
 .ivx .paidb{grid-column:1/-1}
 .ivx .fixk{display:flex;align-items:center;justify-content:center;direction:rtl}
 .ivx .row,.ivx .date,.ivx input,.ivx select,.ivx .sum,.ivx .gate,.ivx details.d{scroll-margin-top:96px}
+
+/* wallet: no background mark behind figures */
+body:has(.ivx)::after{display:none}
