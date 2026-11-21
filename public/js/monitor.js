@@ -9,8 +9,7 @@
       gapEGP: local24 - globalEGP, gapUSD: (local24 - globalEGP) / bankSell,
       gapPercent: (local24 / globalEGP - 1) * 100,
       implied: local24 / gramUSD, fxGap: local24 / gramUSD - bankSell,
-      fxPercent: (local24 / gramUSD / bankSell - 1) * 100,
-      drop24: Math.max(0, 7735 - local24), drop21: local21 > 0 ? Math.max(0, 6767 - local21) : null };
+      fxPercent: (local24 / gramUSD / bankSell - 1) * 100 };
   }
 
   function assess(sources, now = Date.now()) {
@@ -61,8 +60,6 @@
     $('fetchStatus').textContent=(state.busy?'تحميل الأسعار… • ':'')+window.DHB_QUOTE.connection(state.transport);
     if (!state.dealerEdited) $('dealer').value=usable(a)?a['21'].sell:'';
     calculator();
-    if($('reference24'))$('reference24').textContent=result?fmt(result.drop24)+' ('+fmt(result.drop24/7735*100,'%')+')':'—';
-    if($('reference21'))$('reference21').textContent=result?fmt(result.drop21)+' ('+fmt(result.drop21/6767*100,'%')+')':'—';
     window.dispatchEvent(new CustomEvent('gold-board-updated',{detail:{sources:state.sources,quality,result,transport:state.transport}}));
   }
   async function json(url) {
