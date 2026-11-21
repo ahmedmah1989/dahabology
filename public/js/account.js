@@ -184,3 +184,26 @@ export async function saveDocIf(path, data, version) {
     currentDocument: version ? { updateTime: version } : { exists: false },
   }] }, "POST", t));
 }
+
+// Optimistic read-modify-write. load() -> {data, version}; save(data, version) throws a CONFLICT error if the document changed since the read.
+// On conflict the whole cycle (fresh read, mutate again on the newer rows) repeats. After the last attempt nothing is saved.
+// mutate(items) -> {items, ...info}; return no `items` to skip the write.
+export async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
+  for (let n = 0; n < attempts; n++) {
+    const cur = await load();
+    const d = cur && cur.data;
+    const r = mutate(d && d.items);
+    if (!r.items) return r;
+    try { await save({ v: (d && d.v) || 1, items: r.items }, cur && cur.version); return r; }
+    catch (e) { if (!e || e.code !== "CONFLICT") throw e; }
+  }
+  throw new AccountError("CONFLICT");
+}
+// The one way to change the account's gold list. Every writer must use this, so a stale copy can never overwrite newer rows.
+export function updateGoldItems(mutate, uid) {
+  return commitWithRetry({
+    load: async () => { const x = await loadDocVersioned("gold/items"); if (uid && currentUser()?.uid !== uid) throw Object.assign(new Error("user changed"), { ar: "تغيّر الحساب. حاول مرة أخرى." }); return x; },
+    save: (data, version) => saveDocIf("gold/items", data, version),
+    mutate,
+  });
+}

@@ -12,8 +12,10 @@
     if (!TYPES.includes(o.type)) return { error: 'اختر نوع القطعة.' };
     if (!/^\d{4}-\d{2}-\d{2}$/.test(o.date || '') || Number.isNaN(Date.parse(o.date))) return { error: 'اختر تاريخ الشراء.' };
     if (o.type === 'jewelry' && !['adornment', 'saving'].includes(o.purpose)) return { error: 'اختر نية شراء المصوغات: زينة أو ادخار.' };
+    const det = o.details ? (o.details.stones || o.details.making !== undefined || o.details.tax !== undefined || o.details.stamp !== undefined ? o.details : {}) : {};
     const rec = { id: String(base.id), label: String(base.note || '').slice(0, 40), type: o.type, karat: Number(base.k), grams: base.g, purchaseDate: o.date, paid: base.paid };
     if (o.type === 'jewelry') rec.purpose = o.purpose;
+    Object.keys(det).forEach(k => { if (det[k] !== undefined) rec[k] = det[k]; });
     return { rec };
   }
   // Append without touching other items. Same id already there: keep the existing one.
@@ -28,24 +30,11 @@
     const priced = [], unpriced = [];
     (Array.isArray(cloud) ? cloud : []).forEach(i => {
       if (!i || !(Number(i.grams) > 0) || ![18, 21, 24].includes(Number(i.karat))) return;
-      (Number.isFinite(i.paid) && i.paid >= 0 ? priced : unpriced).push({ id: i.id, k: String(i.karat), g: Number(i.grams), paid: i.paid, note: i.label || '' });
+      (Number.isFinite(i.paid) && i.paid >= 0 ? priced : unpriced).push({ id: i.id, k: String(i.karat), g: Number(i.grams), paid: i.paid, note: i.label || '', rec: i });
     });
     return { priced, unpriced };
   }
-  // Optimistic read-modify-write. load() -> {data, version}; save(data, version) throws {code:'CONFLICT'} if the document changed since the read.
-  // On conflict the whole cycle (fresh read, mutate again on the newer rows) is repeated. After the last attempt nothing is saved.
-  async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
-    for (let n = 0; n < attempts; n++) {
-      const cur = await load();
-      const d = cur && cur.data;
-      const r = mutate(d && d.items);
-      if (!r.items) return r; // nothing to write
-      try { await save({ v: (d && d.v) || 1, items: r.items }, cur && cur.version); return r; }
-      catch (e) { if (!e || e.code !== 'CONFLICT') throw e; }
-    }
-    const err = new Error('CONFLICT'); err.code = 'CONFLICT'; err.ar = 'القائمة اتغيّرت من مكان تاني وما قدرناش نحفظ بأمان. ما اتحفظش أي حاجة. حدّث الصفحة وحاول مرة أخرى.'; throw err;
-  }
-  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num, commitWithRetry };
+  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num };
   if (typeof document === 'undefined' || !document.getElementById('walForm')) return;
 
   const $ = id => document.getElementById(id);
@@ -87,35 +76,83 @@
     if (!u) { $(loginId).hidden = false; say(noticeId, 'لازم تسجّل الدخول الأول علشان القطعة تتحفظ في حسابك. ما اتحفظش أي حاجة.', 'err'); return null; }
     if (!u.emailVerified) { $(loginId).hidden = false; say(noticeId, 'حسابك محتاج تأكيد البريد. أكمل التأكيد من صفحة حسابي ثم ارجع.', 'err'); return null; }
     return serial(async () => {
-      const r = await commitWithRetry({
-        load: async () => { const x = await L.loadDocVersioned('gold/items'); if (L.currentUser()?.uid !== u.uid) throw Object.assign(new Error('user changed'), { ar: 'تغيّر الحساب. حاول مرة أخرى.' }); return x; },
-        save: (data, version) => L.saveDocIf('gold/items', data, version),
-        mutate,
-      });
+      const r = await L.updateGoldItems(mutate, u.uid);
       if (r.items) { owner = u.uid; setCloud(r.items); }
       return r;
     });
   }
 
-  // ---- add a new piece: needs an account ----
+  // ---- add or edit a piece: needs an account ----
+  const LG = () => window.DHB_LEDGER;
+  const radio = n => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
+  const syncMore = () => { const w = radio('walS') === 'with'; $('walSOnly').hidden = !w; $('walSG').hidden = !(w && $('walBasis').value === 'total'); };
+  document.querySelectorAll('input[name=walS]').forEach(x => x.addEventListener('change', syncMore)); $('walBasis').addEventListener('change', syncMore);
+  $('walZero').addEventListener('click', () => ['walMk', 'walTx', 'walSt'].forEach(i => { if ($(i).value.trim() === '') $(i).value = '0'; }));
   $('walType').addEventListener('change', () => { $('walPur').hidden = $('walType').value !== 'jewelry'; });
+  let editingId = null;
+  function resetForm() {
+    editingId = null;
+    ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDD', 'walMM', 'walYY', 'walMk', 'walTx', 'walSt', 'walStoneG'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true; $('walBasis').value = ''; $('walPromise').checked = false;
+    document.querySelectorAll('input[name=walP],input[name=walS]').forEach(x => { x.checked = false; }); syncMore();
+    $('walAdd').textContent = 'احفظ في حسابي'; $('walCancel').hidden = true;
+  }
+  $('walCancel').addEventListener('click', () => { resetForm(); say('walMsg', ''); });
+  const formDetails = () => LG().readDetails({ stones: radio('walS'), basis: $('walBasis').value, stoneG: $('walStoneG').value, promise: $('walPromise').checked ? 'full' : '', making: $('walMk').value, tax: $('walTx').value, stamp: $('walSt').value });
+  // Fill the form from a saved row (edit). Shown values are exactly what is saved; blank means not recorded.
+  window.DHB_CLOUD_EDIT = id => {
+    const r = (window.DHB_CLOUD_ITEMS || []).find(x => x.id === id), rec = r && r.rec; if (!rec) return;
+    resetForm(); editingId = id; const d = String(rec.purchaseDate || '').split('-');
+    $('walGramsIn').value = rec.grams; $('walPaidIn').value = Number.isFinite(rec.paid) ? rec.paid : ''; $('walNoteIn').value = rec.label || '';
+    if (d.length === 3) { $('walDD').value = Number(d[2]); $('walMM').value = Number(d[1]); $('walYY').value = d[0]; }
+    $('walType').value = rec.type || ''; $('walPur').hidden = rec.type !== 'jewelry'; document.querySelectorAll('input[name=walP]').forEach(x => { x.checked = x.value === rec.purpose; });
+    document.querySelectorAll('input[name=walS]').forEach(x => { x.checked = x.value === rec.stones; });
+    ['making:walMk', 'tax:walTx', 'stamp:walSt', 'stoneG:walStoneG'].forEach(p => { const [k, i] = p.split(':'); $(i).value = Number.isFinite(rec[k]) ? rec[k] : ''; });
+    $('walBasis').value = rec.basis || ''; $('walPromise').checked = rec.promise === 'full'; syncMore();
+    document.querySelectorAll('.x-karat[data-set=walKarat]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === String(rec.karat)))); $('walKarat').value = String(rec.karat);
+    $('walMore').open = true; $('walAdd').textContent = 'احفظ التعديل'; $('walCancel').hidden = false;
+    say('walMsg', Number.isFinite(rec.additions) && rec.additions > 0 ? 'القطعة دي فيها مبلغ "إضافات" قديم محفوظ زي ما هو. التعديل ما بيغيّرهوش.' : '');
+    $('walForm').scrollIntoView({ block: 'start' });
+  };
   $('walForm').addEventListener('submit', async () => {
     const btn = $('walAdd'); if (btn.disabled) return;
-    const id = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+    const date = LG().parseDMY($('walDD').value, $('walMM').value, $('walYY').value);
+    if (!date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
+    if (!radio('walS')) return say('walMsg', 'اختر: القطعة بفصوص ولا بدون فصوص.', 'err');
+    const dt = formDetails(); if (dt.error) return say('walMsg', 'راجع التفاصيل الاختيارية (أرقام صحيحة، ووزن الفصوص أقل من الوزن الكلي).', 'err');
+    const id = editingId || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
     const b = buildRecord({ id, k: $('walKarat').value, g: num($('walGramsIn').value), paid: num($('walPaidIn').value), note: $('walNoteIn').value.trim() },
-      { type: $('walType').value, date: $('walDate').value, purpose: (document.querySelector('input[name=walP]:checked') || {}).value });
+      { type: $('walType').value, date, purpose: radio('walP'), details: dt.details });
     if (b.error) return say('walMsg', b.error, 'err');
+    if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
     btn.disabled = true; say('walMsg', '');
     try {
-      const r = await writeAccount(items => mergeItem(items, b.rec), 'walMsg', 'walLogin');
-      if (r) {
-        say('walMsg', 'اتحفظت في حسابك.', 'ok');
-        ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDate'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true;
-        document.querySelectorAll('input[name=walP]').forEach(x => { x.checked = false; });
-      }
+      const was = editingId;
+      const r = await writeAccount(items => {
+        if (!was) return mergeItem(items, b.rec);
+        const cur = Array.isArray(items) ? items : [];
+        if (!cur.some(i => i && i.id === was)) throw Object.assign(new Error('gone'), { ar: 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.' });
+        // Only fields this form owns change on the newest copy; anything else on the row (legacy additions, unknown fields) is kept.
+        return { items: cur.map(i => { if (!i || i.id !== was) return i; const n = Object.assign({}, i, { label: b.rec.label, type: b.rec.type, karat: b.rec.karat, grams: b.rec.grams, purchaseDate: b.rec.purchaseDate, paid: b.rec.paid });
+          if (b.rec.type === 'jewelry') n.purpose = b.rec.purpose; else delete n.purpose;
+          ['stones', 'basis', 'stoneG', 'promise', 'making', 'tax', 'stamp'].forEach(k => { delete n[k]; }); return Object.assign(n, dt.details); }) };
+      }, 'walMsg', 'walLogin');
+      if (r) { say('walMsg', was ? 'اتعدّلت في حسابك.' : 'اتحفظت في حسابك.', 'ok'); resetForm(); }
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتحفظش أي حاجة، حاول مرة أخرى.', 'err'); }
     finally { btn.disabled = false; }
   });
+  // One tap on an old row: set only the stones choice, and only if nobody has set it meanwhile. Nothing else changes.
+  window.DHB_CLOUD_CLASSIFY = async (id, stones) => {
+    if (!['with', 'without'].includes(stones)) return;
+    try {
+      let skipped = false;
+      const r = await writeAccount(items => { const cur = Array.isArray(items) ? items : []; const t = cur.find(i => i && i.id === id);
+        if (!t) throw Object.assign(new Error('gone'), { ar: 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.' });
+        if (t.stones) { skipped = true; return {}; }
+        return { items: cur.map(i => (i && i.id === id ? Object.assign({}, i, { stones }) : i)) }; }, 'walMsg', 'walLogin');
+      if (skipped) await refresh();
+      if (r) say('walMsg', skipped ? 'القطعة دي اتحدد لها اختيار من مكان تاني، سيبناه زي ما هو.' : 'اتحفظ اختيارك.', 'ok');
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتغيّرش أي حاجة، حاول مرة أخرى.', 'err'); }
+  };
   // ---- delete a piece from the account ----
   window.DHB_CLOUD_DELETE = async id => {
     try { const r = await writeAccount(items => ({ items: removeItem(items, id) }), 'walMsg', 'walLogin'); if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }

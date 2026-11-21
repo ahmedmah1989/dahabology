@@ -6,8 +6,8 @@ const { parseInvoice } = await import("./invoice-parse.js" + V);
 const { createReview, FIELDS } = await import("./invoice-review-state.js" + V);
 
 const $ = (id) => document.getElementById(id);
-const LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم)", paid: "إجمالي ما دفعته" };
-const TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDate" };
+const LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم، بيتكتب في يوم / شهر / سنة)", paid: "إجمالي ما دفعته" };
+const TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDD" };
 const ENGINE = new URL("../vendor/tesseract/", import.meta.url).href;
 let objectUrl = null, review = null, busy = false, lastNote = "";
 
@@ -29,6 +29,7 @@ function msg(t, kind) { const m = $("invMsg"); m.textContent = t || ""; m.classN
 function applyConfirmed(f) {
   const v = review.rows[f].confirmed;
   if (f === "karat") { const b = document.querySelector(`.x-karat[data-set="walKarat"][data-value="${v}"]`); if (b) b.click(); }
+  else if (f === "purchaseDate") { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); if (m) { [["walDD", m[3]], ["walMM", m[2]], ["walYY", m[1]]].forEach(([i, x]) => { $(i).value = String(Number(x)); }); } }
   else { const el = $(TARGET[f]); el.value = String(v); el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); }
 }
 

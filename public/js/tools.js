@@ -99,28 +99,45 @@
   function walletRender() {
     if (!$('walRows')) return;
     set('walQuoteStatus','تقدير قيمة دهبك بسعر شراء التاجر منك • '+window.DHB_QUOTE.describe(last?.sources?.isagha));
-    const items = allItems(), w = wallet(items, local()), body = $('walRows');
+    const items = allItems(), isg = local(), L = window.DHB_LEDGER, body = $('walRows');
+    const pm = {}; ['18', '21', '24'].forEach(k => { const p = prices(isg, k); if (p) pm[k] = p; });
+    const recOf = it => it.rec || { id: it.id, karat: Number(it.k), grams: it.g, paid: it.paid, label: it.note }; // device rows have no stones choice: not counted
+    const recs = items.map(recOf), agg = L.aggregate(recs, pm);
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
-    w.rows.forEach(r => {
-      const it = document.createElement('div'); it.className = 'x-item';
-      const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = 'حذف'; b.setAttribute('aria-label', 'حذف هذه القطعة');
-      b.addEventListener('click', () => {
-        if (!confirm(r.where === 'account' ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
-        if (r.where === 'account') { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id); return; }
+    const WHY = { 'stones-unset': 'لسه ما حددتش بفصوص ولا بدون، فمش داخلة في القيمة', 'gold-weight-unknown': 'وزن الذهب الصافي غير معروف، فمش داخلة في القيمة', 'stones-cost-unknown': 'تكلفة الفصوص غير معروفة', 'legacy-additions': 'فيها مبلغ "إضافات" قديم محفوظ، فالمقارنة بسعر الذهب فقط مش متاحة', 'fees-missing': 'مصنعية أو ضريبة أو دمغة غير مسجلة', 'no-market-price': 'في انتظار السعر', 'no-price': 'سعر الشراء غير مسجل', 'non-positive-gold': 'الأرقام المسجلة مش منطقية، راجعها' };
+    items.forEach((r, ix) => {
+      const rec = recs[ix], v = L.valuation(rec, pm), cloud = r.where === 'account';
+      const it = document.createElement('div'); it.className = 'x-item wl';
+      const mk = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
+      const del = mk('حذف', 'حذف هذه القطعة', () => {
+        if (!confirm(cloud ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
+        if (cloud) { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id); return; }
         save(load().filter(i => i.id !== r.id)); walletRender();
       });
+      const st = rec.stones === 'with' ? ' • بفصوص' : rec.stones === 'without' ? ' • بدون فصوص' : '';
       it.append(
-        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (r.where === 'account' ? ' • في حسابك' : ' • على جهازك')), piece('span', 'v', r.now === null ? '—' : egp(r.now)),
-        piece('span', 'w', nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)), piece('span', 'd' + (r.diff === null ? '' : r.diff >= 0 ? ' up' : ' dn'), r.diff === null ? '' : signed(r.diff) + percentageSuffix(r.percent, v => signed(v, 1))),
-        piece('span', 'p', ''), b);
-      body.append(it);
+        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (cloud ? ' • في حسابك' : ' • على جهازك') + st), piece('span', 'v', v.B ? egp(v.B.value) : '—'),
+        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)),
+        piece('span', 'd' + (v.B ? (v.B.diff >= 0 ? ' up' : ' dn') : ''), v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) : WHY[v.whyNoB] || ''));
+      if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
+      else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
+      if (v.promise) it.append(piece('span', 'w', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد شفهي، مش مضمون، وما اتحسبش في الإجمالي)'));
+      const acts = document.createElement('div'); acts.className = 'acts';
+      if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) {
+        acts.append(mk('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mk('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
+      }
+      if (cloud && r.rec && window.DHB_CLOUD_EDIT) acts.append(mk('تعديل', 'تعديل هذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
+      acts.append(del); it.append(acts); body.append(it);
     });
-    set('walNow', items.length ? (w.now === null ? '—' : egp(w.now)) : '0 جنيه');
-    set('walPaid', items.length ? egp(w.paid) : '—');
-    set('walWeight', items.length ? nf(w.grams, 3) + ' جم' : '—');
-    const d = $('walDiff'); d.textContent = w.diff === null ? '' : signed(w.diff) + percentageSuffix(w.percent, v => signed(v, 1)); d.className = 'chg' + (w.diff === null ? '' : w.diff >= 0 ? ' up' : ' dn');
-    set('walGrams', items.length ? (w.now === null ? 'في انتظار السعر. ' : '') + 'يعادل ' + nf(w.pure, 3) + ' جرام عيار 24' : '');
+    const showNow = agg.covered > 0;
+    set('walNow', items.length ? (showNow ? egp(agg.now) : '—') : '0 جنيه');
+    set('walPaid', items.length ? egp(agg.paidAll) : '—');
+    set('walWeight', items.length ? nf(agg.grams, 3) + ' جم' : '—');
+    const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)); d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');
+    set('walGrams', items.length && !Object.keys(pm).length ? 'في انتظار السعر.' : '');
+    set('walCover', !items.length ? '' : agg.covered === 0 ? 'القيمة لسه ما اتحسبتش: محتاجين نعرف القطع بفصوص ولا بدون فصوص. قطعك وأسعار شرائها محفوظة زي ما هي، ومفيش ذهب ضاع ولا قيمته صفر.'
+      : 'دخل ' + agg.covered + ' من ' + agg.count + ' قطعة في القيمة، والفرق محسوب على اللي دفعته فيهم بس (' + egp(agg.paidCovered) + ' من ' + egp(agg.paidAll) + '). باقي القطع محفوظة بأسعارها، وبتدخل بعد ما تحدد بفصوص ولا بدون.' + (agg.partial ? ' ⚠ الإجمالي جزئي.' : ''));
   }
   if ($('walRows')) {
     window.DHB_WALLET_RENDER = walletRender; // the add form is handled by wallet-account.js: saving needs an account

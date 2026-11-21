@@ -98,7 +98,7 @@ test('arabic-indic digits are accepted in optional fields', () => {
 });
 
 // ---- optimistic commit (in-memory fake store: MOCK, not Firestore) ----
-const { commitWithRetry } = require('../public/js/wallet-account.js');
+let commitWithRetry; test('load commit helper', async () => { ({ commitWithRetry } = await import('../public/js/account.js')); });
 function fakeStore(items) {
   const s = { doc: { v: 1, items }, ver: 1, saves: 0 };
   s.load = async () => ({ data: JSON.parse(JSON.stringify(s.doc)), version: s.ver });

@@ -33,7 +33,7 @@ test('remove deletes only that id', () => {
 });
 test('account items map to wallet items; items with no price paid are never valued as zero', () => {
   const w = toWalletItems([{ id: '1', label: 'x', type: 'bar', karat: 21, grams: 5, purchaseDate: '2025-01-01', paid: 100 }, { id: '2', type: 'bar', karat: 24, grams: 2, purchaseDate: '2025-01-01' }, { id: '3', karat: 22, grams: 1 }, null]);
-  assert.deepEqual(w.priced, [{ id: '1', k: '21', g: 5, paid: 100, note: 'x' }]);
+  assert.deepEqual(w.priced, [{ id: '1', k: '21', g: 5, paid: 100, note: 'x', rec: w.priced[0].rec }]);
   assert.equal(w.unpriced.length, 1); assert.equal(w.unpriced[0].id, '2');
 });
 test('numbers accept Arabic digits and a comma', () => { assert.equal(num('٤٩٥٠٠'), 49500); assert.equal(num('8,5'), 8.5); assert.ok(Number.isNaN(num(''))) ; });

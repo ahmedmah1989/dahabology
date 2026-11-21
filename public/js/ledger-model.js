@@ -106,6 +106,21 @@
   // Delete one record only. Neighbours (including others from the same invoice) are untouched.
   const deleteItem = (existing, id) => (Array.isArray(existing) ? existing : []).filter(x => x && x.id !== id);
 
-  const api = { netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  // d/m/y inputs -> 'YYYY-MM-DD' (stored format) or null when it is not a real date.
+  function parseDMY(d, m, y) {
+    const dd = optionalNum(d).value, mm = optionalNum(m).value, yy = optionalNum(y).value;
+    if (![dd, mm, yy].every(Number.isInteger) || yy < 1900 || yy > 2200) return null;
+    const t = new Date(Date.UTC(yy, mm - 1, dd));
+    if (t.getUTCFullYear() !== yy || t.getUTCMonth() !== mm - 1 || t.getUTCDate() !== dd) return null;
+    return `${String(yy).padStart(4, '0')}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`;
+  }
+  const dmy = iso => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? iso.split('-').reverse().join('/') : '');
+  // Group by purchase date and year for the ledger view. Rows without a valid date go last, un-grouped by year.
+  function group(recs) {
+    const years = {};
+    (Array.isArray(recs) ? recs : []).forEach(r => { const d = /^\d{4}-\d{2}-\d{2}$/.test(r.purchaseDate || '') ? r.purchaseDate : 'unknown', y = d === 'unknown' ? 'unknown' : d.slice(0, 4); ((years[y] ||= {})[d] ||= []).push(r); });
+    return Object.keys(years).sort().map(y => ({ year: y, dates: Object.keys(years[y]).sort().map(d => ({ date: d, rows: years[y][d] })) }));
+  }
+  const api = { parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();

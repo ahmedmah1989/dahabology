@@ -408,3 +408,8 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  .x-livecalc b{color:var(--x-gold);font-size:18px}
 }
 .today-how{margin-top:10px}
+.x-item.wl{grid-template-columns:1fr}
+.x-item.wl .v,.x-item.wl .d{text-align:start;direction:rtl}
+.x-item.wl .p{display:none}
+.x-item.wl .acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+.x-item.wl .acts .wal-del{min-height:40px;padding:8px 14px}

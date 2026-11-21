@@ -66,7 +66,9 @@ async function loadItems() {
   try { const d = await A.loadDoc("gold/items"); if (g !== gen || uid !== A.currentUser()?.uid) return; items = d?.items || []; render(); }
   catch (e) { if (g !== gen) return; loadedFor = null; show($("nMsg"), e.ar, "err"); }
 }
-async function persist(okText) { const g = gen; await A.saveDoc("gold/items", { v: 1, items }); if (g !== gen) return; show($("nMsg"), okText, "ok"); render(); }
+// Every change goes through the versioned list update: it re-reads the newest list, applies only this change, and refuses (nothing saved)
+// if it cannot do so safely. `items` is replaced by the saved list, so rows another tab changed are kept.
+async function persist(mutate, okText) { const g = gen, uid = A.currentUser()?.uid; const r = await A.updateGoldItems(mutate, uid); if (g !== gen) return; items = r.items; show($("nMsg"), okText, "ok"); render(); }
 function resetForm() { editing = null; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
 $("iType").onchange = () => { $("iPur").hidden = $("iType").value !== "jewelry"; };
 $("iCancel").onclick = resetForm;
@@ -78,12 +80,18 @@ $("itemForm").onsubmit = (ev) => {
   if (!(g > 0)) return show($("nMsg"), "اكتب الوزن بالجرام بصيغة صحيحة.", "err");
   if (!date) return show($("nMsg"), "اختر تاريخ الشراء.", "err");
   if (type === "jewelry" && !pur) return show($("nMsg"), "اختر نية شراء المصوغات: زينة أو ادخار.", "err");
-  const base = editing ? (items.find((i) => i.id === editing) || {}) : {}; // keep fields this page does not edit (for example paid)
-  const rec = { ...base, id: editing || newId(), label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
-  if (type === "jewelry") rec.purpose = pur; else delete rec.purpose;
-  const prev = items.slice(), gn = gen;
-  items = editing ? items.map((i) => (i.id === editing ? rec : i)) : items.concat(rec);
-  run($("iSave"), $("nMsg"), async () => { try { await persist(editing ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); } catch (e) { if (gn === gen) { items = prev; render(); } throw e; } });
+  const changed = { label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
+  const editId = editing, newRec = { id: newId(), ...changed };
+  if (type === "jewelry") { changed.purpose = pur; newRec.purpose = pur; }
+  // Edit: change only the fields this page owns on the newest copy of the row (keeps paid, stones, fees and anything unknown).
+  const mutate = (list) => {
+    const cur = Array.isArray(list) ? list : [];
+    if (!editId) return { items: cur.concat(newRec) };
+    if (!cur.some((i) => i && i.id === editId)) throw Object.assign(new Error("gone"), { ar: "القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل." });
+    return { items: cur.map((i) => { if (!i || i.id !== editId) return i; const n = { ...i, ...changed }; if (type !== "jewelry") delete n.purpose; return n; }) };
+  };
+  const gn = gen;
+  run($("iSave"), $("nMsg"), async () => { await persist(mutate, editId ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); });
 };
 $("list").onclick = (ev) => {
   const b = ev.target.closest("button[data-act]"); if (!b) return;
@@ -94,8 +102,7 @@ $("list").onclick = (ev) => {
     $("iPur").hidden = it.type !== "jewelry"; document.querySelectorAll("input[name=iP]").forEach((r) => (r.checked = r.value === it.purpose));
     $("itemForm").scrollIntoView({ block: "center" });
   } else {
-    const prev = items.slice(), g = gen; items = items.filter((i) => i.id !== id);
-    run(b, $("nMsg"), async () => { try { await persist("تم حذف القطعة."); } catch (e) { if (g === gen) { items = prev; render(); } throw e; } });
+    run(b, $("nMsg"), async () => { await persist((list) => ({ items: (Array.isArray(list) ? list : []).filter((i) => i && i.id !== id) }), "تم حذف القطعة."); });
   }
 };
 // Keep the focused field above the floating dock.
