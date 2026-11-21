@@ -79,7 +79,7 @@
     if (mode === 'has') ['pre', 'vat', 'post'].forEach(k => { const el = $('t_' + k); if (el && document.activeElement !== el) el.value = tax[k]; el && el.classList.toggle('calc', !!calc[k]); });
     const cn = mode === 'has' && ['pre', 'vat', 'post'].some(k => calc[k]); $('calcNote').innerHTML = cn ? '<span class="tag">محسوب</span> الخانة المحسوبة بخط منقط. اكتب فوقها لو الفاتورة مختلفة.' : '';
     const bad = mode === 'has' && [figs.pre, figs.vat, figs.post].every(Number.isFinite) && P(figs.pre) + P(figs.vat) !== P(figs.post);
-    $('taxMsg').innerHTML = bad ? '<span style="color:#f0ca78">الأرقام الثلاثة مش متطابقة. راجعها مع الفاتورة. ما اتغيّر أي رقم.</span>' : 'اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.';
+    $('taxMsg').innerHTML = bad ? '<span style="color:#f0ca78">قبل الضريبة + الضريبة لازم يساوي بعد الضريبة. راجع الأرقام مع الفاتورة، أو امسح خانة واحدة وهتتحسب لوحدها. ما اتغيّر أي رقم كتبته.</span>' : 'اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.';
     $('taxSum').textContent = { unknown: 'غير معروفة', none: 'بدون ضريبة', has: 'حسب الفاتورة' }[mode];
     $('h14').hidden = mode !== 'has';
     const row = (l, v, u) => '<div class="sr"><span>' + l + '</span><b' + (u ? ' class="u0"' : '') + '>' + v + '</b></div>';
@@ -94,7 +94,8 @@
     else det += row('الضريبة', mode === 'none' ? 'بدون ضريبة' : 'غير مسجلة', mode !== 'none');
     det += row('المصنعية (للقطع) ' + mk.n, mk.v, mk.u) + row('الدمغة (للقطع) ' + st.n, st.v, st.u) + '<p class="hint" style="margin:4px 0 0">المصنعية والدمغة المسجلة تفصيل داخل المبلغ المدفوع، مش زيادة عليه.</p>';
     const lines = [];
-    if (Number.isFinite(total)) {
+    if (bad) lines.push('<span class="diff">أرقام الضريبة مش متطابقة، فمفيش مطابقة مع القطع لحد ما تتصحح.</span>');
+    else if (Number.isFinite(total)) {
       lines.push('إجمالي الفاتورة ' + fm(total) + ' جنيه');
       const rc = LG.reconcile(total, rows.map((_r, i) => ({ paid: paids[i] })));
       if (rc.state === 'match') lines.push('<span class="ok">مجموع القطع يساوي إجمالي الفاتورة.</span>');
@@ -103,9 +104,9 @@
     $('sum').innerHTML = '<b><span class="l1">' + unitsAll + ' ' + (unitsAll === 1 ? 'قطعة' : 'قطع') + ' · ' + fg(gMg / 1000) + ' جرام</span><span class="l1">دفعت في القطع ' + fm(okP / 100) + ' جنيه</span></b>' + det + lines.map(l => '<p>' + l + '</p>').join('');
     if (!keepRev) $('walRev').checked = false;
     const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && ['18', '21', '24'].includes(r.k) && Number.isFinite(paids[i]) && r.s && (r.type !== 'jewelry' || r.pp));
-    root.dataset.complete = ok ? '1' : '';
-    $('invErr').textContent = ok ? '' : 'كمّل النوع والعيار والجرام والمبلغ واختيار الفصوص لكل قطعة.';
-    $('walAdd').disabled = !(ok && $('walRev').checked) || root.dataset.busy === '1';
+    const okAll = ok && !bad; root.dataset.complete = okAll ? '1' : '';
+    $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? '' : 'كمّل النوع والعيار والجرام والمبلغ واختيار الفصوص لكل قطعة.');
+    $('walAdd').disabled = !(okAll && $('walRev').checked) || root.dataset.busy === '1';
     root.dispatchEvent(new CustomEvent('invform:update'));
   }
 
@@ -116,15 +117,16 @@
     if (mode === 'has') ['pre', 'vat', 'post'].forEach(k => { const el = $('t_' + k); if (el && document.activeElement !== el) el.value = tax[k]; el && el.classList.toggle('calc', !!calc[k]); });
     $('calcNote').innerHTML = mode === 'has' && ['pre', 'vat', 'post'].some(k => calc[k]) ? '<span class="tag">محسوب</span> الخانة المحسوبة بخط منقط. اكتب فوقها لو الفاتورة مختلفة.' : '';
     const bad = mode === 'has' && [figs.pre, figs.vat, figs.post].every(Number.isFinite) && P(figs.pre) + P(figs.vat) !== P(figs.post);
-    $('taxMsg').innerHTML = bad ? '<span style="color:#f0ca78">الأرقام الثلاثة مش متطابقة. راجعها مع الفاتورة. ما اتغيّر أي رقم.</span>' : 'اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.';
+    $('taxMsg').innerHTML = bad ? '<span style="color:#f0ca78">قبل الضريبة + الضريبة لازم يساوي بعد الضريبة. راجع الأرقام مع الفاتورة، أو امسح خانة واحدة وهتتحسب لوحدها. ما اتغيّر أي رقم كتبته.</span>' : 'اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.';
     $('taxSum').textContent = { unknown: 'غير معروفة', none: 'بدون ضريبة', has: 'حسب الفاتورة' }[mode]; $('h14').hidden = mode !== 'has';
     const paids = invMode.paids, sumP = paids.every(Number.isFinite) ? paids.reduce((a, x) => a + P(x), 0) / 100 : NaN, lines = [];
     lines.push('قطع الفاتورة: ' + paids.length + (Number.isFinite(sumP) ? ' • مجموع ما دفعته فيها ' + fm(sumP) + ' جنيه' : ''));
-    if (Number.isFinite(total)) { lines.push('إجمالي الفاتورة ' + fm(total) + ' جنيه'); const rc = LG.reconcile(total, paids.map(x => ({ paid: x })));
+    if (bad) lines.push('<span class="diff">أرقام الضريبة مش متطابقة، فمفيش مطابقة مع القطع لحد ما تتصحح.</span>');
+    else if (Number.isFinite(total)) { lines.push('إجمالي الفاتورة ' + fm(total) + ' جنيه'); const rc = LG.reconcile(total, paids.map(x => ({ paid: x })));
       if (rc.state === 'match') lines.push('<span class="ok">مجموع القطع يساوي إجمالي الفاتورة.</span>'); else if (rc.state === 'diff') lines.push('<span class="diff">الفرق بين إجمالي الفاتورة ومجموع القطع: ' + fm(Math.abs(rc.diff)) + ' جنيه. الفرق مش بيتقسّم على القطع ولا بيتغيّر فيها.</span>'); }
     $('sum').innerHTML = '<div class="sh">ملخص الفاتورة</div>' + lines.map(l => '<p>' + l + '</p>').join('') + '<p class="hint">التعديل هنا بيغيّر تاريخ الفاتورة وأرقام ضريبتها بس. القطع نفسها بتتعدّل من قائمتها.</p>';
     if (!keepRev) $('walRev').checked = false;
-    const ok = !!LG.parseDMY($('walDD').value, $('walMM').value, $('walYY').value); root.dataset.complete = ok ? '1' : ''; $('invErr').textContent = ok ? '' : 'اكتب تاريخ الفاتورة صح.';
+    const ok = !!LG.parseDMY($('walDD').value, $('walMM').value, $('walYY').value) && !bad; root.dataset.complete = ok ? '1' : ''; $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? '' : 'اكتب تاريخ الفاتورة صح.');
     $('walAdd').disabled = !(ok && $('walRev').checked) || root.dataset.busy === '1';
     root.dispatchEvent(new CustomEvent('invform:update'));
   }
