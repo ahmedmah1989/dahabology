@@ -11,7 +11,11 @@ Test preview only (`/account-preview/`, noindex, not in the navigation).
 - User folder key: the Firebase user id `uid`. Keep it when migrating.
 - `users/{uid}/gold/items` holds `{ v: 1, items: [ ... ] }`. Each item keeps its own stable `id`.
 - Item fields: `id, label?, type (bar|coin|jewelry|scrap), karat, grams, purchaseDate (YYYY-MM-DD), purpose? (adornment|saving, jewelry only)`.
+- `paid?` (number, the total the user paid for the piece, in EGP). Optional and written by the wallet page. Items without it are listed as unpriced and are not valued. Any page that edits an item must keep fields it does not edit, so `paid` survives edits.
 - The document is stored as one JSON string field `json`, so it exports as plain JSON.
+
+## When the backend is unavailable
+If the Firebase project is suspended or unreachable, `account.js` raises `SERVICE_UNAVAILABLE` and the UI says the service is unavailable. A saved session is kept in that case (users are not signed out); only a real permission or token refusal clears it. Pieces already on the device stay on the device.
 
 ## Access rules
 `firebase/firestore.rules`: only a signed-in user with a verified email may read or write their own `users/{uid}/**`. Everything else is denied.
