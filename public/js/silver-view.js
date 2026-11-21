@@ -32,9 +32,9 @@
         const t = document.createElement('table'); t.className = 'silver-t';
         const h = t.insertRow(); ['العيار', 'شراء (جنيه/جرام)', 'بيع (جنيه/جرام)'].forEach(x => { const c = document.createElement('th'); c.textContent = x; h.append(c); });
         lc.rows.forEach(r => { const tr = t.insertRow(); [r.grade, nf(r.buy), nf(r.sell)].forEach(x => tr.insertCell().textContent = x); });
-        const n = document.createElement('p'); n.className = 'x-note'; n.textContent = 'المصدر: آي صاغة • وقت المصدر ' + when(lc.sourceTime) + ' (القاهرة) • السعر بدون مصنعية.';
+        const n = document.createElement('p'); n.className = 'x-note'; n.textContent = 'سعر تاجر محلي واحد (آي صاغة) للجرام، الوحدة غير مكتوبة في صفحة المصدر وتم التحقق منها بمقارنة أوقية الفضة • وقت المصدر ' + when(lc.sourceTime) + ' (القاهرة) • السعر بدون مصنعية.';
         l.append(t, n);
-      } else l.textContent = 'سعر الفضة في السوق المصري لسه مش في ملف الأسعار، فمش هنحوّل السعر العالمي ونسميه سعر محلي.';
+      } else l.textContent = local && local.status === 'available' ? 'آخر سعر محلي للفضة أقدم من 24 ساعة أو غير صالح، فمش معروض كسعر حالي.' : local ? 'سعر الفضة المحلي غير متاح الآن. مش هنحوّل السعر العالمي ونسميه سعر محلي.' : 'سعر الفضة في السوق المصري لسه مش في ملف الأسعار، فمش هنحوّل السعر العالمي ونسميه سعر محلي.';
     }
     window.addEventListener('gold-board-updated', e => { local = e.detail && e.detail.sources && e.detail.sources.isagha_silver; render(); });
     const load = () => fetch('https://api.gold-api.com/price/XAG', { cache: 'no-store' }).then(r => r.ok ? r.json() : null).then(b => { glob = globalSilver(b); }).catch(() => { glob = null; }).then(() => { tried = true; render(); });
