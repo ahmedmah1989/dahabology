@@ -3,7 +3,7 @@ import Base from '../layouts/Base.astro';
 import html from '../panels/wallet.html?raw';
 import { B, ASSET_VERSION } from '../lib/site.js';
 ---
-<Base page="wallet" scripts={['monitor', 'ledger-model', 'tools', 'ui', 'wallet-account']}
+<Base page="wallet" scripts={['monitor', 'ledger-model', 'tools', 'ui', 'invoice-form', 'wallet-account']}
   title="دهبي: احسب قيمة ذهبك اليوم ومكسبك — دهبولوجي"
   description="سجّل ما تملكه من ذهب بالوزن والعيار وما دفعته، واعرف قيمته الآن لو بعته ومكسبك أو خسارتك. الصفحة مفتوحة للجميع، والحفظ يحتاج حساب خاص بك.">
   <Fragment set:html={html} />

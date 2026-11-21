@@ -96,6 +96,7 @@
     const cloud = Array.isArray(window.DHB_CLOUD_ITEMS) ? window.DHB_CLOUD_ITEMS : [], ids = new Set(cloud.map(i => i.id));
     return cloud.map(i => Object.assign({}, i, { where: 'account' })).concat(load().filter(i => !ids.has(i.id)).map(i => Object.assign({}, i, { where: 'device' })));
   }
+  let openKey = '';
   function walletRender() {
     if (!$('walRows')) return;
     set('walQuoteStatus','تقدير قيمة دهبك بسعر شراء التاجر منك • '+window.DHB_QUOTE.describe(last?.sources?.isagha));
@@ -106,44 +107,61 @@
     body.replaceChildren();
     $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
     const WHY = { 'stones-unset': 'لسه ما حددتش بفصوص ولا بدون، فمش داخلة في القيمة', 'gold-weight-unknown': 'وزن الذهب الصافي غير معروف، فمش داخلة في القيمة', 'stones-cost-unknown': 'تكلفة الفصوص غير معروفة', 'legacy-additions': 'فيها مبلغ "إضافات" قديم محفوظ، فالمقارنة بسعر الذهب فقط مش متاحة', 'fees-missing': 'مصنعية أو ضريبة أو دمغة غير مسجلة', 'no-market-price': 'في انتظار السعر', 'no-price': 'سعر الشراء غير مسجل', 'non-positive-gold': 'الأرقام المسجلة مش منطقية، راجعها' };
-    // Newest purchase date first; undated last. A heading with totals opens each year and each purchase date (pieces bought the same day sit together).
     const dateOf = ix => (/^\d{4}-\d{2}-\d{2}$/.test(recs[ix].purchaseDate || '') ? recs[ix].purchaseDate : '');
-    const order = items.map((_, ix) => ix).sort((a, b) => { const da = dateOf(a), db = dateOf(b); return da === db ? a - b : !da ? 1 : !db ? -1 : da < db ? 1 : -1; });
-    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return (a.approx ? '≈ ' : '') + nf(a.grams, 3) + ' جم' + (a.approx ? ' (تقريبي: فيه قطعة وزنها محفوظ بدقة أكبر من ٣ أرقام)' : '') + ' • دفعت ' + egp(a.paidAll) + ' • ' + (a.covered === 0 ? 'القيمة لسه ما اتحسبتش' : 'قيمتها الآن ' + egp(a.now) + (a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة بس)' : '')); };
-    const heading = (cls, title, sel) => { const h = document.createElement('div'); h.className = 'x-grp ' + cls; h.append(piece('b', '', title), piece('span', '', sumLine(sel))); body.append(h); };
+    const invs = {}; (Array.isArray(window.DHB_CLOUD_INVOICES) ? window.DHB_CLOUD_INVOICES : []).forEach(v => { if (v && v.id) invs[v.id] = v; });
+    const keyOf = ix => (items[ix].where === 'device' ? 'dev:' : '') + (recs[ix].invoiceId ? 'i:' + recs[ix].invoiceId : 'd:' + dateOf(ix));
+    const groups = []; const gm = {};
+    items.forEach((_, ix) => { const k = keyOf(ix); if (!gm[k]) { gm[k] = { k, date: dateOf(ix), ix: [] }; groups.push(gm[k]); } gm[k].ix.push(ix); });
+    groups.sort((a, b) => (a.date === b.date ? 0 : !a.date ? 1 : !b.date ? -1 : a.date < b.date ? 1 : -1));
+    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return (a.approx ? '≈ ' : '') + nf(a.grams, 3) + ' جم' + (a.approx ? ' (تقريبي)' : '') + ' • دفعت ' + egp(a.paidAll); };
+    const heading = (title, sel) => { const h = document.createElement('div'); h.className = 'yr'; h.append(piece('b', '', title), piece('span', '', ' • ' + sumLine(sel))); body.append(h); };
     const imgUse = {}; recs.forEach(x => { if (x && x.invoiceImage) imgUse[x.invoiceImage.id] = (imgUse[x.invoiceImage.id] || 0) + 1; });
-    let curYear = null, curDate = null;
-    order.forEach(ix => {
-      const r = items[ix], dt = dateOf(ix), yr = dt ? dt.slice(0, 4) : '';
-      if (yr !== curYear) { curYear = yr; curDate = null; heading('yr', yr ? 'إجمالي سنة ' + yr : 'من غير تاريخ شراء', order.filter(i => (dateOf(i) ? dateOf(i).slice(0, 4) : '') === yr)); }
-      if (dt && dt !== curDate) { curDate = dt; const same = order.filter(i => dateOf(i) === dt); heading('dy', 'إجمالي ' + L.dmy(dt) + (same.length > 1 ? ' (' + same.length + ' قطع بنفس التاريخ)' : ''), same); }
-      const rec = recs[ix], v = L.valuation(rec, pm), cloud = r.where === 'account';
-      const it = document.createElement('div'); it.className = 'x-item wl';
-      const mk = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
-      const del = mk('حذف', 'حذف هذه القطعة', () => {
-        if (!confirm(cloud ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
-        if (cloud) { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id, r.rec ? JSON.parse(JSON.stringify(r.rec)) : undefined); return; }
-        save(load().filter(i => i.id !== r.id)); walletRender();
+    const TN = { bar: 'سبيكة', coin: 'جنيه', jewelry: 'مصوغات', scrap: 'كسر' };
+    const f2 = v => Number.isFinite(v) ? v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+    const feeTag = (l, v) => { const s = document.createElement('span'); s.className = 'tg' + (v === undefined ? ' u' : ''); s.textContent = l + ': ' + (v === undefined ? 'غير مسجلة' : v === 0 ? 'بدون' : f2(v) + ' جنيه'); return s; };
+    const mkBtn = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
+    let curYear = null;
+    groups.forEach(g => {
+      const yr = g.date ? g.date.slice(0, 4) : '';
+      if (yr !== curYear) { curYear = yr; heading(yr ? 'سنة ' + yr : 'من غير تاريخ شراء', groups.filter(x => (x.date ? x.date.slice(0, 4) : '') === yr).flatMap(x => x.ix)); }
+      const meta = g.k.startsWith('i:') ? invs[g.k.slice(2)] : null, cloud = items[g.ix[0]].where === 'account';
+      const card = document.createElement('div'); card.className = 'inv';
+      const tag = meta ? (meta.vatMode === 'has' && Number.isFinite(meta.total) ? 'إجمالي ' + f2(meta.total) : meta.vatMode === 'none' ? 'بدون ضريبة' : 'الضريبة غير معروفة') : (cloud ? '' : 'على جهازك');
+      const hd = document.createElement('header'); hd.append(piece('span', '', g.date ? L.dmy(g.date) : 'من غير تاريخ'), piece('span', '', tag)); card.append(hd);
+      const cols = document.createElement('div'); cols.className = 'cols'; ['النوع', 'عيار', 'جرام', 'دفعت (جنيه)'].forEach(t => cols.append(piece('span', '', t))); card.append(cols);
+      g.ix.forEach(ix => {
+        const r = items[ix], rec = recs[ix], v = L.valuation(rec, pm), q = L.qtyOf(rec), key = g.k + '|' + r.id, isOpen = openKey === key;
+        const row = document.createElement('button'); row.type = 'button'; row.className = 'pr'; row.setAttribute('aria-expanded', String(isOpen));
+        const gs = piece('span', 'g', ''); if (q > 1) { gs.append(q + ' × ' + nf(L.unitGramsOf(rec), 3)); const sm = piece('small', '', '= ' + nf(r.g, 3)); sm.style.cssText = 'display:block;font-size:12px;color:#a9b8d0'; gs.append(sm); } else gs.textContent = nf(r.g, 3);
+        row.append(piece('span', 'n', TN[rec.type] || (r.note || 'ذهب')), piece('span', 'k', String(r.k)), gs, piece('span', 'p', f2(r.paid)));
+        row.addEventListener('click', () => { openKey = isOpen ? '' : key; walletRender(); });
+        card.append(row);
+        if (!isOpen) return;
+        const more = document.createElement('div'); more.className = 'more'; const tags = document.createElement('div'); tags.className = 'tagrow';
+        tags.append(piece('span', 'tg', rec.stones === 'with' ? 'بفصوص' : rec.stones === 'without' ? 'بدون فصوص' : 'الفصوص غير محددة'), feeTag('المصنعية' + (q > 1 ? ' (للـ ' + q + ' كلهم)' : ''), rec.making), feeTag('الدمغة' + (q > 1 ? ' (للـ ' + q + ' كلهم)' : ''), rec.stamp)); more.append(tags);
+        if (r.note) more.append(piece('div', '', r.note));
+        more.append(piece('div', '', (cloud ? 'في حسابك' : 'على جهازك') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? ' • المحفوظ بالظبط: \u2066' + r.g + '\u2069 جرام' : '')));
+        more.append(piece('div', '', v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + egp(v.B.value) + ' (' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) + ')' : WHY[v.whyNoB] || ''));
+        if (v.A) more.append(piece('div', '', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
+        if (v.promise) more.append(piece('div', '', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد البائع مش مضمون، وما اتحسبش في الإجمالي)'));
+        if (rec.invoiceImage && imgUse[rec.invoiceImage.id] > 1) more.append(piece('div', '', 'من نفس صورة الفاتورة: ' + imgUse[rec.invoiceImage.id] + ' قطع'));
+        const acts = document.createElement('div'); acts.className = 'acts';
+        if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) acts.append(mkBtn('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mkBtn('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
+        if (cloud && rec.invoiceImage && window.DHB_INV_VIEW) acts.append(mkBtn('عرض الفاتورة', 'عرض صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, false)), mkBtn('تنزيل الفاتورة', 'تنزيل صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, true, 'invoice-' + (rec.purchaseDate || ''))),
+          mkBtn('حذف الصورة', 'حذف صورة الفاتورة من السطر', () => { if (confirm('حذف صورة الفاتورة من السطر؟ القطعة نفسها هتفضل.')) window.DHB_INV_DELETE(r.id, JSON.parse(JSON.stringify(r.rec))); }));
+        if (cloud && r.rec && window.DHB_CLOUD_EDIT) acts.append(mkBtn('تعديل', 'تعديل هذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
+        acts.append(mkBtn('حذف', 'حذف هذه القطعة', () => {
+          if (!confirm(cloud ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
+          if (cloud) { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id, r.rec ? JSON.parse(JSON.stringify(r.rec)) : undefined); return; }
+          save(load().filter(i => i.id !== r.id)); walletRender();
+        }));
+        more.append(acts); card.append(more);
       });
-      const st = rec.stones === 'with' ? ' • بفصوص' : rec.stones === 'without' ? ' • بدون فصوص' : '';
-      it.append(
-        piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (cloud ? ' • في حسابك' : ' • على جهازك') + st), piece('span', 'v', v.B ? egp(v.B.value) : '—'),
-        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? '≈ ' + nf(r.g, 3) + ' جرام، المحفوظ بالظبط: \u2066' + r.g + '\u2069 جرام' : nf(r.g, 3) + ' جرام') + ' • دفعت ' + egp(r.paid)),
-        piece('span', 'd' + (v.B ? (v.B.diff >= 0 ? ' up' : ' dn') : ''), v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) : WHY[v.whyNoB] || ''));
-      if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
-      else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
-      if (v.promise) it.append(piece('span', 'w', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد البائع مش مضمون، وما اتحسبش في الإجمالي)'));
-      if (rec.invoiceImage && imgUse[rec.invoiceImage.id] > 1) it.append(piece('span', 'w', 'من نفس صورة الفاتورة: ' + imgUse[rec.invoiceImage.id] + ' قطع'));
-      const acts = document.createElement('div'); acts.className = 'acts';
-      if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) {
-        acts.append(mk('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mk('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
-      }
-      if (cloud && rec.invoiceImage && window.DHB_INV_VIEW) {
-        acts.append(mk('عرض الفاتورة', 'عرض صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, false)), mk('تنزيل الفاتورة', 'تنزيل صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, true, 'invoice-' + (rec.purchaseDate || ''))),
-          mk('حذف الصورة', 'حذف صورة الفاتورة من السطر', () => { if (confirm('حذف صورة الفاتورة من السطر؟ القطعة نفسها هتفضل.')) window.DHB_INV_DELETE(r.id, JSON.parse(JSON.stringify(r.rec))); }));
-      }
-      if (cloud && r.rec && window.DHB_CLOUD_EDIT) acts.append(mk('تعديل', 'تعديل هذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
-      acts.append(del); it.append(acts); body.append(it);
+      // Whole-invoice footer: tax, making, stamp as recorded. Unknown is never shown or summed as zero.
+      const rs = g.ix.map(ix => recs[ix]), cover = k => { const vals = rs.map(x => x[k]), nums = vals.filter(x => Number.isFinite(x)); if (!nums.length) return '<b class="u0">غير مسجلة</b>'; if (nums.every(x => x === 0) && nums.length === vals.length) return '<b>بدون</b>'; return '<b>' + f2(nums.reduce((a, x) => a + Math.round(x * 100), 0) / 100) + '</b> جنيه (' + nums.length + ' من ' + vals.length + ' سطور)'; };
+      let taxL; if (meta && meta.vatMode === 'has') taxL = 'قبل الضريبة <b>' + f2(meta.subtotal) + '</b> · الضريبة <b>' + f2(meta.vat) + '</b> · بعد الضريبة <b>' + f2(meta.total) + '</b> جنيه'; else if (meta && meta.vatMode === 'none') taxL = 'الضريبة: <b>بدون ضريبة</b>'; else taxL = 'الضريبة: ' + (rs.some(x => Number.isFinite(x.tax)) ? cover('tax') : '<b class="u0">غير مسجلة</b>');
+      const ft = document.createElement('p'); ft.className = 'invf'; ft.innerHTML = '<span class="sh2">الفاتورة كلها</span><br>' + taxL + '<br>المصنعية: ' + cover('making') + '<br>الدمغة: ' + cover('stamp'); card.append(ft);
+      body.append(card);
     });
     const showNow = agg.covered > 0;
     set('walNow', items.length ? (showNow ? egp(agg.now) : '—') : '0 جنيه');

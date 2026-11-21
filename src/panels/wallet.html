@@ -6,43 +6,32 @@
 <p class="x-note" id="walGrams"></p>
 <p class="x-note" id="walCover" role="status"></p>
 
-<div id="walTable" hidden><div class="x-items" id="walRows"></div></div>
+<div id="walTable" hidden><div class="x-items ivx" id="walRows"></div></div>
 <p class="x-note" id="walEmpty">لم تضف أي قطعة بعد. أضف أول قطعة من هنا.</p>
 
-<form class="x-card" id="walForm" style="margin-top:20px;scroll-margin-top:84px"><h2>أضف قطعة</h2>
+<form class="x-card ivx" id="walForm" style="margin-top:20px;scroll-margin-top:84px"><h2>سجّل مشترياتك</h2>
+<p class="sub" style="font-size:14px;color:#a9b8d0;margin:4px 0 0;line-height:1.7">اكتب اللي في فاتورتك. أي خانة تسيبها فاضية تفضل «غير معروف».</p>
 <div class="x-field" id="invBox" style="margin-top:12px"><span>عندك فاتورة؟ صوّرها وراجع القيم قبل ما تحفظ (اختياري)</span><input id="invFile" type="file" accept="image/*"><p class="x-msg" id="invMsg" role="status"></p><div id="invPanel" hidden><div id="invBody"></div></div></div>
-<div class="x-karats" role="group" aria-label="اختر العيار" style="margin-top:14px">
-<button type="button" class="x-karat" data-set="walKarat" data-value="21" aria-pressed="true"><span>عيار<b>21</b></span></button>
-<button type="button" class="x-karat" data-set="walKarat" data-value="24" aria-pressed="false"><span>عيار<b>24</b></span></button>
-<button type="button" class="x-karat" data-set="walKarat" data-value="18" aria-pressed="false"><span>عيار<b>18</b></span></button>
+<div id="invForm">
+<h3 style="margin:14px 0 8px;font-size:16px;color:var(--x-gold-hot)">١. الفاتورة (كلها)</h3>
+<div class="date" role="group" aria-label="تاريخ الشراء"><div><span class="lab" style="min-height:0">يوم</span><input class="in" id="walDD" inputmode="numeric" maxlength="2" placeholder="يوم" autocomplete="off"></div><div><span class="lab" style="min-height:0">شهر</span><input class="in" id="walMM" inputmode="numeric" maxlength="2" placeholder="شهر" autocomplete="off"></div><div><span class="lab" style="min-height:0">سنة</span><input class="in" id="walYY" inputmode="numeric" maxlength="4" placeholder="سنة" autocomplete="off"></div>
+<label class="cal" aria-label="اختر التاريخ من التقويم"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><input type="date" id="walCal"></label></div>
+<label class="lab" style="margin-top:10px">وصف (اختياري)<input class="in" id="walNoteIn" maxlength="40" placeholder="مثال: جنيه ذهب" autocomplete="off" style="direction:rtl;font-size:16px"></label>
+<details class="d" id="invTax"><summary><span>ضريبة الفاتورة (اختياري)</span><small id="taxSum">غير معروفة</small></summary><div>
+<div class="sg" id="taxMode" role="group" aria-label="ضريبة الفاتورة"><button type="button" data-m="unknown" aria-pressed="true">مش عارف</button><button type="button" data-m="none" aria-pressed="false">بدون ضريبة</button><button type="button" data-m="has" aria-pressed="false">فيها ضريبة</button></div>
+<div id="taxF" hidden><div class="fr"><label class="lab" for="t_pre">قبل الضريبة (جنيه)</label><div><input class="in" id="t_pre" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_vat">الضريبة (جنيه)</label><div><input class="in" id="t_vat" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_post">بعد الضريبة (جنيه)</label><div><input class="in" id="t_post" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div>
+<p class="hint" id="calcNote"></p><button type="button" class="helper" id="h14" hidden>احسب ١٤٪ من «قبل الضريبة» زي فاتورتي</button>
+<p class="hint" id="taxMsg">اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.</p></div></div></details>
+<h3 style="margin:14px 0 4px;font-size:16px;color:var(--x-gold-hot)">٢. القطع</h3><p class="phint">اكتب اللي دفعته في كل قطعة لوحدها.</p>
+<div id="invRows"></div>
+<div id="invAddWrap"><button type="button" class="add" id="invAdd">+ قطعة تانية من نفس الفاتورة</button></div>
+<div class="sum" id="sum" aria-live="polite"></div>
+<label class="gate"><input type="checkbox" id="walRev"> راجعت الأرقام مع الفاتورة</label>
+<fieldset id="walGate" hidden style="border:0;padding:0;margin:8px 0"><legend class="x-note">هل تريد إرفاق صورة الفاتورة كأرشيف؟ (بتتحفظ في حسابك بس، وتقدر تحذفها في أي وقت)</legend>
+<div class="sg"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="yes" style="width:22px;height:22px;margin:0"> نعم، أرفقها</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="no" style="width:22px;height:22px;margin:0"> لا</label></div></fieldset>
+<p class="err" id="invErr" role="alert"></p>
 </div>
-<select id="walKarat" hidden aria-hidden="true"><option value="21">21</option><option value="24">24</option><option value="18">18</option></select>
-<div class="x-grid2">
-<label class="x-field">الوزن بالجرام<input id="walGramsIn" inputmode="decimal" placeholder="8.125" autocomplete="off" required><small class="x-hint" style="display:block;font-weight:400;font-size:.8em;opacity:.8;margin-top:.25rem">جرام لحد ٣ أرقام بعد العلامة (مليجرام). مثال: <bdi dir="ltr">3.125</bdi> يعني <bdi dir="ltr">3</bdi> جرام و<bdi dir="ltr">125</bdi> مليجرام.</small></label>
-<label class="x-field">إجمالي ما دفعته<input id="walPaidIn" inputmode="decimal" placeholder="49500" autocomplete="off" required></label>
-</div>
-<label class="x-field sm">وصف (اختياري)<input id="walNoteIn" maxlength="40" placeholder="جنيه ذهب" autocomplete="off" style="direction:rtl"></label>
-<div class="x-grid2">
-<label class="x-field">النوع<select id="walType"><option value="">اختر</option><option value="bar">سبيكة</option><option value="coin">جنيه / عملة</option><option value="jewelry">مصوغات</option><option value="scrap">كسر</option></select></label>
-</div>
-<div class="x-field" role="group" aria-label="تاريخ الشراء">تاريخ الشراء (يوم / شهر / سنة)<div style="display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:8px;margin-top:6px"><input id="walDD" inputmode="numeric" placeholder="يوم" maxlength="2" autocomplete="off"><input id="walMM" inputmode="numeric" placeholder="شهر" maxlength="2" autocomplete="off"><input id="walYY" inputmode="numeric" placeholder="سنة" maxlength="4" autocomplete="off"></div></div>
-<fieldset id="walPur" hidden style="border:0;padding:0;margin:10px 0"><legend class="x-note">نية شراء المصوغات</legend>
-<div style="display:flex;gap:22px;justify-content:center;margin-top:8px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walP" value="adornment" style="width:22px;height:22px;margin:0"> زينة</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walP" value="saving" style="width:22px;height:22px;margin:0"> ادخار</label></div></fieldset>
-<fieldset id="walStones" style="border:0;padding:0;margin:10px 0"><legend class="x-note">القطعة فيها فصوص؟ (لازم تختار)</legend>
-<div style="display:flex;gap:22px;justify-content:center;margin-top:8px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walS" value="without" style="width:22px;height:22px;margin:0"> بدون فصوص</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walS" value="with" style="width:22px;height:22px;margin:0"> بفصوص</label></div></fieldset>
-<details id="walMore" style="margin:10px 0"><summary class="x-note">تفاصيل اختيارية (مصنعية، ضريبة، دمغة، تقييم)</summary>
-<div class="x-grid2"><label class="x-field">مصنعية<input id="walMk" inputmode="decimal" autocomplete="off"></label><label class="x-field">ضريبة<input id="walTx" inputmode="decimal" autocomplete="off"></label></div>
-<div class="x-grid2"><label class="x-field">دمغة<input id="walSt" inputmode="decimal" autocomplete="off"></label><button type="button" class="x-btn" id="walZero" style="align-self:end">الباقي صفر</button></div>
-<p class="x-note">اللي تسيبه فاضي يفضل "غير معروف" وما بيتحسبش صفر. زر "الباقي صفر" بيكتب صفر في الخانات الفاضية بس لما تضغطه بنفسك.</p>
-<div id="walSOnly" hidden><label class="x-field">وزن الذهب المعتمد للبيع<select id="walBasis"><option value="">غير معروف</option><option value="total">الوزن الكلي شامل الفصوص</option><option value="net">الوزن صافي ذهب</option></select></label>
-<label class="x-field" id="walSG" hidden>وزن الفصوص بالجرام<input id="walStoneG" inputmode="decimal" autocomplete="off"></label>
-<label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="walPromise" style="width:22px;height:22px;margin:0"> البائع وعد باسترداد الفصوص بسعر الذهب (الوعد مش مضمون، راجع سياسة الشركة المكتوبة)</label></div></details>
-<div id="walGate" class="x-card" hidden style="margin:12px 0"><p class="x-note" role="alert" style="color:#f0ca78">برجاء مراجعة البيانات والتأكد من صحتها قبل الإضافة.</p>
-<label style="display:flex;align-items:center;gap:10px;margin:8px 0"><input type="checkbox" id="walRev" style="width:24px;height:24px;margin:0"> تمت المراجعة</label>
-<fieldset style="border:0;padding:0;margin:8px 0"><legend class="x-note">هل تريد إرفاق صورة الفاتورة بالسطر كأرشيف؟</legend>
-<div style="display:flex;gap:22px;margin-top:6px"><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="yes" style="width:22px;height:22px;margin:0"> نعم، أرفقها</label><label style="display:flex;align-items:center;gap:8px"><input type="radio" name="walAtt" value="no" style="width:22px;height:22px;margin:0"> لا</label></div></fieldset>
-<p class="x-note">الصورة (لو اخترت إرفاقها) بتتحفظ في حسابك بس، وتقدر تعرضها أو تنزّلها أو تحذفها من السطر في أي وقت. لو اخترت «لا» القيم اللي كتبتها بتفضل زي ما هي.</p></div>
-<div class="x-actions"><button type="submit" class="x-btn" id="walAdd">احفظ في حسابي</button><button type="button" class="x-btn" id="walCancel" hidden>إلغاء التعديل</button></div><p class="x-msg" id="walMsg" role="status"></p>
+<div class="x-actions"><button type="submit" class="save" id="walAdd" disabled>احفظ الفاتورة</button><button type="button" class="x-btn" id="walCancel" hidden>إلغاء التعديل</button></div><p class="x-msg" id="walMsg" role="status"></p>
 <p class="x-note">تقدر تشوف الصفحة والأسعار من غير تسجيل. الحفظ بس محتاج حساب، علشان قطعك تتحفظ في حسابك الخاص وقواعد الحماية تمنع أي مستخدم آخر من قراءتها.</p>
 <p class="x-note" id="walLogin" hidden><a href="../account-preview/">سجّل الدخول أو أنشئ حساب</a> ثم ارجع لهذه الصفحة.</p></form>
 <p class="x-note" id="walUnpriced" hidden></p>

@@ -178,3 +178,96 @@ test('account preview page loads the strict parser before its script, wallet pag
   assert.ok(!/Number\(String\(\$\("iGrams"\)/.test(u));
   assert.ok(/parseNumber/.test(u));
 });
+
+// ---- invoices, quantity, weight (synthetic values only) ----
+const { test: t2 } = require('node:test');
+const assert2 = require('node:assert/strict');
+const LM = require('../public/js/ledger-model.js');
+t2('weight parts compose to integer milligrams, leading zeros kept', () => {
+  assert2.equal(LM.composeWeight('6', '28').mg, 6280);
+  assert2.equal(LM.composeWeight('6', '028').mg, 6028);
+  assert2.equal(LM.composeWeight('', '5').mg, 500);
+  assert2.equal(LM.composeWeight('10', '').mg, 10000);
+  assert2.equal(LM.composeWeight('٦', '٢٨').mg, 6280);
+  assert2.ok(LM.composeWeight('', '').blank);
+  assert2.ok(LM.composeWeight('1', '2345').error);
+  assert2.ok(LM.composeWeight('1a', '2').error);
+  assert2.ok(LM.composeWeight('0', '0').error);
+});
+t2('quantity is a whole number 1..999 and blank means 1', () => {
+  assert2.equal(LM.readQty('').value, 1); assert2.equal(LM.readQty('3').value, 3); assert2.equal(LM.readQty('999').value, 999);
+  ['0', '1000', '2.5', '-1', 'x', '2,5'].forEach(v => assert2.ok(LM.readQty(v).error, v));
+});
+t2('quantity times unit weight is exact in milligrams', () => {
+  assert2.equal(LM.gramsOfMg(LM.totalMg(10000, 3)), 30);
+  assert2.equal(LM.gramsOfMg(LM.totalMg(6028, 7)), 42.196);
+  assert2.equal(LM.gramsOfMg(LM.totalMg(2500, 3)), 7.5);
+});
+t2('invoice figures: third value is calculated in piastres; mismatch is flagged, never changed', () => {
+  const a = LM.invoiceFigures('has', 175438.6, 24561.4, undefined); assert2.equal(a.total, 20000000); assert2.equal(a.calc, 'total');
+  const b = LM.invoiceFigures('has', 175438.6, undefined, 200000); assert2.equal(b.vat, 2456140); assert2.equal(b.calc, 'vat');
+  const c = LM.invoiceFigures('has', undefined, 24561.4, 200000); assert2.equal(c.sub, 17543860); assert2.equal(c.calc, 'sub');
+  const d = LM.invoiceFigures('has', 100, 14, 115); assert2.equal(d.mismatch, true); assert2.equal(d.calc, null); assert2.equal(d.vat, 1400);
+  assert2.equal(LM.invoiceFigures('has', 0.1, 0.2, undefined).total, 30);
+  assert2.equal(LM.invoiceFigures('has', 100, 200, undefined).calc, 'total');
+  assert2.equal(LM.invoiceFigures('has', 500, undefined, 100).negative, true);
+  assert2.equal(LM.invoiceFigures('none').calc, null);
+});
+t2('reconcile compares once, shows the difference, never splits it', () => {
+  assert2.deepEqual(LM.reconcile(200000, [{ paid: 149500 }, { paid: 50500 }]), { state: 'match', diff: 0 });
+  assert2.deepEqual(LM.reconcile(200000, [{ paid: 149500 }, { paid: 50400.5 }]), { state: 'diff', diff: 99.5 });
+  assert2.equal(LM.reconcile(200000, [{ paid: 1 }, {}]).state, 'incomplete');
+  assert2.equal(LM.reconcile(undefined, [{ paid: 1 }]).state, 'no-total');
+});
+const baseInv = { id: 'inv1', date: '2026-11-12', mode: 'has', sub: '175438.60', vat: '24561.40', total: '' };
+const barLine = { id: 'r1', type: 'bar', karat: '21', qty: '3', whole: '10', frac: '', paid: '149500', making: '3000', stamp: '', stampNone: true, stones: 'without' };
+const coinLine = { id: 'r2', type: 'coin', karat: '21', qty: '1', whole: '6', frac: '28', paid: '50500', stones: 'without' };
+t2('buildInvoice: quantity row keeps total grams, unit grams and line-total money', () => {
+  const r = LM.buildInvoice(baseInv, [barLine, coinLine]);
+  assert2.ok(!r.error, JSON.stringify(r.error));
+  const [bar, coin] = r.rows;
+  assert2.equal(bar.grams, 30); assert2.equal(bar.qty, 3); assert2.equal(bar.unitGrams, 10); assert2.equal(bar.paid, 149500); assert2.equal(bar.making, 3000); assert2.equal(bar.stamp, 0);
+  assert2.equal(bar.invoiceId, 'inv1'); assert2.ok(!('tax' in bar));
+  assert2.equal(coin.grams, 6.28); assert2.ok(!('qty' in coin)); assert2.ok(!('making' in coin)); assert2.ok(!('stamp' in coin)); // blank stays unknown
+  assert2.deepEqual(r.invoice, { id: 'inv1', vatMode: 'has', subtotal: 175438.6, vat: 24561.4, total: 200000 });
+});
+t2('buildInvoice: unknown tax stores no figures; bad fields are listed and nothing is built', () => {
+  const r = LM.buildInvoice({ id: 'i', date: '2026-01-02', mode: 'unknown' }, [coinLine]);
+  assert2.deepEqual(r.invoice, { id: 'i', vatMode: 'unknown' });
+  const bad = LM.buildInvoice(baseInv, [Object.assign({}, coinLine, { stones: '' , paid: '' , qty: '0'})]);
+  assert2.ok(bad.error.includes('stones:0') && bad.error.includes('paid:0') && bad.error.includes('qty:0')); assert2.ok(!bad.rows);
+  assert2.ok(LM.buildInvoice({ id: 'i', date: 'x', mode: 'none' }, [coinLine]).error);
+  assert2.ok(LM.buildInvoice(baseInv, [Object.assign({}, coinLine, { type: 'jewelry' })]).error.includes('purpose:0'));
+});
+t2('mergeInvoice is retry safe and keeps older rows and invoices', () => {
+  const built = LM.buildInvoice(baseInv, [barLine, coinLine]);
+  const old = [{ id: 'old', grams: 5, karat: 21, paid: 1 }];
+  const m1 = LM.mergeInvoice(old, undefined, built);
+  assert2.equal(m1.items.length, 3); assert2.equal(m1.invoices.length, 1);
+  const m2 = LM.mergeInvoice(m1.items, m1.invoices, built);
+  assert2.equal(m2.items.length, 3); assert2.equal(m2.invoices.length, 1); assert2.equal(m2.added, 0);
+  assert2.deepEqual(m2.items[0], old[0]);
+});
+t2('rows from a quantity line still work with the valuation (grams is the total)', () => {
+  const r = LM.buildInvoice(baseInv, [barLine]).rows[0];
+  assert2.equal(LM.netGrams(r), 30); assert2.equal(LM.qtyOf(r), 3); assert2.equal(LM.unitGramsOf(r), 10);
+  assert2.equal(LM.qtyOf({ grams: 8 }), 1); assert2.equal(LM.unitGramsOf({ grams: 8 }), 8);
+});
+t2('commitWithRetry keeps other document keys and the invoices list, and passes invoices to the writer', async () => {
+  const { commitWithRetry } = await import('../public/js/account.js');
+  let doc = { v: 1, items: [{ id: 'a' }], invoices: [{ id: 'i0', vatMode: 'none' }], future: { x: 1 } }, saved = null, seen = null;
+  await commitWithRetry({ load: async () => ({ data: doc, version: 'v1' }), save: async d => { saved = d; }, mutate: (it, inv) => { seen = inv; return { items: it.concat({ id: 'b' }) }; } });
+  assert2.deepEqual(seen, [{ id: 'i0', vatMode: 'none' }]); assert2.deepEqual(saved.invoices, doc.invoices); assert2.deepEqual(saved.future, { x: 1 }); assert2.equal(saved.items.length, 2);
+  await commitWithRetry({ load: async () => ({ data: doc, version: 'v1' }), save: async d => { saved = d; }, mutate: (it, inv) => ({ items: it, invoices: inv.concat({ id: 'i1' }) }) });
+  assert2.equal(saved.invoices.length, 2);
+  await commitWithRetry({ load: async () => ({ data: null, version: null }), save: async d => { saved = d; }, mutate: it => ({ items: [{ id: 'z' }] }) });
+  assert2.deepEqual(saved, { v: 1, items: [{ id: 'z' }] });
+});
+t2('stones details are kept only for lines with stones and must be lighter than the line', () => {
+  const w = Object.assign({}, coinLine, { stones: 'with', basis: 'total', stoneG: '1.5', promise: 'full' });
+  const r = LM.buildInvoice(baseInv, [w]).rows[0];
+  assert2.equal(r.basis, 'total'); assert2.equal(r.stoneG, 1.5); assert2.equal(r.promise, 'full');
+  assert2.ok(LM.buildInvoice(baseInv, [Object.assign({}, w, { stoneG: '7' })]).error.includes('stoneG:0'));
+  const wo = LM.buildInvoice(baseInv, [Object.assign({}, coinLine, { basis: 'net', stoneG: '1', promise: 'full' })]).rows[0];
+  assert2.ok(!('basis' in wo) && !('stoneG' in wo) && !('promise' in wo));
+});

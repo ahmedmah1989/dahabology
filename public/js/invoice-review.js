@@ -5,11 +5,11 @@
 // Sibling modules load with this file's own ?v= so one deploy never mixes old and new versions.
 const V = new URL(import.meta.url).search;
 const { parseInvoice } = await import("./invoice-parse.js" + V);
-const { createReview, FIELDS } = await import("./invoice-review-state.js" + V);
+const { createReview } = await import("./invoice-review-state.js" + V);
 
 const $ = (id) => document.getElementById(id);
-const LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم، بيتكتب في يوم / شهر / سنة)", paid: "إجمالي ما دفعته" };
-const TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDD" };
+const _LABEL = { karat: "العيار", grams: "الوزن بالجرام", purchaseDate: "تاريخ الشراء (سنة-شهر-يوم، بيتكتب في يوم / شهر / سنة)", paid: "إجمالي ما دفعته" };
+const _TARGET = { grams: "walGramsIn", paid: "walPaidIn", purchaseDate: "walDD" };
 const ENGINE = new URL("../vendor/tesseract/", import.meta.url).href;
 const OCR_SUGGESTIONS = false;
 let objectUrl = null, review = null, busy = false, lastNote = "", curFile = null, curParsed = null, session = null;
@@ -31,51 +31,19 @@ async function ocrFile(file) {
   } finally { await w.terminate(); }
 }
 
-function gate(on) { const g = $("walGate"); if (!g) return; g.hidden = !on; if (!on) { $("walRev").checked = false; document.querySelectorAll("input[name=walAtt]").forEach((x) => { x.checked = false; }); } const b = $("walAdd"); if (b && !(window.DHB_WAL_EDITING && window.DHB_WAL_EDITING())) b.textContent = on ? "تأكيد الإضافة" : "احفظ في حسابي"; }
+function gate(on) { const g = $("walGate"); if (!g) return; g.hidden = !on; if (!on) { document.querySelectorAll("input[name=walAtt]").forEach((x) => { x.checked = false; }); } }
 function drop() { if (objectUrl) { URL.revokeObjectURL(objectUrl); objectUrl = null; } review = null; curFile = null; curParsed = null; session = null; gate(false); $("invBody").innerHTML = ""; $("invPanel").hidden = true; $("invFile").value = ""; }
 function msg(t, kind) { const m = $("invMsg"); m.textContent = t || ""; m.className = "x-msg" + (kind ? " " + kind : ""); }
-
-function applyConfirmed(f) {
-  $("walRev").checked = false; // any change after the review resets it
-  const v = review.rows[f].confirmed;
-  if (f === "karat") { const b = document.querySelector(`.x-karat[data-set="walKarat"][data-value="${v}"]`); if (b) b.click(); }
-  else if (f === "purchaseDate") { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(v)); if (m) { [["walDD", m[3]], ["walMM", m[2]], ["walYY", m[1]]].forEach(([i, x]) => { $(i).value = String(Number(x)); }); } }
-  else { const el = $(TARGET[f]); el.value = String(v); el.dispatchEvent(new Event("input", { bubbles: true })); el.dispatchEvent(new Event("change", { bubbles: true })); }
-}
 
 function render() {
   const body = $("invBody"); body.innerHTML = "";
   const img = document.createElement("img"); img.src = objectUrl; img.alt = "صورة الفاتورة"; img.id = "invImg"; img.style.cssText = "width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#0001;cursor:zoom-in";
   img.onclick = () => { const z = img.style.maxHeight === "none"; img.style.maxHeight = z ? "46vh" : "none"; img.style.cursor = z ? "zoom-in" : "zoom-out"; };
   body.append(img);
-  const note = document.createElement("p"); note.className = "x-note"; note.textContent = OCR_SUGGESTIONS ? "القراءة الآلية قد تغلط في رقم وتطلع رقم معقول. قارن كل قيمة بالصورة، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل." : "اكتب كل قيمة من الصورة بنفسك، وراجع الجرامات والمليجرام بالظبط، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل.";
+  const note = document.createElement("p"); note.className = "x-note"; note.textContent = "اكتب القيم من الصورة بنفسك في النموذج تحت، وراجعها قبل الحفظ. الصورة بتفضل على جهازك لحد ما تختار ترفقها.";
   body.append(note);
-  for (const f of FIELDS) {
-    const r = review.rows[f], wrap = document.createElement("div"); wrap.className = "x-card"; wrap.style.margin = "10px 0"; wrap.dataset.field = f;
-    const lab = document.createElement("label"); lab.className = "x-field"; lab.textContent = LABEL[f];
-    const inp = document.createElement("input"); inp.value = r.input; inp.setAttribute("inputmode", f === "purchaseDate" ? "numeric" : "decimal"); inp.autocomplete = "off";
-    inp.oninput = () => { review.setInput(f, inp.value); rowState(wrap, f); };
-    lab.append(inp); wrap.append(lab);
-    const sug = document.createElement("div"); sug.style.cssText = "display:flex;gap:8px;flex-wrap:wrap;margin:6px 0";
-    if (r.suggestions.length) {
-      const t = document.createElement("span"); t.className = "x-note"; t.textContent = "مقترح (غير مؤكد):"; sug.append(t);
-      r.suggestions.forEach((s, i) => { const b = document.createElement("button"); b.type = "button"; b.className = "x-btn ghost"; b.textContent = s; b.onclick = () => { inp.value = review.suggest(f, i); rowState(wrap, f); }; sug.append(b); });
-    } else { const t = document.createElement("span"); t.className = "x-note"; t.dataset.hint = f; t.textContent = OCR_SUGGESTIONS ? (r.note || "لم يُقرأ") + ". اكتبه من الصورة." : "اكتبه من الصورة."; sug.append(t); }
-    wrap.append(sug);
-    const act = document.createElement("div"); act.className = "x-actions";
-    const ok = document.createElement("button"); ok.type = "button"; ok.className = "x-btn"; ok.textContent = "أكّد"; ok.dataset.confirm = f;
-    ok.onclick = () => { if (review.confirm(f)) { applyConfirmed(f); } rowState(wrap, f); };
-    act.append(ok); wrap.append(act);
-    const st = document.createElement("p"); st.className = "x-msg"; st.setAttribute("role", "status"); st.dataset.state = f; wrap.append(st);
-    body.append(wrap);
-  }
   const done = document.createElement("button"); done.type = "button"; done.className = "x-btn ghost"; done.textContent = "إغلاق وحذف الصورة"; done.onclick = () => { drop(); msg(""); };
   body.append(done);
-}
-function rowState(wrap, f) {
-  const r = review.rows[f], st = wrap.querySelector("[data-state]");
-  const hint = wrap.querySelector("[data-hint]"); if (hint) hint.hidden = r.confirmed !== null;
-  st.textContent = r.error || (r.confirmed !== null ? "✓ تم التأكيد وانتقلت القيمة للنموذج" : ""); st.className = "x-msg " + (r.error ? "err" : r.confirmed !== null ? "ok" : "");
 }
 
 async function onPick() {
@@ -111,16 +79,13 @@ async function prepareArchive() {
 export function init() {
   if (!$("invFile")) return;
   $("invFile").addEventListener("change", onPick);
-  // Any edit to the form after "تمت المراجعة" was ticked clears it, so the owner reviews what is actually being saved.
-  $("walForm").addEventListener("input", (e) => { if (e.target && e.target.id !== "walRev" && e.target.name !== "walAtt") $("walRev").checked = false; });
-  $("walForm").addEventListener("change", (e) => { if (e.target && e.target.id !== "walRev" && e.target.name !== "walAtt") $("walRev").checked = false; });
   addEventListener("pagehide", () => { if (objectUrl) drop(); });
   window.DHB_INVOICE = {
     active: () => !!objectUrl && !!curFile,
     session: () => session,
     prepareArchive,
     // After a piece was saved from this photo: keep the photo for another piece from the same invoice, clear what was confirmed.
-    afterSave() { if (!objectUrl) return; review = createReview(curParsed); render(); $("walRev").checked = false; document.querySelectorAll("input[name=walAtt]").forEach((x) => { x.checked = false; }); msg("اتحفظت. لو في قطعة تانية في نفس الفاتورة راجعها من الصورة وأضفها، أو اضغط «إغلاق وحذف الصورة».", "ok"); },
+    afterSave() { if (!objectUrl) return; drop(); msg("تمت الإضافة. اتقفلت الصورة من على الصفحة."); },
     close() { drop(); msg(""); },
   };
 }

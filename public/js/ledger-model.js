@@ -164,6 +164,106 @@
   }
   const CHANGED_AR = 'القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني.';
   const GONE_AR = 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.';
-  const api = { parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+
+  // ---- invoices: several lines bought together, quantity, weight entry, invoice-level tax (all pure) ----
+  // Money is compared in whole piastres (integers) so 0.1 + 0.2 style drift can never show as a difference.
+  const piastres = v => Math.round(v * 100);
+  const QTY_MAX = 999;
+  // Quantity: whole number 1..999. Blank means 1. Anything else is an error, never rounded.
+  function readQty(v) {
+    const t = v === undefined || v === null ? '' : String(v).trim();
+    if (t === '') return { value: 1 };
+    const r = parseNumber(t, 'money');
+    if (r.error || r.blank || !Number.isInteger(r.value) || /[.,]/.test(t.replace(/[\u066b\u066c\u060c]/g, '.')) || r.value < 1 || r.value > QTY_MAX) return { error: 'qty' };
+    return { value: r.value };
+  }
+  // Weight as two typed parts: whole grams and the digits after the point (up to 3, leading zeros kept: 6 and 028 is 6.028 g). Result in integer milligrams.
+  function composeWeight(whole, frac) {
+    const w = String(whole === undefined || whole === null ? '' : whole).trim(), f = String(frac === undefined || frac === null ? '' : frac).trim();
+    const dig = t => t.replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0));
+    const W = dig(w), F = dig(f);
+    if (W === '' && F === '') return { blank: true };
+    if (!/^\d{0,5}$/.test(W) || !/^\d{0,3}$/.test(F)) return { error: 'format' };
+    const mg = (W === '' ? 0 : Number(W)) * 1000 + (F === '' ? 0 : Number(F.padEnd(3, '0')));
+    return mg > 0 ? { mg } : { error: 'zero' };
+  }
+  const gramsOfMg = mg => mg / 1000; // exact for every integer milligram value that fits, e.g. 30000 -> 30, 6280 -> 6.28
+  // Total weight of a line with q identical pieces. Integer milligrams, no float multiplication.
+  const totalMg = (unitMg, q) => unitMg * q;
+  const BAR_PRESETS = [1, 2.5, 5, 10, 20, 50, 100, 250, 500, 1000];
+  // Invoice-level tax. mode: 'unknown' | 'none' | 'has'. With 'has', two of (subtotal, vat, total) give the third.
+  // Inputs are numbers in pounds or undefined. Returns piastres, which of the three were calculated, and a mismatch flag when all three are given and disagree.
+  function invoiceFigures(mode, sub, vat, tot) {
+    if (mode !== 'has') return { mode, calc: null };
+    const a = [sub, vat, tot].map(x => (Number.isFinite(x) ? piastres(x) : undefined));
+    const given = a.filter(x => x !== undefined).length;
+    const out = { mode, sub: a[0], vat: a[1], total: a[2], calc: null, mismatch: false };
+    if (given === 2) {
+      if (a[2] === undefined) { out.total = a[0] + a[1]; out.calc = 'total'; }
+      else if (a[1] === undefined) { out.vat = a[2] - a[0]; out.calc = 'vat'; }
+      else { out.sub = a[2] - a[1]; out.calc = 'sub'; }
+      if (out.calc && [out.sub, out.vat, out.total].some(x => x < 0)) { out.calc = null; out.sub = a[0]; out.vat = a[1]; out.total = a[2]; out.negative = true; }
+    } else if (given === 3) out.mismatch = a[0] + a[1] !== a[2];
+    return out;
+  }
+  // Compare the invoice total with the sum of the lines' paid amounts. The difference is shown, never split between lines.
+  // lines: [{paid}] paid may be undefined (unknown) -> comparison unavailable.
+  function reconcile(total, lines) {
+    if (!Number.isFinite(total)) return { state: 'no-total' };
+    if (!lines.length || lines.some(l => !Number.isFinite(l.paid))) return { state: 'incomplete' };
+    const diff = piastres(total) - lines.reduce((s, l) => s + piastres(l.paid), 0);
+    return { state: diff === 0 ? 'match' : 'diff', diff: diff / 100 };
+  }
+  // Build the stored rows for one invoice from form values. Nothing is saved here.
+  // inv: {id, date, mode, sub, vat, total} ; lines: [{id, type, karat, qty, whole, frac, paid, making, makingNone, stamp, stampNone, stones, purpose, note}]
+  // making/stamp are line totals for all q pieces and a breakdown INSIDE paid. Blank = not recorded (key absent); "بدون" = explicit 0.
+  function buildInvoice(inv, lines) {
+    if (!Array.isArray(lines) || !lines.length) return { error: ['lines'] };
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(inv.date || '') ? inv.date : null; if (!date) return { error: ['date'] };
+    if (!['unknown', 'none', 'has'].includes(inv.mode || 'unknown')) return { error: ['mode'] };
+    const rows = [], errs = [];
+    lines.forEach((l, i) => {
+      const q = readQty(l.qty), w = composeWeight(l.whole, l.frac), paid = optionalNum(l.paid, 'money');
+      if (q.error) errs.push('qty:' + i); if (w.error || w.blank) errs.push('weight:' + i);
+      if (paid.error || paid.value === undefined) errs.push('paid:' + i);
+      if (!['bar', 'coin', 'jewelry', 'scrap'].includes(l.type)) errs.push('type:' + i);
+      if (!KARATS.includes(Number(l.karat))) errs.push('karat:' + i);
+      if (l.stones !== 'with' && l.stones !== 'without') errs.push('stones:' + i);
+      if (l.type === 'jewelry' && !['adornment', 'saving'].includes(l.purpose)) errs.push('purpose:' + i);
+      const fee = (k, none) => { if (none) return { value: 0 }; const r = optionalNum(l[k], 'money'); if (r.error) errs.push(k + ':' + i); return r; };
+      const mk = fee('making', l.makingNone), st = fee('stamp', l.stampNone);
+      if (errs.some(e => e.endsWith(':' + i))) return;
+      const total = totalMg(w.mg, q.value);
+      const rec = { id: String(l.id), label: String(l.note || '').slice(0, 40), type: l.type, karat: Number(l.karat), grams: gramsOfMg(total), purchaseDate: date, paid: paid.value, stones: l.stones, invoiceId: String(inv.id) };
+      if (q.value > 1) { rec.qty = q.value; rec.unitGrams = gramsOfMg(w.mg); }
+      if (l.type === 'jewelry') rec.purpose = l.purpose;
+      if (l.stones === 'with') {
+        const d = readDetails({ stones: 'with', basis: l.basis, stoneG: l.stoneG, promise: l.promise });
+        if (d.error) errs.push('stones-details:' + i);
+        else { ['basis', 'stoneG', 'promise'].forEach(k => { if (d.details[k] !== undefined) rec[k] = d.details[k]; }); if (rec.stoneG !== undefined && rec.stoneG >= rec.grams) errs.push('stoneG:' + i); }
+      }
+      if (errs.some(e => e.endsWith(':' + i))) return;
+      if (mk.value !== undefined) rec.making = mk.value;
+      if (st.value !== undefined) rec.stamp = st.value;
+      rows.push(rec);
+    });
+    if (errs.length) return { error: errs };
+    const f = invoiceFigures(inv.mode || 'unknown', optionalNum(inv.sub, 'money').value, optionalNum(inv.vat, 'money').value, optionalNum(inv.total, 'money').value);
+    const meta = { id: String(inv.id), vatMode: inv.mode || 'unknown' };
+    if (f.mode === 'has') { ['sub:subtotal', 'vat:vat', 'total:total'].forEach(p => { const [k, n] = p.split(':'); if (f[k] !== undefined) meta[n] = f[k] / 100; }); }
+    return { rows, invoice: meta };
+  }
+  // Append rows and the invoice record in one list change. Same ids already there are kept as they are (retry safe).
+  // The doc keeps its list under `items`; invoice records live next to it under `invoices` and are handed back separately so the writer keeps both.
+  function mergeInvoice(existingItems, existingInvoices, built) {
+    const items = Array.isArray(existingItems) ? existingItems : [], invs = Array.isArray(existingInvoices) ? existingInvoices : [];
+    const have = new Set(items.map(x => x && x.id));
+    const add = built.rows.filter(r => !have.has(r.id));
+    return { items: items.concat(add), invoices: invs.some(x => x && x.id === built.invoice.id) ? invs : invs.concat(built.invoice), added: add.length };
+  }
+  // Display helpers for rows (old rows have no qty and read exactly as before).
+  const qtyOf = r => (Number.isInteger(r && r.qty) && r.qty > 1 ? r.qty : 1);
+  const unitGramsOf = r => (qtyOf(r) > 1 && finite(r.unitGrams) ? r.unitGrams : (r && r.grams));
+  const api = { readQty, composeWeight, gramsOfMg, totalMg, BAR_PRESETS, invoiceFigures, reconcile, buildInvoice, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();

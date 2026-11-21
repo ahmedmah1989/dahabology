@@ -56,7 +56,7 @@
     n.textContent = w.unpriced.length ? 'في حسابك ' + w.unpriced.length + ' قطعة من غير سعر شراء، ما اتحسبتش في القيمة هنا.' : '';
     paint();
   }
-  function clearCloud() { gen++; owner = null; window.DHB_CLOUD_ITEMS = []; $('walUnpriced').hidden = true; paint(); }
+  function clearCloud() { gen++; owner = null; window.DHB_CLOUD_ITEMS = []; window.DHB_CLOUD_INVOICES = []; $('walUnpriced').hidden = true; paint(); }
   async function refresh() {
     const g = ++gen;
     if (!localStorage.getItem(SESSION)) { if (owner) clearCloud(); return; }
@@ -68,7 +68,7 @@
     try {
       const d = await L.loadDoc('gold/items');
       if (g !== gen || L.currentUser()?.uid !== u.uid) return;
-      owner = u.uid; setCloud(d && d.items);
+      owner = u.uid; window.DHB_CLOUD_INVOICES = (d && Array.isArray(d.invoices)) ? d.invoices : []; setCloud(d && d.items);
     } catch (e) { if (g === gen) say('walMsg', (e && e.ar) || 'تعذّر تحميل قطع حسابك.', 'err'); }
   }
 
@@ -79,117 +79,101 @@
     if (!u.emailVerified) { $(loginId).hidden = false; say(noticeId, 'حسابك محتاج تأكيد البريد. أكمل التأكيد من صفحة حسابي ثم ارجع.', 'err'); return null; }
     return serial(async () => {
       const r = await L.updateGoldItems(mutate, u.uid);
-      if (r.items) { owner = u.uid; setCloud(r.items); }
+      if (r.items) { owner = u.uid; if (r.invoices) window.DHB_CLOUD_INVOICES = r.invoices; setCloud(r.items); }
       return r;
     });
   }
 
-  // ---- add or edit a piece: needs an account ----
-  const LG = () => window.DHB_LEDGER;
+  // ---- add an invoice (one or more lines) or edit one line: needs an account ----
+  const LG = () => window.DHB_LEDGER, FM = () => window.DHB_INVFORM;
   const radio = n => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
-  const syncMore = () => { const w = radio('walS') === 'with'; $('walSOnly').hidden = !w; $('walSG').hidden = !(w && $('walBasis').value === 'total'); };
-  document.querySelectorAll('input[name=walS]').forEach(x => x.addEventListener('change', syncMore)); $('walBasis').addEventListener('change', syncMore);
-  $('walZero').addEventListener('click', () => ['walMk', 'walTx', 'walSt'].forEach(i => { if ($(i).value.trim() === '') $(i).value = '0'; }));
-  $('walType').addEventListener('change', () => { $('walPur').hidden = $('walType').value !== 'jewelry'; });
   let editingId = null, editBase = null;
   window.DHB_WAL_EDITING = () => !!editingId;
-  let pendingId = null, unsure = false; // pendingId: one id per add attempt, so a retry can never create a second record
+  let attempt = null, unsure = false; // attempt: one invoice id and one id per line for the whole attempt, so a retry can never create a second record
+  const uid = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   async function rowState(id) { try { const d = await (await lib()).loadDoc('gold/items'); return d && Array.isArray(d.items) && d.items.some(i => i && i.id === id) ? 'found' : 'absent'; } catch (_) { return 'unknown'; } }
   function resetForm() {
-    editingId = null; editBase = null; pendingId = null; unsure = false;
-    ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDD', 'walMM', 'walYY', 'walMk', 'walTx', 'walSt', 'walStoneG'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true; $('walBasis').value = ''; $('walPromise').checked = false;
-    document.querySelectorAll('input[name=walP],input[name=walS]').forEach(x => { x.checked = false; }); syncMore();
-    $('walAdd').textContent = 'احفظ في حسابي'; $('walCancel').hidden = true;
+    editingId = null; editBase = null; attempt = null; unsure = false;
+    FM().reset(); $('walAdd').textContent = 'احفظ الفاتورة'; $('walCancel').hidden = true;
+    document.querySelectorAll('input[name=walAtt]').forEach(x => { x.checked = false; });
   }
   $('walCancel').addEventListener('click', () => { resetForm(); say('walMsg', ''); });
-  const formDetails = () => LG().readDetails({ stones: radio('walS'), basis: $('walBasis').value, stoneG: $('walStoneG').value, promise: $('walPromise').checked ? 'full' : '', making: $('walMk').value, tax: $('walTx').value, stamp: $('walSt').value });
   // Fill the form from a saved row (edit). Shown values are exactly what is saved; blank means not recorded.
   window.DHB_CLOUD_EDIT = id => {
     const r = (window.DHB_CLOUD_ITEMS || []).find(x => x.id === id), rec = r && r.rec; if (!rec) return;
-    resetForm(); editingId = id; editBase = JSON.parse(JSON.stringify(rec)); const d = String(rec.purchaseDate || '').split('-');
-    $('walGramsIn').value = rec.grams; $('walPaidIn').value = Number.isFinite(rec.paid) ? rec.paid : ''; $('walNoteIn').value = rec.label || '';
-    if (d.length === 3) { $('walDD').value = Number(d[2]); $('walMM').value = Number(d[1]); $('walYY').value = d[0]; }
-    $('walType').value = rec.type || ''; $('walPur').hidden = rec.type !== 'jewelry'; document.querySelectorAll('input[name=walP]').forEach(x => { x.checked = x.value === rec.purpose; });
-    document.querySelectorAll('input[name=walS]').forEach(x => { x.checked = x.value === rec.stones; });
-    ['making:walMk', 'tax:walTx', 'stamp:walSt', 'stoneG:walStoneG'].forEach(p => { const [k, i] = p.split(':'); $(i).value = Number.isFinite(rec[k]) ? rec[k] : ''; });
-    $('walBasis').value = rec.basis || ''; $('walPromise').checked = rec.promise === 'full'; syncMore();
-    document.querySelectorAll('.x-karat[data-set=walKarat]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.value === String(rec.karat)))); $('walKarat').value = String(rec.karat);
-    $('walMore').open = true; $('walAdd').textContent = 'احفظ التعديل'; $('walCancel').hidden = false;
+    resetForm(); editingId = id; editBase = JSON.parse(JSON.stringify(rec)); FM().loadRow(rec);
+    $('walAdd').textContent = 'احفظ التعديل'; $('walCancel').hidden = false;
     say('walMsg', Number.isFinite(rec.additions) && rec.additions > 0 ? 'القطعة دي فيها مبلغ "إضافات" قديم محفوظ زي ما هو. التعديل ما بيغيّرهوش.' : '');
     $('walForm').scrollIntoView({ block: 'start' });
   };
+  const OWNED = ['stones', 'basis', 'stoneG', 'promise', 'making', 'stamp', 'qty', 'unitGrams', 'purpose'];
   $('walForm').addEventListener('submit', async () => {
     const btn = $('walAdd'); if (btn.disabled) return;
     const INV = window.DHB_INVOICE, photo = !editingId && INV && INV.active();
-    if (unsure && pendingId) {
-      btn.disabled = true; say('walMsg', 'بتأكد من حالة آخر حفظ…'); const st = await rowState(pendingId); btn.disabled = false;
-      if (st === 'found') { say('walMsg', 'القطعة كانت اتحفظت فعلاً. ما اتضافتش مرة تانية. راجع القائمة.', 'ok'); resetForm(); refresh(); if (photo) INV.afterSave(); return; }
+    if (unsure && attempt) {
+      btn.disabled = true; say('walMsg', 'بتأكد من حالة آخر حفظ…'); const st = await rowState(attempt.rowIds[0]); FM().update();
+      if (st === 'found') { say('walMsg', 'الفاتورة كانت اتحفظت فعلاً. ما اتضافتش مرة تانية. راجع القائمة.', 'ok'); resetForm(); refresh(); if (photo) INV.afterSave(); return; }
       if (st === 'unknown') { say('walMsg', 'مش قادرين نتأكد لو آخر حفظ تم. افتح قائمة قطعك وتأكد قبل ما تضيف تاني. ما هنكرر الإضافة من غير تأكيد.', 'err'); return; }
       unsure = false;
     }
-    if (photo) {
-      // Photo flow: the owner must tick "تمت المراجعة" (an alert reminds them until they do) and answer the attach question.
-      if (!$('walRev').checked) { say('walMsg', 'لازم تراجع البيانات وتعلّم على «تمت المراجعة» قبل التأكيد.', 'err'); alert('برجاء مراجعة البيانات والتأكد من صحتها، ثم علّم على «تمت المراجعة» قبل تأكيد الإضافة.'); return; }
-      if (!radio('walAtt')) { say('walMsg', 'اختر: هل تريد إرفاق صورة الفاتورة بالسطر ولا لا؟', 'err'); return; }
-    }
-    const date = LG().parseDMY($('walDD').value, $('walMM').value, $('walYY').value);
-    if (!date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
-    if (!radio('walS')) return say('walMsg', 'اختر: القطعة بفصوص ولا بدون فصوص.', 'err');
-    const dt = formDetails(); if (dt.error) return say('walMsg', 'راجع التفاصيل الاختيارية (أرقام صحيحة، ووزن الفصوص أقل من الوزن الكلي).', 'err');
-    { const pd = PN($('walPaidIn').value, 'money'); if (pd.error === 'ambiguous') return say('walMsg', 'المبلغ غير واضح. اكتبه من غير فاصلة آلاف، مثال: 46000 أو 46000.5', 'err'); }
-    const keepOld = editBase && editBase.grams > 0 && String($('walGramsIn').value).trim() === String(editBase.grams);
-    { const gr = PN($('walGramsIn').value, 'grams'); if (!keepOld && gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مليجرام). مثال: \u20663.125\u2069 يعني \u20663\u2069 جرام و\u2066125\u2069 مليجرام.', 'err'); }
-    const id = editingId || pendingId || (pendingId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-    const b = buildRecord({ id, k: $('walKarat').value, g: keepOld ? editBase.grams : num($('walGramsIn').value, 'grams'), paid: num($('walPaidIn').value, 'money'), note: $('walNoteIn').value.trim() },
-      { type: $('walType').value, date, purpose: radio('walP'), details: dt.details });
-    if (b.error) return say('walMsg', b.error, 'err');
-    if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
-    btn.disabled = true; say('walMsg', '');
+    if (!$('walRev').checked) return say('walMsg', 'لازم تراجع الأرقام وتعلّم على «راجعت الأرقام مع الفاتورة» قبل الحفظ.', 'err');
+    if (photo && !radio('walAtt')) return say('walMsg', 'اختر: هل تريد إرفاق صورة الفاتورة ولا لا؟', 'err');
+    const c = FM().collect();
+    if (!c.date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
+    if (!attempt) attempt = { invId: editingId ? (editBase.invoiceId || uid()) : uid(), rowIds: c.lines.map(() => uid()) };
+    if (editingId) attempt.rowIds = [editingId];
+    if (attempt.rowIds.length !== c.lines.length) attempt.rowIds = c.lines.map(() => uid());
+    const keep = editingId && c.lines[0].keepWeight;
+    const lines = c.lines.map((l, i) => Object.assign({ id: attempt.rowIds[i] }, keep ? { whole: '1', frac: '' } : {}, l, keep ? { whole: '1', frac: '' } : {}));
+    if (keep && LG().readQty(lines[0].qty).value !== (editBase.qty || 1)) return say('walMsg', 'الوزن المحفوظ بدقة أكبر من ٣ أرقام. لو غيّرت العدد، اكتب وزن القطعة من جديد.', 'err');
+    const built = LG().buildInvoice({ id: attempt.invId, date: c.date, mode: editingId ? 'unknown' : c.mode, sub: c.sub, vat: c.vat, total: c.total }, lines);
+    if (built.error) return say('walMsg', 'راجع الخانات (النوع والوزن والمبلغ والمصنعية والدمغة والفصوص). ما اتحفظش أي حاجة.', 'err');
+    if (keep) { const r0 = built.rows[0]; r0.grams = editBase.grams; if (editBase.qty > 1) { r0.qty = editBase.qty; r0.unitGrams = editBase.unitGrams; } else { delete r0.qty; delete r0.unitGrams; } }
+    if (c.lines.some(l => l.type === 'bar' && !(editBase && editBase.type === 'bar' && editBase.karat !== 24) && Number(l.karat) !== 24)) return say('walMsg', 'السبيكة عيارها 24.', 'err');
+    btn.disabled = true; say('walMsg', ''); FM().setBusy(true);
     let wroteImage = null, reusedId = null;
     try {
       const was = editingId, base = editBase;
       if (photo && radio('walAtt') === 'yes') {
         // Archive first: if the image cannot be stored, nothing is added and every field stays as typed.
         const ses = INV.session();
-        if (ses.saved) { try { const ex = await (await lib()).loadDoc('gold/inv_' + ses.saved.id); if (!ex) ses.saved = null; } catch (_) { ses.saved = null; } } // the stored image may have been removed with an earlier row
+        if (ses.saved) { try { const ex = await (await lib()).loadDoc('gold/inv_' + ses.saved.id); if (!ex) ses.saved = null; } catch (_) { ses.saved = null; } }
         if (!ses.saved) {
-          let pr; try { pr = await INV.prepareArchive(); } catch (e) { throw Object.assign(new Error('img'), { ar: e && e.code === 'TOO_BIG' ? 'الصورة كبيرة قوي حتى بعد التصغير. ما اتحفظش أي حاجة. ممكن تختار «لا» وتضيف القطعة من غير صورة.' : 'تعذّر تجهيز الصورة للحفظ. ما اتحفظش أي حاجة، والقيم زي ما هي. ممكن تختار «لا» وتضيف من غير صورة.' }); }
+          let pr; try { pr = await INV.prepareArchive(); } catch (e) { throw Object.assign(new Error('img'), { ar: e && e.code === 'TOO_BIG' ? 'الصورة كبيرة قوي حتى بعد التصغير. ما اتحفظش أي حاجة. ممكن تختار «لا».' : 'تعذّر تجهيز الصورة. ما اتحفظش أي حاجة. جرّب تاني أو اختر «لا».' }); }
           const L0 = await lib(), u0 = L0.currentUser();
           if (!u0 || !u0.emailVerified) throw Object.assign(new Error('auth'), { ar: 'لازم تكون مسجّل الدخول بحساب مؤكد علشان الصورة تتحفظ. ما اتحفظش أي حاجة.' });
-          const iid = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+          const iid = uid();
           try { await L0.saveDoc('gold/inv_' + iid, { v: 1, type: pr.type, bytes: pr.bytes, data: pr.data, created: new Date().toISOString() }); }
           catch (e) { throw Object.assign(new Error('img'), { ar: 'تعذّر حفظ الصورة في حسابك. ما اتحفظش أي حاجة، والقيم زي ما هي. جرّب تاني أو اختر «لا».' }); }
           ses.saved = { id: iid, type: pr.type, bytes: pr.bytes }; wroteImage = iid;
         }
-        b.rec.invoiceImage = Object.assign({}, ses.saved); if (!wroteImage) reusedId = ses.saved.id;
+        built.rows.forEach(rw => { rw.invoiceImage = Object.assign({}, ses.saved); }); if (!wroteImage) reusedId = ses.saved.id;
       }
       let r;
       try {
-        r = await writeAccount(items => {
-        if (!was) { const m = mergeItem(items, b.rec); if (reusedId) m.imageOps = [{ op: 'require', id: reusedId }]; return m; }
-        const cur = Array.isArray(items) ? items : [];
-        const now = cur.find(i => i && i.id === was);
-        if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
-        if (!LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
-        // Only fields this form owns change on the newest copy; anything else on the row (legacy additions, invoice image, unknown fields) is kept.
-        return { items: cur.map(i => { if (!i || i.id !== was) return i; const n = Object.assign({}, i, { label: b.rec.label, type: b.rec.type, karat: b.rec.karat, grams: b.rec.grams, purchaseDate: b.rec.purchaseDate, paid: b.rec.paid });
-          if (b.rec.type === 'jewelry') n.purpose = b.rec.purpose; else delete n.purpose;
-          ['stones', 'basis', 'stoneG', 'promise', 'making', 'tax', 'stamp'].forEach(k => { delete n[k]; }); return Object.assign(n, dt.details); }) };
-      }, 'walMsg', 'walLogin');
+        r = await writeAccount((items, invs) => {
+          if (!was) { const m = LG().mergeInvoice(items, invs, built); if (reusedId) m.imageOps = [{ op: 'require', id: reusedId }]; return m; }
+          const cur = Array.isArray(items) ? items : [], now = cur.find(i => i && i.id === was), b0 = built.rows[0];
+          if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
+          if (!LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
+          // Only fields this form owns change on the newest copy; anything else on the row (legacy additions or tax, invoice link and image, unknown fields) is kept.
+          return { items: cur.map(i => { if (!i || i.id !== was) return i; const n = Object.assign({}, i, { label: b0.label, type: b0.type, karat: b0.karat, grams: b0.grams, purchaseDate: b0.purchaseDate, paid: b0.paid });
+            OWNED.forEach(k => { delete n[k]; }); OWNED.forEach(k => { if (b0[k] !== undefined) n[k] = b0[k]; }); return n; }) };
+        }, 'walMsg', 'walLogin');
       } catch (e) {
-        // An unclear failure (network, server) may still have saved the row: look at the saved list before touching the image or telling the owner anything.
+        // An unclear failure (network, server) may still have saved the rows: look at the saved list before touching the image or telling the owner anything.
         const known = e && ['changed', 'gone', 'img', 'auth', 'imggone'].includes(e.message);
         if (!known && !was) {
-          const st = await rowState(b.rec.id);
+          const st = await rowState(attempt.rowIds[0]);
           if (st === 'found') { r = true; wroteImage = null; }
-          else if (st === 'unknown') { unsure = true; wroteImage = null; throw Object.assign(new Error('unsure'), { ar: 'مش متأكدين لو القطعة اتحفظت (النت أو الخدمة مش مستقرة). ما تضيفهاش تاني دلوقتي. افتح قائمة قطعك وتأكد، أو دوس نفس الزر تاني وهنتأكد قبل ما نضيف.' }); }
+          else if (st === 'unknown') { unsure = true; wroteImage = null; throw Object.assign(new Error('unsure'), { ar: 'مش متأكدين لو الفاتورة اتحفظت (النت أو الخدمة مش مستقرة). ما تضيفهاش تاني دلوقتي: افتح قائمة قطعك وتأكد، أو اضغط حفظ مرة تانية وهنتأكد الأول.' }); }
         }
         if (!r) {
-        // The row was not saved. An image written only for this attempt must not be left behind.
-        if (wroteImage) { try { await dropImageIfUnused(wroteImage); INV.session().saved = null; } catch (_) {} }
-        if (reusedId) { let ex = true; try { ex = await (await lib()).loadDoc('gold/inv_' + reusedId); } catch (_) {} if (!ex) { INV.session().saved = null; throw Object.assign(new Error('imggone'), { ar: 'صورة الفاتورة اتحذفت من مكان تاني، فما اتحفظش أي حاجة. دوس «تأكيد الإضافة» تاني علشان الصورة تتحفظ من جديد.' }); } }
-        if (!known && !was) { pendingId = null; unsure = false; throw Object.assign(new Error('absent'), { ar: 'اتأكدنا: القطعة ما اتحفظتش. تقدر تحاول تاني.' }); }
-        pendingId = null; unsure = false; throw e;
+          // Nothing was saved. An image written only for this attempt must not be left behind.
+          if (wroteImage) { try { await dropImageIfUnused(wroteImage); INV.session().saved = null; } catch (_) {} }
+          if (reusedId) { let ex = true; try { ex = await (await lib()).loadDoc('gold/inv_' + reusedId); } catch (_) {} if (!ex) { INV.session().saved = null; throw Object.assign(new Error('imggone'), { ar: 'صورة الفاتورة اتحذفت من مكان تاني. ما اتحفظش أي حاجة. اختر «لا» أو اختار الصورة من جديد.' }); } }
+          if (!known && !was) { attempt = null; unsure = false; throw Object.assign(new Error('absent'), { ar: 'اتأكدنا: الفاتورة ما اتحفظتش. تقدر تحاول تاني.' }); }
+          attempt = null; unsure = false; throw e;
         }
       }
       if (r) {
@@ -197,7 +181,7 @@
         if (photo) INV.afterSave();
       }
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
-    finally { btn.disabled = false; }
+    finally { FM().setBusy(false); }
   });
   // One tap on an old row: set only the stones choice, and only if nobody has set it meanwhile. Nothing else changes.
   window.DHB_CLOUD_CLASSIFY = async (id, stones) => {
