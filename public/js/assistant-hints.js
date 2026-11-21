@@ -28,5 +28,7 @@ document.addEventListener('focusin',e=>{if(e.target.closest?.('input,textarea,se
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!hint.hidden){stop();}});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){if(timer){remaining=Math.max(0,remaining-(performance.now()-started));clearTimeout(timer);timer=null;}hide();}else schedule();});
 new MutationObserver(()=>{if(dialog.open)stop();}).observe(dialog,{attributes:true,attributeFilter:['open']});
+const suppressWhenOpen=new MutationObserver(()=>{if(document.querySelector('.x-dock details[open],dialog[open]'))hide();});
+suppressWhenOpen.observe(document.body,{attributes:true,attributeFilter:['open'],childList:true,subtree:true});
 addEventListener('scroll',hide,{passive:true});addEventListener('resize',hide);addEventListener('pagehide',stop);schedule();
 })();
