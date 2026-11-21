@@ -18,6 +18,18 @@
     if (!quoteUsableAt(a, now) || !quoteUsableAt(g, now) || !(l > 0) || !(o > 0)) return null;
     return l / (o / OUNCE);
   }
+  // Why the implied dollar can or cannot be shown, from its two inputs only (never the bank rate).
+  const MAXAGE_H = 24;
+  function impliedStatus(sources, now = Date.now()) {
+    const a = sources?.isagha, g = sources?.gold;
+    const parts = [
+      { key: 'local', label: 'سعر بيع جرام 24 (آي صاغة)', q: a, v: a?.['24']?.sell },
+      { key: 'ounce', label: 'الأونصة العالمية', q: g, v: g?.sell },
+    ].map(x => ({ ...x, ok: quoteUsableAt(x.q, now) && x.v > 0, time: validTime(x.q?.sourceTime) ? x.q.sourceTime : null,
+      why: !x.q || x.q.status !== 'available' ? 'غير متاح الآن' : !validTime(x.q.sourceTime) ? 'بدون وقت مصدر صالح' : Date.parse(x.q.sourceTime) > now + 120000 ? 'وقت المصدر في المستقبل' : now - Date.parse(x.q.sourceTime) > MAXAGE_H * 3600000 ? 'أقدم من ' + MAXAGE_H + ' ساعة' : !(x.v > 0) ? 'رقم غير صالح' : '' }));
+    const value = parts.every(x => x.ok) ? a['24'].sell / (g.sell / OUNCE) : null;
+    return { value, parts, maxAgeHours: MAXAGE_H };
+  }
   function assess(sources, now = Date.now()) {
     const quotes = [sources?.isagha, sources?.misr, sources?.gold];
     const times = quotes.map(q => validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN);
@@ -30,7 +42,7 @@
   }
   function quoteUsableAt(q,now){return quoteUsable(q,now);}
   function quoteUsable(q,now=Date.now()) {const t=validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN;return q?.status==='available' && Number.isFinite(t) && t<=now+120000 && now-t<=86400000;}
-  if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable,impliedFromGold};
+  if (typeof module !== 'undefined') module.exports = {calculate, OUNCE, assess,quoteUsable,impliedFromGold,impliedStatus};
   if (typeof document === 'undefined') return;
   const $ = id => (document.getElementById(id)||document.createElement('div'));
   const state = {sources:{}, generatedAt:null, lastCheck:null, busy:false, dealerEdited:false, transport:null};
@@ -61,6 +73,12 @@
     const map={gapEGP:[result?.gapEGP],gapPercent:[result?.gapPercent,'%'],gapUSD:[result?.gapUSD,' دولار'],implied:[result?.implied],fxGap:[result?.fxGap],fxPercent:[result?.fxPercent,'%'],global24:[result?.globalEGP],global21:[result?.global21]};
     Object.entries(map).forEach(([id,args])=>$(id).textContent=fmt(...args));
     {const imp=result?result.implied:impliedFromGold(state.sources);$('implied').textContent=fmt(imp);$('impliedNote').textContent=Number.isFinite(imp)?'رقم محسوب: سعر بيع جرام 24 عند الصاغة (آي صاغة) ÷ قيمة الجرام العالمي بالدولار. ده المعروف بين الناس بدولار الصاغة، وهو مش سعر دولار مُعلن من أي جهة، وبيتأثر بعرض وطلب سوق الذهب نفسه. مش داخل فيه سعر البنك.':'';}
+    if ($('impVal')) {
+      const st = impliedStatus(state.sources), when = v => v ? new Date(v).toLocaleString('ar-EG-u-nu-latn', { timeZone: 'Africa/Cairo', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (القاهرة)' : 'بدون وقت';
+      $('impVal').textContent = Number.isFinite(st.value) ? st.value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' جنيه للدولار' : 'غير متاح';
+      $('impIn').replaceChildren(...st.parts.map(x => { const li = document.createElement('li'); li.textContent = x.label + ': ' + (x.v > 0 ? x.v.toLocaleString('en-US', { maximumFractionDigits: 2 }) + (x.key === 'ounce' ? ' دولار للأونصة' : ' جنيه للجرام') : '—') + ' • وقت المصدر: ' + when(x.time) + (x.ok ? ' • صالح' : ' • ' + x.why); return li; }));
+      $('impWhy').textContent = Number.isFinite(st.value) ? 'محسوب من القراءتين فوق فقط، وكلتاهما أحدث من ' + st.maxAgeHours + ' ساعة. مش بيستخدم سعر البنك، فبيظهر حتى لو سعر البنك قديم.' : 'مش بنحسبه لأن ' + st.parts.filter(x => !x.ok).map(x => x.label + ' ' + x.why).join(' و') + '. بنحسبه بس لو القراءتين أحدث من ' + st.maxAgeHours + ' ساعة. سعر البنك مش شرط.';
+    }
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
     $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');

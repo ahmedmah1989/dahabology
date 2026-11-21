@@ -39,3 +39,16 @@ assert.equal(assess(sources,now).usable,false);
   S.gold.sourceTime = iso(now-30*3600e3); assert.equal(impliedFromGold(S, now), null);
   S.gold.sourceTime = iso(now-1000); S.isagha['24'].sell = 0; assert.equal(impliedFromGold(S, now), null);
 }
+{
+  const {impliedStatus} = require('../public/js/monitor.js');
+  const now = Date.now(), iso = t => new Date(t).toISOString();
+  const mk = () => ({isagha:{status:'available',sourceTime:iso(now-4*3600e3),'24':{sell:6251.5}}, gold:{status:'available',sourceTime:iso(now-1000),sell:3538.58}, misr:{status:'unavailable'}});
+  let r = impliedStatus(mk(), now);
+  equal(r.value, 6251.5/(3538.58/OUNCE)); assert.ok(r.parts.every(x => x.ok && x.time)); assert.equal(r.maxAgeHours, 24);
+  let S = mk(); S.isagha.sourceTime = iso(now-30*3600e3); r = impliedStatus(S, now);
+  assert.equal(r.value, null); assert.equal(r.parts[0].why, 'أقدم من 24 ساعة'); assert.equal(r.parts[1].ok, true);
+  S = mk(); delete S.gold; r = impliedStatus(S, now); assert.equal(r.value, null); assert.equal(r.parts[1].why, 'غير متاح الآن');
+  S = mk(); S.gold.sourceTime = '2026-11-21T10:00:00'; assert.equal(impliedStatus(S, now).parts[1].why, 'بدون وقت مصدر صالح');
+  S = mk(); S.gold.sourceTime = iso(now+3600e3); assert.equal(impliedStatus(S, now).parts[1].why, 'وقت المصدر في المستقبل');
+  S = mk(); S.isagha['24'].sell = 0; assert.equal(impliedStatus(S, now).value, null);
+}

@@ -14,7 +14,7 @@
   // Local silver rows from the price file. Needs status available, a valid source time within 24 hours and positive numbers.
   function localSilver(q, now = Date.now()) {
     const t = iso(q && q.sourceTime) ? Date.parse(q.sourceTime) : NaN;
-    if (!q || q.status !== 'available' || !Number.isFinite(t) || t > now + 120000 || now - t > MAX || !q.grades) return null;
+    if (!q || q.status !== 'available' || !Number.isFinite(t) || t > now + 120000 || now - t > MAX || !q.grades || q.currency !== 'EGP' || q.unit !== 'gram' || typeof q.unitBasis !== 'string') return null;
     const rows = GRADES.filter(g => q.grades[g] && q.grades[g].sell > 0 && q.grades[g].buy > 0).map(g => ({ grade: g, buy: q.grades[g].buy, sell: q.grades[g].sell }));
     return rows.length ? { rows, sourceTime: q.sourceTime } : null;
   }

@@ -8,7 +8,7 @@ test('global silver accepts only a recent USD XAG quote', () => {
     assert.equal(S.globalSilver(b, now), null);
 });
 test('local silver needs a valid recent file entry and never derives from global', () => {
-  const q = { status: 'available', sourceTime: iso(1000), grades: { 999: { buy: 70.75, sell: 73.75 }, 925: { buy: 65.5, sell: 68.5 }, 800: { buy: 0, sell: 59 } } };
+  const q = { status: 'available', currency: 'EGP', unit: 'gram', unitBasis: 'x', sourceTime: iso(1000), grades: { 999: { buy: 70.75, sell: 73.75 }, 925: { buy: 65.5, sell: 68.5 }, 800: { buy: 0, sell: 59 } } };
   const r = S.localSilver(q, now); assert.deepEqual(r.rows.map(x => x.grade), ['999', '925']);
   assert.equal(S.localSilver({ ...q, sourceTime: iso(86400001) }, now), null);
   assert.equal(S.localSilver({ ...q, status: 'unavailable' }, now), null);
@@ -21,4 +21,9 @@ test('catalog sizes: bars 24k, coins 21k, others ignored', () => {
   assert.deepEqual(z.bars, [1, 5]); assert.deepEqual(z.coins, [{ w: 8, name: 'جنيه' }]);
   assert.equal(L.sizesFromCatalog([]), null); assert.equal(L.sizesFromCatalog(null), null);
   assert.equal(L.BAR_PRESETS, undefined);
+});
+test('local silver rejects wrong or missing currency, unit or unit note', () => {
+  const q = { status: 'available', currency: 'EGP', unit: 'gram', unitBasis: 'x', sourceTime: iso(1000), grades: { 999: { buy: 70, sell: 73 } } };
+  assert.ok(S.localSilver(q, now));
+  for (const m of [{ currency: 'USD' }, { currency: undefined }, { unit: 'ounce' }, { unit: undefined }, { unitBasis: undefined }]) assert.equal(S.localSilver({ ...q, ...m }, now), null);
 });
