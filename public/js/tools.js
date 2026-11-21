@@ -122,7 +122,7 @@
         piece('span', 'd' + (v.B ? (v.B.diff >= 0 ? ' up' : ' dn') : ''), v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) : WHY[v.whyNoB] || ''));
       if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
       else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
-      if (v.promise) it.append(piece('span', 'w', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد شفهي، مش مضمون، وما اتحسبش في الإجمالي)'));
+      if (v.promise) it.append(piece('span', 'w', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد البائع مش مضمون، وما اتحسبش في الإجمالي)'));
       const acts = document.createElement('div'); acts.className = 'acts';
       if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) {
         acts.append(mk('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mk('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
