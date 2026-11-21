@@ -63,7 +63,8 @@
   // ---- invoice-level tax: with two figures given, the third is a real calculated value, tagged ----
   function taxFigures() {
     const ids = ['pre', 'vat', 'post'];
-    ids.forEach(k => { if (calc[k] && ids.filter(x => !calc[x] && tax[x].trim() !== '').length < 2) { tax[k] = ''; delete calc[k]; } });
+    // A calculated figure is never kept across edits: drop it every pass and, if two typed figures remain, derive it again from them.
+    ids.forEach(k => { if (calc[k]) { tax[k] = ''; delete calc[k]; } });
     const given = ids.filter(k => !calc[k] && tax[k].trim() !== ''), empty = ids.filter(k => tax[k].trim() === '');
     if (given.length === 2 && empty.length === 1 && given.every(k => Number.isFinite(money(tax[k])))) {
       const f = LG.invoiceFigures('has', money(tax.pre) || undefined, money(tax.vat), money(tax.post) || undefined);
@@ -174,6 +175,8 @@
   $('invAdd').addEventListener('click', () => { rows.push(newRow()); paintRows(); touch(); update(); });
   $('taxMode').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; mode = b.dataset.m; [...$('taxMode').children].forEach(x => x.setAttribute('aria-pressed', String(x === b))); $('taxF').hidden = mode !== 'has'; touch(); update(); });
   ['pre', 'vat', 'post'].forEach(k => $('t_' + k).addEventListener('input', e => { tax[k] = e.target.value; delete calc[k]; e.target.classList.remove('calc'); touch(); update(); }));
+  // A field that was focused while its value changed is not rewritten under the cursor; repaint it when the cursor leaves.
+  ['pre', 'vat', 'post'].forEach(k => $('t_' + k).addEventListener('blur', () => update(true)));
   $('h14').addEventListener('click', () => { const a = money(tax.pre); if (!Number.isFinite(a)) return; tax.post = ''; delete calc.post; tax.vat = cents(Math.round(P(a) * 14 / 100)); delete calc.vat; touch(); update(); });
   ['walDD', 'walMM', 'walYY'].forEach(i => $(i).addEventListener('input', touch));
   $('walCal').addEventListener('change', e => { const [y, m, d] = e.target.value.split('-'); if (y) { $('walDD').value = +d; $('walMM').value = +m; $('walYY').value = y; touch(); update(); } });
