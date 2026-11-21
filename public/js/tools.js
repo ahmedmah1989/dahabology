@@ -111,11 +111,12 @@
     const order = items.map((_, ix) => ix).sort((a, b) => { const da = dateOf(a), db = dateOf(b); return da === db ? a - b : !da ? 1 : !db ? -1 : da < db ? 1 : -1; });
     const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return nf(a.grams, 3) + ' جم • دفعت ' + egp(a.paidAll) + ' • ' + (a.covered === 0 ? 'القيمة لسه ما اتحسبتش' : 'قيمتها الآن ' + egp(a.now) + (a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة بس)' : '')); };
     const heading = (cls, title, sel) => { const h = document.createElement('div'); h.className = 'x-grp ' + cls; h.append(piece('b', '', title), piece('span', '', sumLine(sel))); body.append(h); };
+    const imgUse = {}; recs.forEach(x => { if (x && x.invoiceImage) imgUse[x.invoiceImage.id] = (imgUse[x.invoiceImage.id] || 0) + 1; });
     let curYear = null, curDate = null;
     order.forEach(ix => {
       const r = items[ix], dt = dateOf(ix), yr = dt ? dt.slice(0, 4) : '';
       if (yr !== curYear) { curYear = yr; curDate = null; heading('yr', yr ? 'إجمالي سنة ' + yr : 'من غير تاريخ شراء', order.filter(i => (dateOf(i) ? dateOf(i).slice(0, 4) : '') === yr)); }
-      if (dt && dt !== curDate) { curDate = dt; const same = order.filter(i => dateOf(i) === dt); heading('dy', 'إجمالي ' + L.dmy(dt) + (same.length > 1 ? ' (' + same.length + ' قطع)' : ''), same); }
+      if (dt && dt !== curDate) { curDate = dt; const same = order.filter(i => dateOf(i) === dt); heading('dy', 'إجمالي ' + L.dmy(dt) + (same.length > 1 ? ' (' + same.length + ' قطع بنفس التاريخ)' : ''), same); }
       const rec = recs[ix], v = L.valuation(rec, pm), cloud = r.where === 'account';
       const it = document.createElement('div'); it.className = 'x-item wl';
       const mk = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
@@ -132,6 +133,7 @@
       if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
       else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
       if (v.promise) it.append(piece('span', 'w', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد البائع مش مضمون، وما اتحسبش في الإجمالي)'));
+      if (rec.invoiceImage && imgUse[rec.invoiceImage.id] > 1) it.append(piece('span', 'w', 'من نفس صورة الفاتورة: ' + imgUse[rec.invoiceImage.id] + ' قطع'));
       const acts = document.createElement('div'); acts.className = 'acts';
       if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) {
         acts.append(mk('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mk('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
