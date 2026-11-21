@@ -128,9 +128,11 @@
     if (!date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
     if (!radio('walS')) return say('walMsg', 'اختر: القطعة بفصوص ولا بدون فصوص.', 'err');
     const dt = formDetails(); if (dt.error) return say('walMsg', 'راجع التفاصيل الاختيارية (أرقام صحيحة، ووزن الفصوص أقل من الوزن الكلي).', 'err');
-    { const gr = PN($('walGramsIn').value, 'grams'); if (gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي.', 'err'); }
+    { const pd = PN($('walPaidIn').value, 'money'); if (pd.error === 'ambiguous') return say('walMsg', 'المبلغ غير واضح. اكتبه من غير فاصلة آلاف، مثال: 46000 أو 46000.5', 'err'); }
+    const keepOld = editBase && editBase.grams > 0 && String($('walGramsIn').value).trim() === String(editBase.grams);
+    { const gr = PN($('walGramsIn').value, 'grams'); if (!keepOld && gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي.', 'err'); }
     const id = editingId || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
-    const b = buildRecord({ id, k: $('walKarat').value, g: num($('walGramsIn').value, 'grams'), paid: num($('walPaidIn').value, 'money'), note: $('walNoteIn').value.trim() },
+    const b = buildRecord({ id, k: $('walKarat').value, g: keepOld ? editBase.grams : num($('walGramsIn').value, 'grams'), paid: num($('walPaidIn').value, 'money'), note: $('walNoteIn').value.trim() },
       { type: $('walType').value, date, purpose: radio('walP'), details: dt.details });
     if (b.error) return say('walMsg', b.error, 'err');
     if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');

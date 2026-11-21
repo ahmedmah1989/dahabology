@@ -76,7 +76,10 @@ $("iCancel").onclick = resetForm;
 $("itemForm").onsubmit = (ev) => {
   ev.preventDefault();
   if ($("iSave").disabled) return;
-  const g = Number(String($("iGrams").value).replace(",", ".")), type = $("iType").value, date = $("iDate").value;
+  const keepOld = editSnap && editSnap.grams > 0 && String($("iGrams").value).trim() === String(editSnap.grams);
+  const PN = window.DHB_LEDGER && window.DHB_LEDGER.parseNumber, pr = PN ? PN($("iGrams").value, "grams") : { error: "none" };
+  if (!keepOld && pr.error === "precision") return show($("nMsg"), "الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي.", "err");
+  const g = keepOld ? editSnap.grams : (pr.value !== undefined ? pr.value : NaN), type = $("iType").value, date = $("iDate").value;
   const pur = (document.querySelector('input[name=iP]:checked') || {}).value;
   if (!(g > 0)) return show($("nMsg"), "اكتب الوزن بالجرام بصيغة صحيحة.", "err");
   if (!date) return show($("nMsg"), "اختر تاريخ الشراء.", "err");

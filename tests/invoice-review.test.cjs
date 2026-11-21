@@ -1,5 +1,6 @@
 // Review state: suggestions are untrusted, only confirmed values leave, bad input and OCR failure fall back to manual entry.
 const test = require('node:test'), assert = require('node:assert');
+globalThis.DHB_LEDGER = require('../public/js/ledger-model.js');
 const today = new Date('2026-11-21T00:00:00Z');
 const mods = () => Promise.all([import('../public/js/invoice-review-state.js'), import('../public/js/invoice-parse.js')]);
 
@@ -66,4 +67,15 @@ test('wallet photo flow ships with automatic reading OFF: no OCR call and no sug
   assert.match(src, /const OCR_SUGGESTIONS = false;/);
   assert.match(src, /if \(!OCR_SUGGESTIONS\) msg\([^)]*\);\s*\n\s*else try \{ const o = await ocrFile\(file\)/);
   assert.equal((src.match(/ocrFile\(/g) || []).length, 2); // the definition and the single guarded call
+});
+
+test('review confirm uses the strict reader: 46,5 is 46.5 not 465, 46.000 is unclear, 3.1259 g refused, Arabic digits read', async () => {
+  const [S] = await mods();
+  assert.deepEqual(S.validate('paid', '46,5', today), { ok: true, value: 46.5 });
+  assert.deepEqual(S.validate('paid', '٤٦٬٠٠٠', today), { ok: true, value: 46000 });
+  assert.equal(S.validate('paid', '46.000', today).ok, false);
+  assert.equal(S.validate('paid', '46.123', today).ok, false);
+  assert.deepEqual(S.validate('grams', '٣٫١٢٥', today), { ok: true, value: 3.125 });
+  assert.deepEqual(S.validate('grams', '3,125', today), { ok: true, value: 3.125 });
+  assert.equal(S.validate('grams', '3.1259', today).ok, false);
 });

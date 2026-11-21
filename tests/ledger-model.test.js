@@ -168,3 +168,13 @@ test('totals add milligram weights without float drift', () => {
   assert.equal(L.aggregate(recs, {}).grams, 3.426);
   assert.equal(L.aggregate([{ id: 'a', karat: 21, grams: 0.1 }, { id: 'b', karat: 21, grams: 0.2 }], {}).grams, 0.3);
 });
+
+test('account preview page loads the strict parser before its script, wallet page keeps legacy precise grams on unchanged edit', () => {
+  const fs = require('node:fs');
+  const a = fs.readFileSync(require('node:path').join(__dirname, '../src/pages/account-preview.astro'), 'utf8');
+  const i = a.indexOf('/js/ledger-model.js'), j = a.indexOf('/js/account-ui.js');
+  assert.ok(i > 0 && j > i);
+  const u = fs.readFileSync(require('node:path').join(__dirname, '../public/js/account-ui.js'), 'utf8');
+  assert.ok(!/Number\(String\(\$\("iGrams"\)/.test(u));
+  assert.ok(/parseNumber/.test(u));
+});

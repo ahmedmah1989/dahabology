@@ -11,13 +11,16 @@ export function validate(field, raw, today = new Date()) {
     const n = Number(s);
     return WALLET_KARATS.includes(n) ? { ok: true, value: n } : { ok: false, error: "اختر 18 أو 21 أو 24." };
   }
-  if (field === "grams") {
-    const n = Number(s.replace(",", "."));
-    return n > 0 && n <= 2000 && /^\d+(\.\d{1,3})?$/.test(s.replace(",", ".")) ? { ok: true, value: n } : { ok: false, error: "اكتب الوزن بالجرام بأرقام صحيحة." };
-  }
-  if (field === "paid") {
-    const n = Number(s.replace(/,/g, ""));
-    return Number.isFinite(n) && n >= 0 && /^\d+(\.\d{1,2})?$/.test(s.replace(/,/g, "")) ? { ok: true, value: n } : { ok: false, error: "اكتب المبلغ المدفوع بأرقام صحيحة." };
+  if (field === "grams" || field === "paid") {
+    // One strict reader for every number (same as the wallet form). If it is not loaded, fail closed rather than guess a separator.
+    const PN = globalThis.DHB_LEDGER && globalThis.DHB_LEDGER.parseNumber;
+    const r = PN ? PN(raw, field === "grams" ? "grams" : "money") : { error: "format" };
+    if (field === "grams") {
+      if (r.error === "precision") return { ok: false, error: "الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي." };
+      return r.value > 0 && r.value <= 2000 ? { ok: true, value: r.value } : { ok: false, error: "اكتب الوزن بالجرام بأرقام صحيحة." };
+    }
+    if (r.error === "ambiguous") return { ok: false, error: "المبلغ غير واضح. اكتبه من غير فاصلة آلاف، مثال: 46000 أو 46000.5" };
+    return Number.isFinite(r.value) && r.value >= 0 && Math.abs(r.value * 100 - Math.round(r.value * 100)) < 1e-6 ? { ok: true, value: r.value } : { ok: false, error: "اكتب المبلغ المدفوع بأرقام صحيحة." };
   }
   if (field === "purchaseDate") {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return { ok: false, error: "اكتب التاريخ بصيغة سنة-شهر-يوم." };

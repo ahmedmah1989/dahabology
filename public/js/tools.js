@@ -128,7 +128,7 @@
       const st = rec.stones === 'with' ? ' • بفصوص' : rec.stones === 'without' ? ' • بدون فصوص' : '';
       it.append(
         piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (cloud ? ' • في حسابك' : ' • على جهازك') + st), piece('span', 'v', v.B ? egp(v.B.value) : '—'),
-        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + nf(r.g, 3) + ' جرام • دفعت ' + egp(r.paid)),
+        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? '≈ ' + nf(r.g, 3) + ' جرام (المحفوظ ' + r.g + ')' : nf(r.g, 3) + ' جرام') + ' • دفعت ' + egp(r.paid)),
         piece('span', 'd' + (v.B ? (v.B.diff >= 0 ? ' up' : ' dn') : ''), v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) : WHY[v.whyNoB] || ''));
       if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
       else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
