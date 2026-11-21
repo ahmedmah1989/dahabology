@@ -48,7 +48,7 @@ function render() {
   const img = document.createElement("img"); img.src = objectUrl; img.alt = "صورة الفاتورة"; img.id = "invImg"; img.style.cssText = "width:100%;max-height:46vh;object-fit:contain;border-radius:12px;background:#0001;cursor:zoom-in";
   img.onclick = () => { const z = img.style.maxHeight === "none"; img.style.maxHeight = z ? "46vh" : "none"; img.style.cursor = z ? "zoom-in" : "zoom-out"; };
   body.append(img);
-  const note = document.createElement("p"); note.className = "x-note"; note.textContent = OCR_SUGGESTIONS ? "القراءة الآلية قد تغلط في رقم وتطلع رقم معقول. قارن كل قيمة بالصورة، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل." : "اكتب كل قيمة من الصورة بنفسك، وراجع الجرامات والمللي بالظبط، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل.";
+  const note = document.createElement("p"); note.className = "x-note"; note.textContent = OCR_SUGGESTIONS ? "القراءة الآلية قد تغلط في رقم وتطلع رقم معقول. قارن كل قيمة بالصورة، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل." : "اكتب كل قيمة من الصورة بنفسك، وراجع الجرامات والمليجرام بالظبط، واضغط «أكّد» عشان تنتقل للنموذج. اللي ما تأكدش مش هيتنقل.";
   body.append(note);
   for (const f of FIELDS) {
     const r = review.rows[f], wrap = document.createElement("div"); wrap.className = "x-card"; wrap.style.margin = "10px 0"; wrap.dataset.field = f;

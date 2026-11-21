@@ -16,7 +16,7 @@ export function validate(field, raw, today = new Date()) {
     const PN = globalThis.DHB_LEDGER && globalThis.DHB_LEDGER.parseNumber;
     const r = PN ? PN(raw, field === "grams" ? "grams" : "money") : { error: "format" };
     if (field === "grams") {
-      if (r.error === "precision") return { ok: false, error: "الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي." };
+      if (r.error === "precision") return { ok: false, error: "الوزن بالجرام لحد ٣ أرقام بعد العلامة (مليجرام). مثال: \u20663.125\u2069 يعني \u20663\u2069 جرام و\u2066125\u2069 مليجرام." };
       return r.value > 0 && r.value <= 2000 ? { ok: true, value: r.value } : { ok: false, error: "اكتب الوزن بالجرام بأرقام صحيحة." };
     }
     if (r.error === "ambiguous") return { ok: false, error: "المبلغ غير واضح. اكتبه من غير فاصلة آلاف، مثال: 46000 أو 46000.5" };

@@ -93,8 +93,10 @@
   $('walType').addEventListener('change', () => { $('walPur').hidden = $('walType').value !== 'jewelry'; });
   let editingId = null, editBase = null;
   window.DHB_WAL_EDITING = () => !!editingId;
+  let pendingId = null, unsure = false; // pendingId: one id per add attempt, so a retry can never create a second record
+  async function rowState(id) { try { const d = await (await lib()).loadDoc('gold/items'); return d && Array.isArray(d.items) && d.items.some(i => i && i.id === id) ? 'found' : 'absent'; } catch (_) { return 'unknown'; } }
   function resetForm() {
-    editingId = null; editBase = null;
+    editingId = null; editBase = null; pendingId = null; unsure = false;
     ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDD', 'walMM', 'walYY', 'walMk', 'walTx', 'walSt', 'walStoneG'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true; $('walBasis').value = ''; $('walPromise').checked = false;
     document.querySelectorAll('input[name=walP],input[name=walS]').forEach(x => { x.checked = false; }); syncMore();
     $('walAdd').textContent = 'احفظ في حسابي'; $('walCancel').hidden = true;
@@ -119,6 +121,12 @@
   $('walForm').addEventListener('submit', async () => {
     const btn = $('walAdd'); if (btn.disabled) return;
     const INV = window.DHB_INVOICE, photo = !editingId && INV && INV.active();
+    if (unsure && pendingId) {
+      btn.disabled = true; say('walMsg', 'بتأكد من حالة آخر حفظ…'); const st = await rowState(pendingId); btn.disabled = false;
+      if (st === 'found') { say('walMsg', 'القطعة كانت اتحفظت فعلاً. ما اتضافتش مرة تانية. راجع القائمة.', 'ok'); resetForm(); refresh(); if (photo) INV.afterSave(); return; }
+      if (st === 'unknown') { say('walMsg', 'مش قادرين نتأكد لو آخر حفظ تم. افتح قائمة قطعك وتأكد قبل ما تضيف تاني. ما هنكرر الإضافة من غير تأكيد.', 'err'); return; }
+      unsure = false;
+    }
     if (photo) {
       // Photo flow: the owner must tick "تمت المراجعة" (an alert reminds them until they do) and answer the attach question.
       if (!$('walRev').checked) { say('walMsg', 'لازم تراجع البيانات وتعلّم على «تمت المراجعة» قبل التأكيد.', 'err'); alert('برجاء مراجعة البيانات والتأكد من صحتها، ثم علّم على «تمت المراجعة» قبل تأكيد الإضافة.'); return; }
@@ -130,8 +138,8 @@
     const dt = formDetails(); if (dt.error) return say('walMsg', 'راجع التفاصيل الاختيارية (أرقام صحيحة، ووزن الفصوص أقل من الوزن الكلي).', 'err');
     { const pd = PN($('walPaidIn').value, 'money'); if (pd.error === 'ambiguous') return say('walMsg', 'المبلغ غير واضح. اكتبه من غير فاصلة آلاف، مثال: 46000 أو 46000.5', 'err'); }
     const keepOld = editBase && editBase.grams > 0 && String($('walGramsIn').value).trim() === String(editBase.grams);
-    { const gr = PN($('walGramsIn').value, 'grams'); if (!keepOld && gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مللي جرام). مثال: 3.125 يعني ٣ جرام و١٢٥ مللي.', 'err'); }
-    const id = editingId || (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
+    { const gr = PN($('walGramsIn').value, 'grams'); if (!keepOld && gr.error === 'precision') return say('walMsg', 'الوزن بالجرام لحد ٣ أرقام بعد العلامة (مليجرام). مثال: \u20663.125\u2069 يعني \u20663\u2069 جرام و\u2066125\u2069 مليجرام.', 'err'); }
+    const id = editingId || pendingId || (pendingId = typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
     const b = buildRecord({ id, k: $('walKarat').value, g: keepOld ? editBase.grams : num($('walGramsIn').value, 'grams'), paid: num($('walPaidIn').value, 'money'), note: $('walNoteIn').value.trim() },
       { type: $('walType').value, date, purpose: radio('walP'), details: dt.details });
     if (b.error) return say('walMsg', b.error, 'err');
@@ -169,16 +177,26 @@
           ['stones', 'basis', 'stoneG', 'promise', 'making', 'tax', 'stamp'].forEach(k => { delete n[k]; }); return Object.assign(n, dt.details); }) };
       }, 'walMsg', 'walLogin');
       } catch (e) {
+        // An unclear failure (network, server) may still have saved the row: look at the saved list before touching the image or telling the owner anything.
+        const known = e && ['changed', 'gone', 'img', 'auth', 'imggone'].includes(e.message);
+        if (!known && !was) {
+          const st = await rowState(b.rec.id);
+          if (st === 'found') { r = true; wroteImage = null; }
+          else if (st === 'unknown') { unsure = true; wroteImage = null; throw Object.assign(new Error('unsure'), { ar: 'مش متأكدين لو القطعة اتحفظت (النت أو الخدمة مش مستقرة). ما تضيفهاش تاني دلوقتي. افتح قائمة قطعك وتأكد، أو دوس نفس الزر تاني وهنتأكد قبل ما نضيف.' }); }
+        }
+        if (!r) {
         // The row was not saved. An image written only for this attempt must not be left behind.
         if (wroteImage) { try { await dropImageIfUnused(wroteImage); INV.session().saved = null; } catch (_) {} }
         if (reusedId) { let ex = true; try { ex = await (await lib()).loadDoc('gold/inv_' + reusedId); } catch (_) {} if (!ex) { INV.session().saved = null; throw Object.assign(new Error('imggone'), { ar: 'صورة الفاتورة اتحذفت من مكان تاني، فما اتحفظش أي حاجة. دوس «تأكيد الإضافة» تاني علشان الصورة تتحفظ من جديد.' }); } }
-        throw e;
+        if (!known && !was) { pendingId = null; unsure = false; throw Object.assign(new Error('absent'), { ar: 'اتأكدنا: القطعة ما اتحفظتش. تقدر تحاول تاني.' }); }
+        pendingId = null; unsure = false; throw e;
+        }
       }
       if (r) {
         say('walMsg', was ? 'اتعدّلت في حسابك.' : (photo ? 'تمت الإضافة بنجاح.' : 'اتحفظت في حسابك.'), 'ok'); resetForm();
         if (photo) INV.afterSave();
       }
-    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتحفظش أي حاجة، حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
     finally { btn.disabled = false; }
   });
   // One tap on an old row: set only the stones choice, and only if nobody has set it meanwhile. Nothing else changes.

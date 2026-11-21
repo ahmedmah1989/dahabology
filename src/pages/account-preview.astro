@@ -24,6 +24,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 #ac .items .x-btn{padding:7px 14px;font-size:14px}
 #ac details{margin-top:16px;text-align:right}#ac details li{margin-top:6px;line-height:1.8}
 #ac .row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:12px}
+#ac{padding-bottom:150px}
 </style>
 <section id="ac" data-base={base}>
 <p class="x-note" role="note"><b>نسخة تجريبية للاختبار.</b> الصفحة غير مدرجة في قوائم الموقع ولا تظهر في محركات البحث، لكن أي شخص معه الرابط يقدر يفتحها. حسابك مستقل: بياناتك لا يراها غيرك، ولا نحفظ إلا ما تكتبه هنا.</p>
@@ -59,7 +60,7 @@ const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 <label class="x-field">الاسم (اختياري)<input id="iLabel" class="txt" maxlength="60"></label>
 <label class="x-field">النوع<select id="iType"><option value="bar">سبيكة</option><option value="coin">جنيه / عملة ذهبية</option><option value="jewelry">مصوغات</option><option value="scrap">كسر / خردة</option></select></label>
 <div class="x-grid2"><label class="x-field">العيار<select id="iKarat"><option>24</option><option selected>21</option><option>22</option><option>18</option></select></label>
-<label class="x-field">الوزن بالجرام<input id="iGrams" inputmode="decimal" placeholder="8.125" autocomplete="off"><small class="x-hint" style="display:block;font-weight:400;font-size:.8em;opacity:.8;margin-top:.25rem">جرام لحد ٣ أرقام بعد العلامة: 3.125 يعني ٣ جرام و١٢٥ مللي.</small></label></div>
+<label class="x-field">الوزن بالجرام<input id="iGrams" inputmode="decimal" placeholder="8.125" autocomplete="off"><small class="x-hint" style="display:block;font-weight:400;font-size:.8em;opacity:.8;margin-top:.25rem">جرام لحد ٣ أرقام بعد العلامة (مليجرام). مثال: <bdi dir="ltr">3.125</bdi> يعني <bdi dir="ltr">3</bdi> جرام و<bdi dir="ltr">125</bdi> مليجرام.</small></label></div>
 <label class="x-field">تاريخ الشراء<input id="iDate" type="date"></label>
 <fieldset id="iPur" hidden style="border:0;padding:0;margin:14px 0 0"><legend style="font-weight:700">نية الشراء</legend>
 <label class="opt"><input type="radio" name="iP" value="adornment"> زينة</label>

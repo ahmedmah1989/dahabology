@@ -109,7 +109,7 @@
     // Newest purchase date first; undated last. A heading with totals opens each year and each purchase date (pieces bought the same day sit together).
     const dateOf = ix => (/^\d{4}-\d{2}-\d{2}$/.test(recs[ix].purchaseDate || '') ? recs[ix].purchaseDate : '');
     const order = items.map((_, ix) => ix).sort((a, b) => { const da = dateOf(a), db = dateOf(b); return da === db ? a - b : !da ? 1 : !db ? -1 : da < db ? 1 : -1; });
-    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return nf(a.grams, 3) + ' جم • دفعت ' + egp(a.paidAll) + ' • ' + (a.covered === 0 ? 'القيمة لسه ما اتحسبتش' : 'قيمتها الآن ' + egp(a.now) + (a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة بس)' : '')); };
+    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return (a.approx ? '≈ ' : '') + nf(a.grams, 3) + ' جم' + (a.approx ? ' (تقريبي: فيه قطعة وزنها محفوظ بدقة أكبر من ٣ أرقام)' : '') + ' • دفعت ' + egp(a.paidAll) + ' • ' + (a.covered === 0 ? 'القيمة لسه ما اتحسبتش' : 'قيمتها الآن ' + egp(a.now) + (a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة بس)' : '')); };
     const heading = (cls, title, sel) => { const h = document.createElement('div'); h.className = 'x-grp ' + cls; h.append(piece('b', '', title), piece('span', '', sumLine(sel))); body.append(h); };
     const imgUse = {}; recs.forEach(x => { if (x && x.invoiceImage) imgUse[x.invoiceImage.id] = (imgUse[x.invoiceImage.id] || 0) + 1; });
     let curYear = null, curDate = null;
@@ -128,7 +128,7 @@
       const st = rec.stones === 'with' ? ' • بفصوص' : rec.stones === 'without' ? ' • بدون فصوص' : '';
       it.append(
         piece('b', '', (r.note || 'ذهب') + ' • عيار ' + r.k + (cloud ? ' • في حسابك' : ' • على جهازك') + st), piece('span', 'v', v.B ? egp(v.B.value) : '—'),
-        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? '≈ ' + nf(r.g, 3) + ' جرام (المحفوظ ' + r.g + ')' : nf(r.g, 3) + ' جرام') + ' • دفعت ' + egp(r.paid)),
+        piece('span', 'w', (rec.purchaseDate ? L.dmy(rec.purchaseDate) + ' • ' : '') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? '≈ ' + nf(r.g, 3) + ' جرام، المحفوظ بالظبط: \u2066' + r.g + '\u2069 جرام' : nf(r.g, 3) + ' جرام') + ' • دفعت ' + egp(r.paid)),
         piece('span', 'd' + (v.B ? (v.B.diff >= 0 ? ' up' : ' dn') : ''), v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) : WHY[v.whyNoB] || ''));
       if (v.A) it.append(piece('span', 'w', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
       else if (v.whyNoA && v.whyNoA !== v.whyNoB && WHY[v.whyNoA]) it.append(piece('span', 'w', 'مقارنة سعر الجرام: ' + WHY[v.whyNoA]));
@@ -148,7 +148,7 @@
     const showNow = agg.covered > 0;
     set('walNow', items.length ? (showNow ? egp(agg.now) : '—') : '0 جنيه');
     set('walPaid', items.length ? egp(agg.paidAll) : '—');
-    set('walWeight', items.length ? nf(agg.grams, 3) + ' جم' : '—');
+    set('walWeight', items.length ? (agg.approx ? '≈ ' : '') + nf(agg.grams, 3) + ' جم' + (agg.approx ? ' (تقريبي)' : '') : '—');
     const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)); d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');
     set('walGrams', items.length && !Object.keys(pm).length ? 'في انتظار السعر.' : '');
     set('walCover', !items.length ? '' : agg.covered === 0 ? 'القيمة لسه ما اتحسبتش: محتاجين نعرف القطع بفصوص ولا بدون فصوص. قطعك وأسعار شرائها محفوظة زي ما هي، ومفيش ذهب ضاع ولا قيمته صفر.'

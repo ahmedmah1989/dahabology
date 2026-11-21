@@ -65,6 +65,7 @@
     return {
       count: list.length, grams: Math.round(list.reduce((s, r) => s + (r.grams || 0), 0) * 1000) / 1000,
       paidAll, paidCovered, now, diff: covered.length ? now - paidCovered : null, percent: paidCovered > 0 ? (now - paidCovered) / paidCovered * 100 : null,
+      approx: list.some(r => finite(r.grams) && Math.abs(r.grams * 1000 - Math.round(r.grams * 1000)) > 1e-6),
       covered: covered.length, unpriced: list.length - priced.length, noGoldWeight: priced.length - covered.length,
       partial: covered.length < list.length,
     };

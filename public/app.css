@@ -419,3 +419,4 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
 .x-grp b{font-size:14px;color:#f0ca78}
 .x-grp.yr{background:#16263f;border:1px solid #2c3a52}
 .x-grp.dy{background:#101c30;border-inline-start:3px solid #e7bf67}
+html{scroll-padding-bottom:150px}
