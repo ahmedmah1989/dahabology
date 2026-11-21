@@ -125,3 +125,11 @@ test('commit: non-conflict errors are not retried; mutate with nothing to write 
   const r = await commitWithRetry({ load: s.load, save: async () => { throw new Error('should not save'); }, mutate: () => ({ added: false }) });
   assert.equal(r.added, false);
 });
+
+test('sameRow: detects any change to a row, ignores key order', () => {
+  assert.equal(L.sameRow({ id: 'a', grams: 8, stones: 'with' }, { stones: 'with', grams: 8, id: 'a' }), true);
+  assert.equal(L.sameRow({ id: 'a', grams: 8 }, { id: 'a', grams: 9 }), false);
+  assert.equal(L.sameRow({ id: 'a', grams: 8 }, { id: 'a', grams: 8, stones: 'without' }), false);
+  assert.equal(L.sameRow({ id: 'a', grams: 8, x: undefined }, { id: 'a', grams: 8 }), true);
+  assert.equal(L.sameRow(null, { id: 'a' }), false);
+});

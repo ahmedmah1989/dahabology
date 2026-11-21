@@ -55,7 +55,8 @@ $("vResend").onclick = () => run($("vResend"), $("vMsg"), async () => { await A.
 $("vOut").onclick = () => A.signOut();
 $("outBtn").onclick = () => A.signOut();
 const TYPES = { bar: "سبيكة", coin: "جنيه / عملة", jewelry: "مصوغات", scrap: "كسر" };
-let items = [], editing = null;
+let items = [], editing = null, editSnap = null;
+const sortKeys = (o) => Object.keys(o).sort().reduce((a, k) => { if (o[k] !== undefined) a[k] = o[k]; return a; }, {});
 const newId = () => "g" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 function render() {
@@ -69,7 +70,7 @@ async function loadItems() {
 // Every change goes through the versioned list update: it re-reads the newest list, applies only this change, and refuses (nothing saved)
 // if it cannot do so safely. `items` is replaced by the saved list, so rows another tab changed are kept.
 async function persist(mutate, okText) { const g = gen, uid = A.currentUser()?.uid; const r = await A.updateGoldItems(mutate, uid); if (g !== gen) return; items = r.items; show($("nMsg"), okText, "ok"); render(); }
-function resetForm() { editing = null; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
+function resetForm() { editing = null; editSnap = null; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
 $("iType").onchange = () => { $("iPur").hidden = $("iType").value !== "jewelry"; };
 $("iCancel").onclick = resetForm;
 $("itemForm").onsubmit = (ev) => {
@@ -81,13 +82,15 @@ $("itemForm").onsubmit = (ev) => {
   if (!date) return show($("nMsg"), "اختر تاريخ الشراء.", "err");
   if (type === "jewelry" && !pur) return show($("nMsg"), "اختر نية شراء المصوغات: زينة أو ادخار.", "err");
   const changed = { label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
-  const editId = editing, newRec = { id: newId(), ...changed };
+  const editId = editing, editBase = editSnap, newRec = { id: newId(), ...changed };
   if (type === "jewelry") { changed.purpose = pur; newRec.purpose = pur; }
   // Edit: change only the fields this page owns on the newest copy of the row (keeps paid, stones, fees and anything unknown).
   const mutate = (list) => {
     const cur = Array.isArray(list) ? list : [];
     if (!editId) return { items: cur.concat(newRec) };
-    if (!cur.some((i) => i && i.id === editId)) throw Object.assign(new Error("gone"), { ar: "القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل." });
+    const now = cur.find((i) => i && i.id === editId);
+    if (!now) throw Object.assign(new Error("gone"), { ar: "القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل." });
+    if (editBase && JSON.stringify(sortKeys(now)) !== JSON.stringify(sortKeys(editBase))) throw Object.assign(new Error("changed"), { ar: "القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني." });
     return { items: cur.map((i) => { if (!i || i.id !== editId) return i; const n = { ...i, ...changed }; if (type !== "jewelry") delete n.purpose; return n; }) };
   };
   const gn = gen;
@@ -97,12 +100,16 @@ $("list").onclick = (ev) => {
   const b = ev.target.closest("button[data-act]"); if (!b) return;
   const id = b.closest("li").dataset.id, it = items.find((i) => i.id === id);
   if (b.dataset.act === "edit") {
-    editing = id; $("formTitle").textContent = "تعديل القطعة"; $("iCancel").hidden = false; $("iSave").textContent = "حفظ التعديل";
+    editing = id; editSnap = JSON.parse(JSON.stringify(it)); $("formTitle").textContent = "تعديل القطعة"; $("iCancel").hidden = false; $("iSave").textContent = "حفظ التعديل";
     $("iLabel").value = it.label || ""; $("iType").value = it.type; $("iKarat").value = String(it.karat); $("iGrams").value = it.grams; $("iDate").value = it.purchaseDate;
     $("iPur").hidden = it.type !== "jewelry"; document.querySelectorAll("input[name=iP]").forEach((r) => (r.checked = r.value === it.purpose));
     $("itemForm").scrollIntoView({ block: "center" });
   } else {
-    run(b, $("nMsg"), async () => { await persist((list) => ({ items: (Array.isArray(list) ? list : []).filter((i) => i && i.id !== id) }), "تم حذف القطعة."); });
+    const snap = JSON.parse(JSON.stringify(it));
+    run(b, $("nMsg"), async () => { await persist((list) => { const cur = Array.isArray(list) ? list : [], now = cur.find((i) => i && i.id === id);
+      if (!now) return { items: cur };
+      if (JSON.stringify(sortKeys(now)) !== JSON.stringify(sortKeys(snap))) throw Object.assign(new Error("changed"), { ar: "القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني." });
+      return { items: cur.filter((i) => i && i.id !== id) }; }, "تم حذف القطعة."); });
   }
 };
 // Keep the focused field above the floating dock.

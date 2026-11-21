@@ -89,9 +89,9 @@
   document.querySelectorAll('input[name=walS]').forEach(x => x.addEventListener('change', syncMore)); $('walBasis').addEventListener('change', syncMore);
   $('walZero').addEventListener('click', () => ['walMk', 'walTx', 'walSt'].forEach(i => { if ($(i).value.trim() === '') $(i).value = '0'; }));
   $('walType').addEventListener('change', () => { $('walPur').hidden = $('walType').value !== 'jewelry'; });
-  let editingId = null;
+  let editingId = null, editBase = null;
   function resetForm() {
-    editingId = null;
+    editingId = null; editBase = null;
     ['walGramsIn', 'walPaidIn', 'walNoteIn', 'walDD', 'walMM', 'walYY', 'walMk', 'walTx', 'walSt', 'walStoneG'].forEach(i => { $(i).value = ''; }); $('walType').value = ''; $('walPur').hidden = true; $('walBasis').value = ''; $('walPromise').checked = false;
     document.querySelectorAll('input[name=walP],input[name=walS]').forEach(x => { x.checked = false; }); syncMore();
     $('walAdd').textContent = 'احفظ في حسابي'; $('walCancel').hidden = true;
@@ -101,7 +101,7 @@
   // Fill the form from a saved row (edit). Shown values are exactly what is saved; blank means not recorded.
   window.DHB_CLOUD_EDIT = id => {
     const r = (window.DHB_CLOUD_ITEMS || []).find(x => x.id === id), rec = r && r.rec; if (!rec) return;
-    resetForm(); editingId = id; const d = String(rec.purchaseDate || '').split('-');
+    resetForm(); editingId = id; editBase = JSON.parse(JSON.stringify(rec)); const d = String(rec.purchaseDate || '').split('-');
     $('walGramsIn').value = rec.grams; $('walPaidIn').value = Number.isFinite(rec.paid) ? rec.paid : ''; $('walNoteIn').value = rec.label || '';
     if (d.length === 3) { $('walDD').value = Number(d[2]); $('walMM').value = Number(d[1]); $('walYY').value = d[0]; }
     $('walType').value = rec.type || ''; $('walPur').hidden = rec.type !== 'jewelry'; document.querySelectorAll('input[name=walP]').forEach(x => { x.checked = x.value === rec.purpose; });
@@ -126,18 +126,20 @@
     if (dt.details.stoneG !== undefined && dt.details.stoneG >= b.rec.grams) return say('walMsg', 'وزن الفصوص لازم يكون أقل من الوزن الكلي.', 'err');
     btn.disabled = true; say('walMsg', '');
     try {
-      const was = editingId;
+      const was = editingId, base = editBase;
       const r = await writeAccount(items => {
         if (!was) return mergeItem(items, b.rec);
         const cur = Array.isArray(items) ? items : [];
-        if (!cur.some(i => i && i.id === was)) throw Object.assign(new Error('gone'), { ar: 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.' });
+        const now = cur.find(i => i && i.id === was);
+        if (!now) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
+        if (!LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
         // Only fields this form owns change on the newest copy; anything else on the row (legacy additions, unknown fields) is kept.
         return { items: cur.map(i => { if (!i || i.id !== was) return i; const n = Object.assign({}, i, { label: b.rec.label, type: b.rec.type, karat: b.rec.karat, grams: b.rec.grams, purchaseDate: b.rec.purchaseDate, paid: b.rec.paid });
           if (b.rec.type === 'jewelry') n.purpose = b.rec.purpose; else delete n.purpose;
           ['stones', 'basis', 'stoneG', 'promise', 'making', 'tax', 'stamp'].forEach(k => { delete n[k]; }); return Object.assign(n, dt.details); }) };
       }, 'walMsg', 'walLogin');
       if (r) { say('walMsg', was ? 'اتعدّلت في حسابك.' : 'اتحفظت في حسابك.', 'ok'); resetForm(); }
-    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتحفظش أي حاجة، حاول مرة أخرى.', 'err'); }
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتحفظش أي حاجة، حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
     finally { btn.disabled = false; }
   });
   // One tap on an old row: set only the stones choice, and only if nobody has set it meanwhile. Nothing else changes.
@@ -154,9 +156,13 @@
     } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتغيّرش أي حاجة، حاول مرة أخرى.', 'err'); }
   };
   // ---- delete a piece from the account ----
-  window.DHB_CLOUD_DELETE = async id => {
-    try { const r = await writeAccount(items => ({ items: removeItem(items, id) }), 'walMsg', 'walLogin'); if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
-    catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); }
+  window.DHB_CLOUD_DELETE = async (id, base) => {
+    try { const r = await writeAccount(items => {
+        const cur = Array.isArray(items) ? items : [], now = cur.find(i => i && i.id === id);
+        if (!now) return { already: true }; // already deleted elsewhere: nothing to remove, nothing resurrected
+        if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
+        return { items: removeItem(cur, id) }; }, 'walMsg', 'walLogin'); if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
+    catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };
 
   // ---- move one device piece into the account (user's choice, one at a time) ----

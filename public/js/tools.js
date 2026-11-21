@@ -112,7 +112,7 @@
       const mk = (txt, label, fn) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wal-del'; b.textContent = txt; b.setAttribute('aria-label', label); b.addEventListener('click', fn); return b; };
       const del = mk('حذف', 'حذف هذه القطعة', () => {
         if (!confirm(cloud ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
-        if (cloud) { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id); return; }
+        if (cloud) { if (window.DHB_CLOUD_DELETE) window.DHB_CLOUD_DELETE(r.id, r.rec ? JSON.parse(JSON.stringify(r.rec)) : undefined); return; }
         save(load().filter(i => i.id !== r.id)); walletRender();
       });
       const st = rec.stones === 'with' ? ' • بفصوص' : rec.stones === 'without' ? ' • بدون فصوص' : '';

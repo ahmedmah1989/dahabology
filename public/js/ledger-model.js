@@ -121,6 +121,14 @@
     (Array.isArray(recs) ? recs : []).forEach(r => { const d = /^\d{4}-\d{2}-\d{2}$/.test(r.purchaseDate || '') ? r.purchaseDate : 'unknown', y = d === 'unknown' ? 'unknown' : d.slice(0, 4); ((years[y] ||= {})[d] ||= []).push(r); });
     return Object.keys(years).sort().map(y => ({ year: y, dates: Object.keys(years[y]).sort().map(d => ({ date: d, rows: years[y][d] })) }));
   }
-  const api = { parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  // True when the saved row is still exactly what the screen showed when the user started (key order does not matter).
+  // Used so an edit or delete made from an older view never silently replaces or removes a row that changed meanwhile.
+  function sameRow(a, b) {
+    const norm = v => (Array.isArray(v) ? v.map(norm) : v && typeof v === 'object' ? Object.keys(v).sort().reduce((o, k) => { if (v[k] !== undefined) o[k] = norm(v[k]); return o; }, {}) : v);
+    return !!a && !!b && JSON.stringify(norm(a)) === JSON.stringify(norm(b));
+  }
+  const CHANGED_AR = 'القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني.';
+  const GONE_AR = 'القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل.';
+  const api = { sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();
