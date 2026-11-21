@@ -78,8 +78,9 @@ $("itemForm").onsubmit = (ev) => {
   if (!(g > 0)) return show($("nMsg"), "اكتب الوزن بالجرام بصيغة صحيحة.", "err");
   if (!date) return show($("nMsg"), "اختر تاريخ الشراء.", "err");
   if (type === "jewelry" && !pur) return show($("nMsg"), "اختر نية شراء المصوغات: زينة أو ادخار.", "err");
-  const rec = { id: editing || newId(), label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
-  if (type === "jewelry") rec.purpose = pur;
+  const base = editing ? (items.find((i) => i.id === editing) || {}) : {}; // keep fields this page does not edit (for example paid)
+  const rec = { ...base, id: editing || newId(), label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
+  if (type === "jewelry") rec.purpose = pur; else delete rec.purpose;
   const prev = items.slice(), gn = gen;
   items = editing ? items.map((i) => (i.id === editing ? rec : i)) : items.concat(rec);
   run($("iSave"), $("nMsg"), async () => { try { await persist(editing ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); } catch (e) { if (gn === gen) { items = prev; render(); } throw e; } });
