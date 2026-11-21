@@ -23,6 +23,7 @@ export const MESSAGES_AR = {
   EMAIL_NOT_VERIFIED: "لم يتم تأكيد بريدك بعد. افتح رسالة التأكيد (وراجع البريد المزعج) ثم اضغط الرابط، أو اطلب رسالة جديدة.",
   PERMISSION_DENIED: "غير مسموح. سجّل الدخول بحساب مؤكَّد البريد.",
   SERVICE_UNAVAILABLE: "خدمة الحسابات متوقفة مؤقتًا من جهتنا، فلا يمكن التسجيل أو الحفظ الآن. جرّب بعد قليل. الصفحات والأسعار شغّالة بدون حساب.",
+  CONFLICT: "القائمة اتغيّرت من مكان تاني أثناء الحفظ. ما اتحفظش أي حاجة. حدّث الصفحة وحاول مرة أخرى.",
   DEFAULT: "حدث خطأ غير متوقع. حاول مرة أخرى بعد قليل."
 };
 
@@ -51,6 +52,7 @@ async function call(url, body, method = "POST", token) {
     if (unavailable(data)) throw new AccountError("SERVICE_UNAVAILABLE");
     const raw = String(data?.error?.message || data?.error?.status || res.status);
     const code = raw.split(" : ")[0].split(" ")[0];
+    if (["FAILED_PRECONDITION", "ABORTED", "ALREADY_EXISTS"].includes(String(data?.error?.status || code))) throw new AccountError("CONFLICT");
     throw new AccountError(res.status === 403 ? "PERMISSION_DENIED" : res.status === 404 ? "NOT_FOUND" : code);
   }
   return data;
@@ -164,4 +166,21 @@ export async function loadDoc(path) {
 }
 export async function deleteDoc(path) {
   await authed((s, t) => call(`${FS}/users/${s.uid}/${path}`, undefined, "DELETE", t));
+}
+
+// Versioned access for read-modify-write. `version` is the document's updateTime from the server. A write made with a version
+// is refused (CONFLICT) if anyone changed the document since it was read, so a stale copy can never overwrite newer rows.
+// version null = the document did not exist when read; the write is refused if someone created it meanwhile.
+export async function loadDocVersioned(path) {
+  try {
+    const d = await authed((s, t) => call(`${FS}/users/${s.uid}/${path}`, undefined, "GET", t));
+    return { data: JSON.parse(d.fields.json.stringValue), version: d.updateTime || null, exists: true };
+  } catch (e) { if (e.code === "NOT_FOUND" || e.code === "404") return { data: null, version: null, exists: false }; throw e; }
+}
+export async function saveDocIf(path, data, version) {
+  // documents:commit with a precondition (the single-document PATCH takes its precondition less reliably).
+  await authed((s, t) => call(`${FS}:commit`, { writes: [{
+    update: { name: `projects/${FIREBASE.projectId}/databases/(default)/documents/users/${s.uid}/${path}`, fields: { json: { stringValue: JSON.stringify(data) } } },
+    currentDocument: version ? { updateTime: version } : { exists: false },
+  }] }, "POST", t));
 }

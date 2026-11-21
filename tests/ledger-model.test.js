@@ -96,3 +96,32 @@ test('deleteItem removes one record only', () => {
 test('arabic-indic digits are accepted in optional fields', () => {
   assert.equal(L.readDetails({ stones: 'without', making: '٦٠٠', tax: '٠', stamp: '٢٠' }).details.making, 600);
 });
+
+// ---- optimistic commit (in-memory fake store: MOCK, not Firestore) ----
+const { commitWithRetry } = require('../public/js/wallet-account.js');
+function fakeStore(items) {
+  const s = { doc: { v: 1, items }, ver: 1, saves: 0 };
+  s.load = async () => ({ data: JSON.parse(JSON.stringify(s.doc)), version: s.ver });
+  s.save = async (data, version) => { if (version !== s.ver) { const e = new Error('c'); e.code = 'CONFLICT'; throw e; } s.doc = data; s.ver++; s.saves++; };
+  s.other = fn => { s.doc = { v: 1, items: fn(s.doc.items) }; s.ver++; };
+  return s;
+}
+test('commit: stale copy is retried on newer rows, other tab work survives', async () => {
+  const s = fakeStore([{ id: 'x', grams: 5 }, { id: 'y', grams: 3 }]);
+  let first = true;
+  await commitWithRetry({ load: async () => { const r = await s.load(); if (first) { first = false; s.other(it => it.filter(i => i.id !== 'y').concat({ id: 'w', grams: 7 })); } return r; }, save: s.save, mutate: it => L.editItem(it, 'x', { grams: '6' }) });
+  assert.deepEqual(s.doc.items.map(i => i.id + ':' + i.grams), ['x:6', 'w:7']);
+});
+test('commit: exhausted attempts save nothing and throw CONFLICT', async () => {
+  const s = fakeStore([{ id: 'x', grams: 5 }]);
+  await assert.rejects(commitWithRetry({ attempts: 3, load: async () => { const r = await s.load(); s.other(it => it.concat({ id: 'n' + s.ver, grams: 1 })); return r; }, save: s.save, mutate: it => ({ items: it.filter(i => i.id !== 'x') }) }), e => e.code === 'CONFLICT' && !!e.ar);
+  assert.equal(s.saves, 0);
+  assert.ok(s.doc.items.some(i => i.id === 'x'));
+});
+test('commit: non-conflict errors are not retried; mutate with nothing to write skips save', async () => {
+  const s = fakeStore([{ id: 'x' }]); let calls = 0;
+  await assert.rejects(commitWithRetry({ load: s.load, save: async () => { calls++; throw Object.assign(new Error('net'), { code: 'NETWORK' }); }, mutate: it => ({ items: it }) }), e => e.code === 'NETWORK');
+  assert.equal(calls, 1);
+  const r = await commitWithRetry({ load: s.load, save: async () => { throw new Error('should not save'); }, mutate: () => ({ added: false }) });
+  assert.equal(r.added, false);
+});

@@ -32,7 +32,20 @@
     });
     return { priced, unpriced };
   }
-  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num };
+  // Optimistic read-modify-write. load() -> {data, version}; save(data, version) throws {code:'CONFLICT'} if the document changed since the read.
+  // On conflict the whole cycle (fresh read, mutate again on the newer rows) is repeated. After the last attempt nothing is saved.
+  async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
+    for (let n = 0; n < attempts; n++) {
+      const cur = await load();
+      const d = cur && cur.data;
+      const r = mutate(d && d.items);
+      if (!r.items) return r; // nothing to write
+      try { await save({ v: (d && d.v) || 1, items: r.items }, cur && cur.version); return r; }
+      catch (e) { if (!e || e.code !== 'CONFLICT') throw e; }
+    }
+    const err = new Error('CONFLICT'); err.code = 'CONFLICT'; err.ar = 'القائمة اتغيّرت من مكان تاني وما قدرناش نحفظ بأمان. ما اتحفظش أي حاجة. حدّث الصفحة وحاول مرة أخرى.'; throw err;
+  }
+  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num, commitWithRetry };
   if (typeof document === 'undefined' || !document.getElementById('walForm')) return;
 
   const $ = id => document.getElementById(id);
@@ -74,10 +87,12 @@
     if (!u) { $(loginId).hidden = false; say(noticeId, 'لازم تسجّل الدخول الأول علشان القطعة تتحفظ في حسابك. ما اتحفظش أي حاجة.', 'err'); return null; }
     if (!u.emailVerified) { $(loginId).hidden = false; say(noticeId, 'حسابك محتاج تأكيد البريد. أكمل التأكيد من صفحة حسابي ثم ارجع.', 'err'); return null; }
     return serial(async () => {
-      const d = await L.loadDoc('gold/items'); // fresh read right before the write
-      if (L.currentUser()?.uid !== u.uid) throw Object.assign(new Error('user changed'), { ar: 'تغيّر الحساب. حاول مرة أخرى.' });
-      const r = mutate(d && d.items);
-      if (r.items) { await L.saveDoc('gold/items', { v: (d && d.v) || 1, items: r.items }); owner = u.uid; setCloud(r.items); }
+      const r = await commitWithRetry({
+        load: async () => { const x = await L.loadDocVersioned('gold/items'); if (L.currentUser()?.uid !== u.uid) throw Object.assign(new Error('user changed'), { ar: 'تغيّر الحساب. حاول مرة أخرى.' }); return x; },
+        save: (data, version) => L.saveDocIf('gold/items', data, version),
+        mutate,
+      });
+      if (r.items) { owner = u.uid; setCloud(r.items); }
       return r;
     });
   }
