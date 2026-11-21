@@ -6,7 +6,7 @@
 </div>
 <div class="x-hero"><div class="x-rays"></div><svg class="x-zap" id="heroZap" viewBox="-60 -60 120 120" aria-hidden="true"><path/></svg>
 <div class="x-ring" aria-live="polite"><span class="lbl">سعر البيع لك</span><b class="val" id="heroPrice">—</b><span class="unit">جنيه للجرام</span><span class="chg" id="heroChange"></span></div></div>
-<section id="impCard" class="x-card"><h2>دولار الصاغة</h2><p class="x-sub">رقم محسوب من الذهب، مش سعر دولار معلن</p><div class="x-bigline"><b id="impVal">—</b></div><p id="impShort" class="x-note"></p><details class="x-more"><summary>طريقة الحساب</summary><ul id="impIn" class="plain"></ul><p id="impWhy" class="x-note"></p></details></section>
+
 
 <div class="x-pair"><div class="x-chip"><span>التاجر يشتري منك بـ</span><b id="heroBuy">—</b></div><div class="x-chip"><span>فرق البيع والشراء</span><b id="heroSpread">—</b></div></div>
 <p class="x-note" id="heroTime">تحميل السعر…</p>
@@ -14,9 +14,11 @@
 <p class="x-note" id="shareMsg" role="status" style="margin-top:6px"></p>
 </section>
 
+<div class="market-reference-grid"><section id="bankCard" class="x-card"><h2 id="bankLabel">الدولار بالمركزي</h2><b id="priceBank">—</b><p id="bankTime" class="x-note"></p><p class="x-note">متوسط سوق مؤرّخ، وليس سعر تنفيذ لحظي</p></section><section id="impCard" class="x-card"><h2>دولار الصاغة</h2><p class="x-sub">رقم محسوب من الذهب، مش سعر دولار معلن</p><div class="x-bigline"><b id="impVal">—</b></div><p id="impShort" class="x-note"></p><details class="x-more"><summary>طريقة الحساب</summary><ul id="impIn" class="plain"></ul><p id="impWhy" class="x-note"></p></details></section><section id="silverCard" class="x-card"><h2>الفضة</h2><h3>عالمي</h3><div id="silverGlobal" aria-live="polite">تحميل…</div><h3>محلي (مصر)</h3><div id="silverLocalBrief" aria-live="polite"></div><details class="x-more"><summary>كل العيارات والمصدر</summary><div id="silverLocal" aria-live="polite"></div></details></section></div>
 <section id="comparison" class="x-card"><h2>مؤشر دهبولوجي</h2><p class="x-sub">سعر الذهب في مصر مقارنةً بقيمته العالمية</p>
 <div class="x-gauge"><svg viewBox="0 0 300 172" role="img" aria-label="عداد يوضح موضع السعر المحلي من خصم 4% إلى علاوة 8% عن القيمة العالمية"><g id="gaugeArcs"></g><g id="gaugeLabels"></g><line id="gaugeNeedle" x1="150" y1="150" x2="150" y2="52" stroke="#fff" stroke-width="4" stroke-linecap="round" style="transform:rotate(-90deg)"/><circle cx="150" cy="150" r="9" fill="#efc66c"/></svg>
 <div class="x-gauge-read"><b id="gapBig">—</b><span class="meter-verdict" id="gapVerdict">—</span></div></div>
+<p class="x-note" id="referenceBasis"></p>
 <p class="x-note" id="gapMeaning">تجهيز المقارنة…</p>
 <details class="x-more"><summary>تفاصيل الحساب</summary>
 <div class="line"><span>الفرق للجرام عيار 24</span><b id="gapEGP">—</b></div>
@@ -24,18 +26,15 @@
 <div class="line"><span>القيمة العالمية لجرام 24</span><b id="global24">—</b></div>
 <div class="line"><span>القيمة العالمية لجرام 21</span><b id="global21">—</b></div>
 <div class="line"><span>دولار الصاغة (الدولار الضمني من الذهب)</span><b id="implied">—</b></div><p class="x-note" id="impliedNote"></p>
-<div class="line"><span>فرقه عن سعر بيع بنك مصر</span><b><span id="fxGap">—</span> (<span id="fxPercent">—</span>)</b></div>
+<div class="line"><span>فرقه عن سعر بيع متوسط سوق المركزي المؤرّخ</span><b><span id="fxGap">—</span> (<span id="fxPercent">—</span>)</b></div>
 <p class="x-note"><span class="badge" id="qualityBadge">فحص الأسعار</span><br><span id="qualityText">تظهر النتيجة عند اكتمال الأسعار.</span></p>
 <p class="x-note">حدود 2% و4% وصفية للقراءة السريعة وليست معيارًا للسعر العادل. القيم قبل المصنعية والدمغة والضرائب. الدولار الضمني مؤشر مستنتج وليس سعر صرف للتنفيذ.</p>
 <span id="gapPercent" hidden></span>
 </details></section>
 
-<div class="x-pair">
-<div class="x-chip"><span id="bankLabel">الدولار في البنك</span><b id="priceBank">—</b><i id="bankTime"></i></div>
-<div class="x-chip"><span>الأونصة العالمية</span><b id="priceOunce">—</b><i id="ounceTime"></i></div>
-</div>
+<div class="x-pair"><div class="x-chip"><span>الأونصة العالمية</span><b id="priceOunce">—</b><i id="ounceTime"></i></div></div>
 
-<section id="silverCard" class="x-card"><h2>الفضة</h2><h3>عالمي</h3><div id="silverGlobal" aria-live="polite">تحميل…</div><h3>محلي (مصر)</h3><div id="silverLocal" aria-live="polite"></div></section>
+
 
 <section id="retailOverview" class="x-card"><h2>الجنيه والسبائك</h2><p class="x-sub">اختر الوزن والمنتج المناسب لك</p>
 <div id="productSummary" class="product-summary-grid x-scroller" aria-live="polite"><p class="x-note">تحميل أسعار المنتجات…</p></div>

@@ -5,10 +5,12 @@ test('record uses the gold/items schema and keeps the price paid', () => {
   const r = buildRecord(local, { type: 'coin', date: '2025-03-01' });
   assert.deepEqual(r.rec, { id: 'a1', label: 'جنيه', type: 'coin', karat: 21, grams: 8, purchaseDate: '2025-03-01', paid: 49500 });
 });
-test('jewelry needs a purpose, others carry none', () => {
+test('explicit purpose is stored across types; legacy unknowns stay unknown', () => {
   assert.ok(buildRecord(local, { type: 'jewelry', date: '2025-03-01' }).error);
   assert.equal(buildRecord(local, { type: 'jewelry', date: '2025-03-01', purpose: 'saving' }).rec.purpose, 'saving');
-  assert.equal('purpose' in buildRecord(local, { type: 'bar', date: '2025-03-01', purpose: 'saving' }).rec, false);
+  assert.equal(buildRecord(local, { type: 'bar', date: '2025-03-01', purpose: 'saving' }).rec.purpose, 'saving');
+  assert.equal('purpose' in buildRecord(local, { type: 'scrap', date: '2025-03-01' }).rec, false);
+  assert.equal(buildRecord(local, { type: 'scrap', date: '2025-03-01', purpose: 'adornment' }).rec.purpose,'adornment');
 });
 test('bad input is refused: type, date, weight, price', () => {
   assert.ok(buildRecord(local, { type: '', date: '2025-03-01' }).error);

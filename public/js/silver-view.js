@@ -28,6 +28,8 @@
       if (glob) { const b = document.createElement('b'); b.textContent = nf(glob.ozUSD) + ' دولار للأونصة'; const s = document.createElement('small'); s.textContent = '≈ ' + nf(glob.gramUSD, 3) + ' دولار للجرام • ' + when(glob.sourceTime) + ' (القاهرة)'; g.append(b, document.createElement('br'), s); }
       else g.textContent = tried ? 'السعر العالمي للفضة غير متاح الآن أو أقدم من 24 ساعة.' : 'تحميل…';
       const l = $('silverLocal'); l.replaceChildren(); const lc = local && localSilver(local);
+      const brief=$('silverLocalBrief'), row=lc?.rows.find(r=>r.grade==='999');
+      if(brief)brief.textContent=row?'999 بيع '+nf(row.sell)+' جنيه / جرام · شراء '+nf(row.buy)+' · آي صاغة · وحدة الجرام مستنتجة · '+when(lc.sourceTime)+' القاهرة':'المحلي غير متاح أو أقدم من 24 ساعة؛ لا تحويل من العالمي';
       if (lc) {
         const t = document.createElement('table'); t.className = 'silver-t';
         const h = t.insertRow(); ['العيار', 'شراء (جنيه/جرام)', 'بيع (جنيه/جرام)'].forEach(x => { const c = document.createElement('th'); c.textContent = x; h.append(c); });

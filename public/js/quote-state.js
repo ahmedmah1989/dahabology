@@ -27,19 +27,25 @@ function lastPublished(q,label,unit,now=Date.now()){
  const d=new Date(t).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit'});
  return 'آخر سعر منشور ('+label+'): '+v.toLocaleString('en-US',{maximumFractionDigits:2})+' '+unit+'، '+d+' بتوقيت القاهرة. أقدم من 24 ساعة، فمش داخل في أي حساب.';
 }
-// Official daily reference (date only, no time of day). Display only: it never passes the 24-hour usability gate and feeds no calculation.
+// Official daily reference, date only. Never passes the 24-hour live-quote gate; the explicit reference scenario uses its original date.
 function official(q,now=Date.now()){
  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(q?.quoteDate||'');const v=Number(q?.sell);
- if(q?.status!=='available'||!m||!(v>0))return null;
+ if(q?.status!=='available'||!m||!Number.isFinite(v)||!(v>0))return null;
  const t=Date.UTC(+m[1],+m[2]-1,+m[3],12);
  const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(now).split('-').map(Number);
  const today=Date.UTC(parts[0],parts[1]-1,parts[2],12),days=Math.round((today-t)/86400000);
  // Never a future date. Too old (more than 10 days, enough for a long holiday) is not shown as the current official rate.
  if(!Number.isFinite(t)||new Date(t).getUTCMonth()!==+m[2]-1||days<0||days>10)return null;
  const d=new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'});
- return {value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'الدولار بالمركزي',text:'متوسط سوق، سعر البيع، '+d};
+ return {sell:v,quoteDate:q.quoteDate,days,value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'الدولار بالمركزي',text:'متوسط سوق، سعر البيع، '+d};
 }
-const api={assess,when,describe,connection,lastPublished,official};
+// A daily CBE reference is not a timestamped quote. It is only an explicitly dated scenario input.
+function reference(sources,now=Date.now()){return official(sources?.cbe,now);}
+function implied(sources,now=Date.now()){
+ const g=sources?.isagha,o=sources?.gold,l=g?.['24']?.sell;
+ return assess(g,now).usable&&assess(o,now).usable&&Number.isFinite(l)&&Number.isFinite(o.sell)&&l>0&&o.sell>0?l/(o.sell/31.1034768):null;
+}
+const api={assess,when,describe,connection,lastPublished,official,reference,implied};
 if(typeof module!=='undefined')module.exports=api;
 if(typeof window!=='undefined')window.DHB_QUOTE=api;
 })();

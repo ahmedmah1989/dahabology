@@ -1,6 +1,7 @@
 <section id="analysis" class="analytics">
 <p class="x-lead">ملخص اليوم أولًا، ثم الاتجاه والمخاطر وتفاصيل الأرقام.</p>
 <section class="x-card today-brief" aria-labelledby="analysisDate"><p class="x-sub" id="analysisDate">تحليل اليوم</p><h2>الصورة من آخر حركة للسعر</h2><b class="today-price" id="analysisNow">—</b><p id="analysisDayState" class="x-note" role="status">انتظار قراءة اليوم…</p><div class="today-change"><b id="analysisMove">—</b><span id="analysisMoveLabel">عن آخر قراءة يومية</span></div><details class="x-more today-how"><summary>كيف تُقرأ هذه الأرقام؟</summary><p id="analysisBasis" class="x-note"></p></details></section>
+<p id="analysisFxBasis" class="x-note"></p>
 <div class="x-reads" role="group" aria-label="قراءات السوق">
 <button type="button" class="x-read" data-open="read1"><span>السعر مقابل العالمي</span><span class="tag none" id="t1">—</span></button>
 <button type="button" class="x-read" data-open="read2"><span>اتجاه السعر</span><span class="tag none" id="t2">—</span></button>
@@ -9,7 +10,7 @@
 <div class="signal" id="signal" aria-live="polite"><div class="head" id="sigHead">تجهيز القراءة…</div><p id="sigText"></p><ol class="plan" id="plan"></ol></div>
 <div hidden><input id="loc"><input id="bud"><b id="f21"></b><b id="diff"></b><b id="gramsLegacy"></b><input id="oz"><input id="usd"><span id="prog"></span></div>
 
-<details class="x-more" id="read1" name="read"><summary>السعر المحلي قريب من القيمة العالمية؟</summary><p id="c1"></p><p class="x-note" style="text-align:start">حساب مباشر من السعر العالمي والدولار؛ حدود 2% و4% تقديرية.</p></details>
+<details class="x-more" id="read1" name="read"><summary>السعر المحلي قريب من القيمة العالمية؟</summary><p id="c1"></p><p class="x-note" style="text-align:start">مقارنة مرجعية من الأونصة وسعر بيع متوسط سوق المركزي بتاريخ نشره، وليست سعر صرف لحظيًا. حدود 2% و4% تقديرية.</p></details>
 <details class="x-more" id="read2" name="read"><summary>اتجاه السعر (متوسط 50 و200 يوم)</summary><p id="c2"></p><p class="x-note" style="text-align:start">وصف للاتجاه من السلسلة المرجعية؛ ليس اختبارًا لاستراتيجية تداول.</p></details>
 <details class="x-more" id="read3" name="read"><summary>افهم المخاطر قبل القرار</summary><p id="c3"></p><p>الاتجاه الصاعد لا يمنع الهبوط. راجع التذبذب وأكبر تراجع في الفترة، وافصل المبلغ الذي تحتاجه قريبًا عن أي مبلغ تدخره في الذهب.</p></details>
 

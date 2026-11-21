@@ -13,10 +13,10 @@
     if (!Number.isFinite(base.paid) || !(base.paid >= 0)) return { error: 'اكتب المبلغ المدفوع بأرقام صحيحة.' };
     if (!TYPES.includes(o.type)) return { error: 'اختر نوع القطعة.' };
     if (!/^\d{4}-\d{2}-\d{2}$/.test(o.date || '') || Number.isNaN(Date.parse(o.date))) return { error: 'اختر تاريخ الشراء.' };
-    if (o.type === 'jewelry' && !['adornment', 'saving'].includes(o.purpose)) return { error: 'اختر نية شراء المصوغات: زينة أو ادخار.' };
+    if ((o.type === 'jewelry' || o.purpose) && !['adornment', 'saving'].includes(o.purpose)) return { error: 'اختر غرض الاقتناء: زينة أو ادخار / استثمار.' };
     const det = o.details ? (o.details.stones || o.details.making !== undefined || o.details.tax !== undefined || o.details.stamp !== undefined ? o.details : {}) : {};
     const rec = { id: String(base.id), label: String(base.note || '').slice(0, 40), type: o.type, karat: Number(base.k), grams: base.g, purchaseDate: o.date, paid: base.paid };
-    if (o.type === 'jewelry') rec.purpose = o.purpose;
+    if (['adornment', 'saving'].includes(o.purpose)) rec.purpose = o.purpose;
     Object.keys(det).forEach(k => { if (det[k] !== undefined) rec[k] = det[k]; });
     return { rec };
   }
@@ -287,13 +287,14 @@
     if (keep && items.some(i => i.id === keep)) sel.value = keep;
     $('waBox').hidden = items.length === 0;
   }
-  $('waType').addEventListener('change', () => { $('waPur').hidden = $('waType').value !== 'jewelry'; });
+  $('waType').addEventListener('change', () => { $('waPur').hidden = !$('waType').value; });
   $('waPiece').addEventListener('focus', fillPieces);
   new MutationObserver(fillPieces).observe($('walRows'), { childList: true });
   fillPieces();
   $('waSave').addEventListener('click', async () => {
     const btn = $('waSave'); if (btn.disabled) return;
     const l = locals().find(i => i.id === $('waPiece').value);
+    if (!(document.querySelector('input[name=waP]:checked') || {}).value) return say('waMsg', 'اختر غرض الاقتناء: زينة أو ادخار / استثمار.', 'err');
     const b = buildRecord(l && { id: l.id, k: l.k, g: l.g, paid: l.paid, note: l.note }, { type: $('waType').value, date: $('waDate').value || '', purpose: (document.querySelector('input[name=waP]:checked') || {}).value });
     if (b.error) return say('waMsg', b.error, 'err');
     btn.disabled = true; say('waMsg', '');

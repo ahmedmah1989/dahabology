@@ -2,7 +2,7 @@ const test=require('node:test');const assert=require('node:assert/strict');
 const {todayPoint,withToday,cairoDay,metrics}=require('../public/js/analytics.js');
 test('analysis reaches today in Cairo with a fresh genuine quote, including after midnight',()=>{
  const now=Date.parse('2026-11-13T22:01:00Z');
- const sources={gold:{status:'available',sell:3890,sourceTime:'2026-11-13T22:00:30Z'},misr:{status:'available',sell:50,sourceTime:'2026-11-13T15:00:00Z'}};
+ const sources={gold:{status:'available',sell:3890,sourceTime:'2026-11-13T22:00:30Z'},cbe:{status:'available',sell:50,quoteDate:'2026-11-13'}};
  assert.equal(cairoDay(now),'2026-11-14');const point=todayPoint(sources,now);
  assert.equal(point.d,'2026-11-14');assert.equal(point.egp,194500);assert.equal(point.provisional,true);
  const historical=[{d:'2026-11-12',usd:3900,egp:195000},{d:'2026-11-13',usd:3880,egp:194000}];
@@ -10,7 +10,7 @@ test('analysis reaches today in Cairo with a fresh genuine quote, including afte
  assert.equal(todayPoint({...sources,gold:{...sources.gold,sourceTime:'2026-11-13T21:59:30Z'}},now),null);
  assert.equal(todayPoint({...sources,gold:{...sources.gold,sourceTime:'2026-11-13T22:10:00Z'}},now),null);
  assert.equal(todayPoint(sources,now+6*60000),null);
- assert.equal(todayPoint({...sources,misr:null},now).egp,null);
+ assert.equal(todayPoint({...sources,cbe:null},now).egp,null);
  assert.equal(withToday(historical,null,now).at(-1).d,'2026-11-13');
 });
 test('unfinished today affects current trend without entering historical daily volatility',()=>{

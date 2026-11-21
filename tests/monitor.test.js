@@ -12,24 +12,18 @@ assert.equal('drop24' in calculate(3000,50,8000,7000),false);
 assert.equal('drop21' in calculate(3000,50,5100,0),false);
 console.log('Gold conversion, premium, implied FX and drawdown checks passed.');
 const {assess} = require('../public/js/monitor.js');
-const now=Date.parse('2026-11-11T12:00:00Z');
+const now=Date.parse('2026-11-21T12:00:00Z');
 const quote=t=>({status:'available',sourceTime:new Date(t).toISOString()});
-const sources={isagha:{...quote(now-60000),'24':{sell:7000},'21':{sell:6125}},misr:{...quote(now-3600000),sell:53},gold:{...quote(now),sell:4100}};
-assert.equal(assess(sources,now).usable,true); // An unchanged bank quote still permits an indicative calculation.
+const sources={isagha:{...quote(now-60000),'24':{sell:7000},'21':{sell:6125}},cbe:{status:'available',sell:53,quoteDate:'2026-11-19'},misr:{...quote(now),sell:999},gold:{...quote(now),sell:4100}};
+assert.equal(assess(sources,now).usable,true);
 assert.equal(assess(sources,now).fresh,false);
-sources.misr.sourceTime=new Date(now-60000).toISOString();
-assert.equal(assess(sources,now).fresh,true);
-sources.misr.sourceTime=new Date(now-25*3600000).toISOString();
-assert.equal(assess(sources,now).usable,false);
-sources.misr.sourceTime=new Date(now+300000).toISOString();
-assert.equal(assess(sources,now).usable,false);
-sources.misr.sourceTime='';
-assert.equal(assess(sources,now).usable,false);
-sources.misr.sourceTime=new Date(now).toISOString();sources.misr.sell=-1;
-assert.equal(assess(sources,now).usable,false);
-console.log('Timestamp, stale bank quote, missing time, future time and invalid price gates passed.');
-sources.misr.sell=53;sources.misr.sourceTime='2026-11-11T12:00:00';
-assert.equal(assess(sources,now).usable,false);
+assert.match(assess(sources,now).reason,/2026-11-19/);
+assert.equal(assess({...sources,cbe:null},now).usable,false);
+for(const quoteDate of ['2026-11-22','2026-11-10','bad'])assert.equal(assess({...sources,cbe:{...sources.cbe,quoteDate}},now).usable,false);
+for(const sourceTime of [new Date(now-86400001).toISOString(),new Date(now+300000).toISOString(),'2026-11-21T12:00:00',''])assert.equal(assess({...sources,gold:{...sources.gold,sourceTime}},now).usable,false);
+assert.equal(assess({...sources,cbe:{...sources.cbe,sell:0}},now).usable,false);
+assert.equal(assess({...sources,isagha:{...sources.isagha,'24':{sell:0}}},now).usable,false);
+
 {
   const {impliedFromGold} = require('../public/js/monitor.js');
   const now = Date.now(), iso = t => new Date(t).toISOString();

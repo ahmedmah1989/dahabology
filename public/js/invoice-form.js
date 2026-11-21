@@ -43,7 +43,7 @@
       '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" maxlength="5" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" maxlength="3" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
 '</div>' +
       '<div class="paidb"><span class="lab">' + (mq ? 'دفعت في الـ ' + q.value + ' كلهم (جنيه)' : 'دفعت فيها (جنيه)') + '</span><input class="in" data-f="p" inputmode="decimal" placeholder="0" value="' + esc(r.p) + '" aria-label="المبلغ المدفوع، قطعة ' + (i + 1) + '"></div></div>' +
-      (jw ? '<div class="sg" role="group" aria-label="نية الشراء"><button type="button" data-pp="adornment" aria-pressed="' + (r.pp === 'adornment') + '">زينة</button><button type="button" data-pp="saving" aria-pressed="' + (r.pp === 'saving') + '">ادخار</button></div>' : '') +
+      (r.type ? '<div class="sg" role="group" aria-label="غرض الاقتناء"><button type="button" data-pp="adornment" aria-pressed="' + (r.pp === 'adornment') + '">زينة</button><button type="button" data-pp="saving" aria-pressed="' + (r.pp === 'saving') + '">ادخار / استثمار</button></div>' : '') +
       '<div class="ms"><button type="button" class="msb" data-ms aria-expanded="' + !!r.mso + '"><span>المصنعية' + tl + ': <b>' + feeText(r, 'mk') + '</b></span><span>الدمغة' + tl + ': <b>' + feeText(r, 'st') + '</b></span><i>' + (r.mso ? '▲' : '▼') + '</i></button>' +
       (r.mso ? '<div class="msf"><div class="fr"><label class="lab">المصنعية' + tl + ' (جنيه)</label><div><input class="in" data-f="mk" inputmode="decimal" placeholder="غير مسجلة" value="' + esc(r.mk) + '"' + (r.mkN ? ' disabled' : '') + '><button type="button" class="nob" data-none="mk" aria-pressed="' + !!r.mkN + '">بدون مصنعية</button></div></div>' +
         '<div class="fr"><label class="lab">الدمغة' + tl + ' (جنيه)</label><div><input class="in" data-f="st" inputmode="decimal" placeholder="غير مسجلة" value="' + esc(r.st) + '"' + (r.stN ? ' disabled' : '') + '><button type="button" class="nob" data-none="st" aria-pressed="' + !!r.stN + '">بدون دمغة</button></div></div>' +
@@ -112,9 +112,9 @@
     }
     $('sum').innerHTML = '<b><span class="l1">' + unitsAll + ' ' + (unitsAll === 1 ? 'قطعة' : 'قطع') + ' · ' + fg(gMg / 1000) + ' جرام</span><span class="l1">دفعت في القطع ' + fm(okP / 100) + ' جنيه</span></b>' + det + lines.map(l => '<p>' + l + '</p>').join('');
     if (!keepRev) $('walRev').checked = false;
-    const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && ['18', '21', '24'].includes(r.k) && Number.isFinite(paids[i]) && r.s && (r.type !== 'jewelry' || r.pp));
+    const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && ['18', '21', '24'].includes(r.k) && Number.isFinite(paids[i]) && r.s && r.pp);
     const okAll = ok && !bad; root.dataset.complete = okAll ? '1' : '';
-    $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? '' : 'كمّل النوع والعيار والجرام والمبلغ واختيار الفصوص لكل قطعة.');
+    $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? '' : 'كمّل النوع والعيار والوزن والمبلغ وغرض الاقتناء واختيار الفصوص لكل قطعة.');
     $('walAdd').disabled = !(okAll && $('walRev').checked) || root.dataset.busy === '1';
     root.dispatchEvent(new CustomEvent('invform:update'));
   }

@@ -239,14 +239,14 @@
       if (!['bar', 'coin', 'jewelry', 'scrap'].includes(l.type)) errs.push('type:' + i);
       if (!KARATS.includes(Number(l.karat))) errs.push('karat:' + i);
       if (l.stones !== 'with' && l.stones !== 'without') errs.push('stones:' + i);
-      if (l.type === 'jewelry' && !['adornment', 'saving'].includes(l.purpose)) errs.push('purpose:' + i);
+      if ((l.type === 'jewelry' || l.purpose) && !['adornment', 'saving'].includes(l.purpose)) errs.push('purpose:' + i);
       const fee = (k, none) => { if (none) return { value: 0 }; const r = optionalNum(l[k], 'money'); if (r.error) errs.push(k + ':' + i); return r; };
       const mk = fee('making', l.makingNone), st = fee('stamp', l.stampNone);
       if (errs.some(e => e.endsWith(':' + i))) return;
       const total = totalMg(w.mg, q.value);
       const rec = { id: String(l.id), label: String(l.note || '').slice(0, 40), type: l.type, karat: Number(l.karat), grams: gramsOfMg(total), purchaseDate: date, paid: paid.value, stones: l.stones, invoiceId: String(inv.id) };
       if (q.value > 1) { rec.qty = q.value; rec.unitGrams = gramsOfMg(w.mg); }
-      if (l.type === 'jewelry') rec.purpose = l.purpose;
+      if (['adornment', 'saving'].includes(l.purpose)) rec.purpose = l.purpose;
       if (l.stones === 'with') {
         const d = readDetails({ stones: 'with', basis: l.basis, stoneG: l.stoneG, promise: l.promise });
         if (d.error) errs.push('stones-details:' + i);

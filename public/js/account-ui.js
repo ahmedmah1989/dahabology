@@ -7,7 +7,7 @@ let gen = 0, shownKey = null, loadedFor = null;
 // Private data must never outlive its user: wipe the list, form and messages on every auth change.
 function wipe() {
   gen++; loadedFor = null; items = []; editing = null;
-  $("list").innerHTML = ""; $("itemForm").reset(); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة";
+  $("list").innerHTML = ""; $("itemForm").reset(); $("iPur").hidden = false; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة";
   $("who").textContent = ""; $("vMail").textContent = "";
   for (const id of ["msg", "vMsg", "nMsg"]) show($(id), "");
   $("authForm").reset(); resetForm();
@@ -61,7 +61,7 @@ const newId = () => "g" + Date.now().toString(36) + Math.random().toString(36).s
 const esc = (t) => String(t).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const editBase0 = () => !!(editing && editSnap);
 function render() {
-  $("list").innerHTML = items.length ? items.map((it) => `<li data-id="${esc(it.id)}"><b>${esc(it.label || TYPES[it.type])}</b><br>${it.metal === "silver" ? TYPES[it.type] + " فضة · نقاء " + esc(it.fineness) : TYPES[it.type] + " · عيار " + esc(it.karat)} · ${esc(it.grams)} جم<br>الشراء: ${esc(it.purchaseDate)}${it.type === "jewelry" ? " · " + (it.purpose === "adornment" ? "زينة" : "ادخار") : ""}<div class="row"><button type="button" class="x-btn ghost" data-act="edit">تعديل</button><button type="button" class="x-btn ghost" data-act="del">حذف</button></div></li>`).join("") : '<li>لا توجد قطع محفوظة بعد.</li>';
+  $("list").innerHTML = items.length ? items.map((it) => `<li data-id="${esc(it.id)}"><b>${esc(it.label || TYPES[it.type])}</b><br>${it.metal === "silver" ? TYPES[it.type] + " فضة · نقاء " + esc(it.fineness) : TYPES[it.type] + " · عيار " + esc(it.karat)} · ${esc(it.grams)} جم<br>الشراء: ${esc(it.purchaseDate)}${" · " + (it.purpose === "adornment" ? "زينة" : it.purpose === "saving" ? "ادخار / استثمار" : "الغرض غير مسجّل")}<div class="row"><button type="button" class="x-btn ghost" data-act="edit">تعديل</button><button type="button" class="x-btn ghost" data-act="del">حذف</button></div></li>`).join("") : '<li>لا توجد قطع محفوظة بعد.</li>';
 }
 async function loadItems() {
   const g = gen, uid = A.currentUser()?.uid;
@@ -75,7 +75,7 @@ const isSilver = (i) => !!i && i.metal === "silver";
 async function persist(mutate, okText) { const g = gen, uid = A.currentUser()?.uid;
   const split = (gold, _inv, silver) => { const all = (Array.isArray(gold) ? gold : []).concat(Array.isArray(silver) ? silver : []); const r = mutate(all); if (!r || !r.items) return r; return { ...r, all: r.items, items: r.items.filter((i) => !isSilver(i)), ...(Array.isArray(silver) || r.items.some(isSilver) ? { silver: r.items.filter(isSilver) } : {}) }; };
   const r = await A.updateGoldItems(split, uid); if (g !== gen) return; items = r.all || r.items; show($("nMsg"), okText, "ok"); render(); }
-function resetForm() { editing = null; editSnap = null; $("itemForm").reset(); $("iMetal").disabled = false; metalShown = "gold"; $("iKarat").innerHTML = "<option>24</option><option selected>21</option><option>22</option><option>18</option>"; $("iKaratLbl").textContent = "العيار"; setTimeout(syncSize, 0); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
+function resetForm() { editing = null; editSnap = null; $("itemForm").reset(); $("iMetal").disabled = false; metalShown = "gold"; $("iKarat").innerHTML = "<option>24</option><option selected>21</option><option>22</option><option>18</option>"; $("iKaratLbl").textContent = "العيار"; setTimeout(syncSize, 0); $("iPur").hidden = false; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
 // Catalog sizes are for 24k bars and 21k coins. A new bar is always 24k. A saved bar that is not 24k keeps its karat and stays editable.
 const LGM = window.DHB_LEDGER;
 let sizes = LGM ? { bars: LGM.CATALOG_SNAPSHOT.bars, coins: LGM.CATALOG_SNAPSHOT.coins, live: false } : null, sizeWarn = false, autoKarat = false;
@@ -92,10 +92,10 @@ function syncMetal() {
 function syncSize() {
   syncMetal();
   const type = $("iType").value, k = $("iKarat"), box = $("iSizes"), silver = $("iMetal").value === "silver";
-  if (silver) { k.disabled = false; $("iPur").hidden = type !== "jewelry"; box.innerHTML = ""; return; }
+  if (silver) { k.disabled = false; $("iPur").hidden = false; box.innerHTML = ""; return; }
   const legacy = !!(editing && editSnap && editSnap.type === "bar" && Number(editSnap.karat) !== 24 && type === "bar");
   if (type === "bar" && !legacy) { k.value = "24"; k.disabled = true; autoKarat = true; } else { if (autoKarat) k.value = "21"; autoKarat = false; k.disabled = false; }
-  $("iPur").hidden = type !== "jewelry";
+  $("iPur").hidden = false;
   if (!sizes || (type !== "bar" && type !== "coin")) { box.innerHTML = ""; return; }
   const bar = type === "bar", list = bar ? sizes.bars.map((w) => ({ w, t: String(w) })) : sizes.coins.map((c) => ({ w: c.w, t: c.name + " (" + c.w + ")" }));
   const need = bar ? "24" : "21";
@@ -103,7 +103,7 @@ function syncSize() {
     '<div class="chips" role="group">' + list.map((c) => '<button type="button" class="chip" data-w="' + c.w + '">' + esc(c.t) + "</button>").join("") + "</div>" +
     (sizeWarn && k.value !== need ? '<p class="hint" role="alert">أحجام الكتالوج دي لعيار ' + need + ". العيار المختار عندك مختلف، فما اتطبقش حجم. غيّر العيار أو اكتب الوزن بنفسك.</p>" : "") +
     (sizes.live ? "" : '<p class="hint">الأحجام من قائمة محفوظة بتاريخ ' + esc(LGM.CATALOG_SNAPSHOT.asOf) + " لأن كتالوج المنتجات الحالي غير متاح الآن. اكتب الوزن بنفسك لو حجمك مختلف.</p>") + "</div>";
-  const cur = Number($("iGrams").value);
+  const cur = LGM ? LGM.parseNumber($("iGrams").value, "grams").value : Number($("iGrams").value);
   box.querySelectorAll(".chip").forEach((c) => c.setAttribute("aria-pressed", String(cur > 0 && Number(c.dataset.w) === cur)));
 }
 $("iSizes").onclick = (ev) => {
@@ -132,12 +132,12 @@ $("itemForm").onsubmit = (ev) => {
   const pur = (document.querySelector('input[name=iP]:checked') || {}).value;
   if (!(g > 0)) return show($("nMsg"), "اكتب الوزن بالجرام بصيغة صحيحة.", "err");
   if (!date) return show($("nMsg"), "اختر تاريخ الشراء.", "err");
-  if (type === "jewelry" && !pur) return show($("nMsg"), "اختر نية شراء المصوغات: زينة أو ادخار.", "err");
+  if (!pur) return show($("nMsg"), "اختر غرض الاقتناء: زينة أو ادخار / استثمار.", "err");
   const silver = $("iMetal").value === "silver";
   if (editBase0() && (editSnap.qty > 1 || editSnap.unitGrams) && !keepOld) return show($("nMsg"), "القطعة دي فيها كمية أو وزن وحدة. غيّر الوزن أو الكمية من «دهبي» عشان ما يتلخبطش الحساب.", "err");
   const changed = silver ? { label: $("iLabel").value.trim(), type, metal: "silver", fineness: Number($("iKarat").value), grams: g, purchaseDate: date } : { label: $("iLabel").value.trim(), type, karat: Number($("iKarat").value), grams: g, purchaseDate: date };
   const editId = editing, editBase = editSnap, newRec = { id: newId(), ...changed };
-  if (type === "jewelry") { changed.purpose = pur; newRec.purpose = pur; }
+  changed.purpose = pur; newRec.purpose = pur;
   // Edit: change only the fields this page owns on the newest copy of the row (keeps paid, stones, fees and anything unknown).
   const mutate = (list) => {
     const cur = Array.isArray(list) ? list : [];
@@ -145,7 +145,7 @@ $("itemForm").onsubmit = (ev) => {
     const now = cur.find((i) => i && i.id === editId);
     if (!now) throw Object.assign(new Error("gone"), { ar: "القطعة دي اتحذفت من مكان تاني. ما اتحفظش أي تعديل." });
     if (editBase && JSON.stringify(sortKeys(now)) !== JSON.stringify(sortKeys(editBase))) throw Object.assign(new Error("changed"), { ar: "القطعة دي اتغيّرت من مكان تاني بعد ما فتحتها. ما اتحفظش أي حاجة. حدّث الصفحة وراجع القيم وجرّب تاني." });
-    return { items: cur.map((i) => { if (!i || i.id !== editId) return i; const n = { ...i, ...changed }; if (type !== "jewelry") delete n.purpose; return n; }) };
+    return { items: cur.map((i) => { if (!i || i.id !== editId) return i; const n = { ...i, ...changed }; return n; }) };
   };
   const gn = gen;
   run($("iSave"), $("nMsg"), async () => { await persist(mutate, editId ? "تم تعديل القطعة." : "تمت إضافة القطعة."); resetForm(); });
@@ -156,7 +156,7 @@ $("list").onclick = (ev) => {
   if (b.dataset.act === "edit") {
     editing = id; editSnap = JSON.parse(JSON.stringify(it)); $("formTitle").textContent = "تعديل القطعة"; $("iCancel").hidden = false; $("iSave").textContent = "حفظ التعديل";
     $("iLabel").value = it.label || ""; $("iMetal").value = it.metal === "silver" ? "silver" : "gold"; syncMetal(); $("iMetal").disabled = true; $("iType").value = it.type; $("iKarat").value = String(it.metal === "silver" ? it.fineness : it.karat); $("iGrams").value = it.grams; $("iDate").value = it.purchaseDate;
-    $("iPur").hidden = it.type !== "jewelry"; sizeWarn = false; syncSize(); document.querySelectorAll("input[name=iP]").forEach((r) => (r.checked = r.value === it.purpose));
+    $("iPur").hidden = false; sizeWarn = false; syncSize(); document.querySelectorAll("input[name=iP]").forEach((r) => (r.checked = r.value === it.purpose));
     $("itemForm").scrollIntoView({ block: "center" });
   } else {
     const snap = JSON.parse(JSON.stringify(it));

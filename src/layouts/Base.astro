@@ -57,6 +57,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
 <script is:inline define:vars={{ B, DATA }}>window.DHB_BASE = B; window.DHB_DATA = DATA;</script>
 <slot name="config" />
 <script is:inline src={asset('js/quote-state.js')}></script>
+<script is:inline src={asset('js/number-fit.js')}></script>
 {/* Register all price consumers before starting the first asynchronous price fetch. */}
 {[...scripts.filter(s => s !== 'monitor'), ...scripts.filter(s => s === 'monitor')].map(s => <script is:inline src={asset('js/' + s + '.js')}></script>)}
 <script is:inline src={asset('js/hscroll.js')}></script>

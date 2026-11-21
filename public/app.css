@@ -552,3 +552,15 @@ body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(saf
 #h14[hidden]+#h14note{display:none}
 .silver-t{width:100%;border-collapse:collapse;margin:8px 0}.silver-t th,.silver-t td{padding:8px 6px;text-align:center;border-bottom:1px solid rgba(255,255,255,.12);font-size:15px}#silverCard h3{font-size:15px;margin:12px 0 4px;color:#e5c76b}
 .x-bigline{text-align:center;margin:6px 0}.x-bigline b{font-size:34px;color:#e5c76b}.x-bigline span{font-size:15px}#impIn{margin:8px 0;padding:0;list-style:none}#impIn li{padding:6px 0;border-bottom:1px solid rgba(255,255,255,.1);font-size:14px}
+
+/* Numeric values stay complete and on one line. number-fit.js shrinks the type to the circle's safe chord. */
+.x-ring .val,.x-ring .change-amount,.x-gauge-read>b,.hero-price>b,.home-market b,.ticker b{white-space:nowrap;overflow-wrap:normal;word-break:normal;direction:ltr;unicode-bidi:isolate}
+.x-ring .val{display:block;width:max-content;max-width:86%;flex-shrink:0}
+#heroChange>.change-amount{display:block;width:max-content;max-width:100%;white-space:nowrap;overflow-wrap:normal}
+.x-ring .chg{flex:0 0 auto;line-height:1.4}
+
+#walDiff,.x-donut-read b{white-space:nowrap;overflow-wrap:normal;word-break:normal;direction:ltr;unicode-bidi:isolate}
+#walDiff{width:max-content;max-width:74%}.x-donut-read b{max-width:70%}
+#heroChange .change-reference bdi{white-space:nowrap;display:inline-block}
+
+.x-livecalc b{direction:ltr;unicode-bidi:isolate;white-space:nowrap;overflow-wrap:normal}

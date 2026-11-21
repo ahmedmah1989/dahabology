@@ -1,4 +1,5 @@
 ﻿(function(){
+  var Q=typeof module!=='undefined'?require('./quote-state.js'):window.DHB_QUOTE;
   var OZ=31.1034768, K21=0.875, EVERY=5*60*1000, FC_REVIEWED="2026-11-11";
   var HBASE="https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@";
   var SERIES=null, M=null, HISTORY=null, liveSources=null, historyBusy=false;
@@ -19,9 +20,9 @@
   function cairoDay(now=Date.now()){return new Intl.DateTimeFormat('en-CA',{timeZone:'Africa/Cairo',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(now));}
   function freshQuote(q,age,now){const t=Date.parse(q&&q.sourceTime);return q&&q.status==='available'&&Number.isFinite(q.sell)&&q.sell>0&&Number.isFinite(t)&&now-t<=age&&t-now<=120000;}
   function todayPoint(s,now=Date.now()){
-    const g=s&&s.gold,b=s&&s.misr,today=cairoDay(now);
+    const g=s&&s.gold,b=Q.reference(s,now),today=cairoDay(now);
     if(!freshQuote(g,300000,now)||cairoDay(Date.parse(g.sourceTime))!==today)return null;
-    return {d:today,usd:g.sell,egp:freshQuote(b,86400000,now)?g.sell*b.sell:null,sourceTime:g.sourceTime,provisional:true};
+    return {d:today,usd:g.sell,egp:b?g.sell*b.sell:null,fxDate:b?.quoteDate,fxSource:b?'CBE daily reference':null,sourceTime:g.sourceTime,provisional:true};
   }
   function withToday(history,s,now=Date.now()){
     const today=cairoDay(now),points=history.filter(p=>!p.provisional&&p.d<today).map(p=>({...p})),point=todayPoint(s,now);
@@ -103,7 +104,7 @@
       tr.appendChild(cell(fmt(f(p))+" ج")); tr.appendChild(cell(sg(b),b>=0?"up":"dn"));
       tb.appendChild(tr);
     });
-    $("perNote").textContent="المقارنة تنتهي بآخر قراءة متاحة ("+L.d+"): الأونصة "+fmt(L.usd)+" دولار، وعيار 21 بالقيمة العالمية "+fmt(f(L))+" جنيه. عمود عيار 21 بيشمل أثر تغير الدولار.";
+    $("perNote").textContent="المقارنة تنتهي بآخر قراءة متاحة ("+L.d+"): الأونصة "+fmt(L.usd)+" دولار، وعيار 21 بالقيمة العالمية "+fmt(f(L))+" جنيه. عمود عيار 21 بيشمل أثر تغير الدولار. التاريخي من سلسلة يومية؛ قراءة اليوم فقط بمرجع المركزي "+(L.fxDate||'غير متاح')+"، مش سلسلة تاريخية للمركزي.";
 
     $("iA50").textContent=m.sma50===null?'غير متاح — أقل من 50 قراءة':fmt(m.sma50)+" دولار ("+(L.usd>m.sma50?"السعر فوقه":"السعر تحته")+")";
     $("iA200").textContent=m.sma200===null?'غير متاح — أقل من 200 قراءة':fmt(m.sma200)+" دولار ("+(L.usd>m.sma200?"السعر فوقه":"السعر تحته")+")";
@@ -165,7 +166,7 @@
       lines.forEach(function(t,i){var d=document.createElement("div"); if(i===0) d.className="v"; d.textContent=t; li.appendChild(d)});
       var s=document.createElement("span"); s.className="ev"; s.textContent=src; li.appendChild(s); box.appendChild(li);
     }
-    var basis='الأونصة المستخدمة '+fmt(oz)+' دولار، والدولار '+fmt(usd,2)+' جنيه. '+(num($("oz").value)>0&&num($("usd").value)>0?'آخر قراءات صالحة من بطاقات السوق؛ راجع حالة تزامنها.':'مرجع يومي '+M.last.d+'، وسعر صرف ضمني من نفس السلسلة؛ ليس سعر البنك الحالي.')+' السعر المحوّل ليس سعر منتج محلي نهائي.';
+    var basis='الأونصة المستخدمة '+fmt(oz)+' دولار، والدولار '+fmt(usd,2)+' جنيه. '+(num($("oz").value)>0&&num($("usd").value)>0?'مرجع بيع متوسط سوق المركزي بتاريخ '+(Q.reference(liveSources)?.quoteDate||'غير متاح')+'؛ ليس سعر صرف لحظيًا. الأونصة والذهب بأوقاتهما.':'مرجع يومي '+M.last.d+'، وسعر صرف ضمني من نفس السلسلة؛ ليس سعر البنك الحالي.')+' السعر المحوّل ليس سعر منتج محلي نهائي.';
     if(sm!==null)item("1) سيناريو تذبذب لشهر — ليس توقعًا مضمونًا",
       ["القيمة العالمية المحوّلة لجرام 21 بين "+fmt(k21(a1,usd))+" و"+fmt(k21(b1,usd))+" جنيه (الأونصة "+fmt(a1)+"–"+fmt(b1)+" $)",
        "نطاق ±انحراف معياري للعوائد اللوغاريتمية، بصفر انجراف وثبات الدولار والتذبذب؛ ليس احتمالًا مُعايرًا لنتيجة السوق. نطاق ±انحرافين: "+fmt(k21(a2,usd))+"–"+fmt(k21(b2,usd))+" جنيه."],basis);
@@ -220,17 +221,17 @@
 
   if(typeof module !== 'undefined') {module.exports={metrics:metrics,asOf:asOf,rollMean:rollMean,nextWeekday:nextWeekday,todayPoint:todayPoint,withToday:withToday,cairoDay:cairoDay,readingLabels:readingLabels};return;}
   window.addEventListener('gold-board-updated',function(event){
-    var s=event.detail.sources, g=s.gold, b=s.misr, a=s.isagha;liveSources=s;
-    var ready=event.detail.quality.usable;
-    $("oz").value=ready?g.sell:'';
-    $("usd").value=ready?b.sell:'';
-    $("loc").value=ready?a['21'].sell:'';
+    var s=event.detail.sources, g=s.gold, b=Q.reference(s), a=s.isagha;liveSources=s;
+    $("oz").value=Q.assess(g).usable?g.sell:'';
+    $("usd").value=b?b.sell:'';
+    $("loc").value=Q.assess(a).usable?a['21'].sell:'';
     $("bud").value=($('budget').value||'');
     applyAnalysis();
   });
 
   function applyAnalysis(){
     var labels=readingLabels(HISTORY,liveSources),point=labels.point,base=labels.base;
+    const fx=Q.reference(liveSources);$('analysisFxBasis').textContent=fx?'التحويل الحالي للجنيه: مرجع بيع متوسط سوق المركزي '+fx.quoteDate+'، مش سعر صرف لحظي. التاريخي من سلسلة صرف يومية منفصلة.':'التحويل الحالي للجنيه غير متاح؛ لا نستخدم بنكًا بديلاً تلقائيًا. التاريخي من سلسلة صرف يومية منفصلة.';
     $('analysisDate').textContent='تحليل اليوم • '+new Date().toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',weekday:'long',day:'numeric',month:'long',year:'numeric'});
     $('analysisNow').textContent=point?fmt(point.usd,2)+' $':'—';
     $('analysisDayState').textContent=labels.state;
@@ -240,7 +241,7 @@
     var delta=point&&base?(point.usd/base.usd-1)*100:null;
     $('analysisMove').textContent=delta===null?'—':sg(delta,2);
     $('analysisMoveLabel').textContent=base?'عن القراءة اليومية '+base.d:'انتظار السجل اليومي';
-    $('analysisBasis').textContent=point?'النقطة والخط الأصفر المتقطع يحددان مستوى آخر قراءة خلال اليوم، لا مسار حركة اليوم. المتوسطات تشمل القراءة بشكل مبدئي؛ التذبذب يُحسب من القراءات اليومية السابقة فقط.':'الرسم التاريخي يظل متاحًا للفهم، ولا يُقدّم كسعر اليوم.';
+    $('analysisBasis').textContent=point?'النقطة والخط الأصفر المتقطع يحددان مستوى آخر قراءة خلال اليوم، لا مسار حركة اليوم. التحويل الحالي للجنيه بمرجع المركزي '+(point.fxDate||'غير المتاح')+'، بينما التاريخي من سلسلة أسعار الصرف اليومية، وليس سجلًا للمركزي. المتوسطات الدولارية مبدئية؛ التذبذب من القراءات اليومية السابقة فقط.':'الرسم التاريخي يظل متاحًا للفهم، ولا يُقدّم كسعر اليوم.';
     if(!HISTORY){render();return;}
     SERIES=withToday(HISTORY,liveSources);
     if(!SERIES.length){$('chart').textContent='القراءات غير متاحة حاليًا.';render();return;}

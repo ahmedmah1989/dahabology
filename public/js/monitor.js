@@ -1,6 +1,7 @@
 ﻿(function () {
   'use strict';
   const OUNCE = 31.1034768;
+  const Q = typeof module !== 'undefined' ? require('./quote-state.js') : window.DHB_QUOTE;
   const validTime=v=>typeof v==='string'&&/T.*(?:Z|[+-]\d{2}:\d{2})$/.test(v)&&Number.isFinite(Date.parse(v));
   function calculate(ounce, bankSell, local24, local21) {
     if (![ounce, bankSell, local24].every(x => Number.isFinite(x) && x > 0)) return null;
@@ -31,14 +32,11 @@
     return { value, parts, maxAgeHours: MAXAGE_H };
   }
   function assess(sources, now = Date.now()) {
-    const quotes = [sources?.isagha, sources?.misr, sources?.gold];
-    const times = quotes.map(q => validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN);
-    if (quotes.some(q => q?.status !== 'available') || times.some(t => !Number.isFinite(t))) return {usable:false, fresh:false, reason:'المقارنة غير متاحة حاليًا.'};
-    if (![sources.isagha?.['24']?.sell,sources.isagha?.['21']?.sell,sources.misr?.sell,sources.gold?.sell].every(v=>Number.isFinite(v)&&v>0)) return {usable:false,fresh:false,reason:'إحدى قيم الأسعار غير صالحة؛ المقارنة معلقة.'};
-    if (times.some(t => t > now + 120000)) return {usable:false, fresh:false, reason:'المقارنة معلقة لحين التحقق.'};
-    if (times.some(t => now-t > 24*3600000)) return {usable:false, fresh:false, reason:'إحدى القراءات تجاوزت 24 ساعة؛ المقارنة معلقة حتى يصل سعر أحدث.'};
-    const fresh = times.every(t => now-t <= 300000) && Math.max(...times)-Math.min(...times) <= 300000;
-    return {usable:true, fresh, reason:'الحساب قبل رسوم المنتج النهائي.'};
+    const fx = Q.reference(sources,now);
+    if (!fx) return {usable:false,fresh:false,reason:'المقارنة معلّقة: مرجع المركزي المؤرّخ غير متاح أو أقدم من 10 أيام. لا نستخدم بنكًا بديلاً تلقائيًا.'};
+    if (!quoteUsable(sources?.isagha,now)||!quoteUsable(sources?.gold,now)) return {usable:false,fresh:false,reason:'المقارنة معلّقة: سعر الذهب المحلي أو الأونصة غير متاح أو أقدم من 24 ساعة.'};
+    if (![sources.isagha?.['24']?.sell,sources.isagha?.['21']?.sell,sources.gold?.sell].every(v=>Number.isFinite(v)&&v>0)) return {usable:false,fresh:false,reason:'إحدى قيم الأسعار غير صالحة؛ المقارنة معلقة.'};
+    return {usable:true,fresh:false,reference:fx,reason:'مقارنة مرجعية بسعر بيع متوسط سوق المركزي بتاريخ '+fx.quoteDate+'، وليست سعر صرف لحظيًا أو للتنفيذ. لا وقت نشر يومي متاح؛ حد العرض 10 أيام، وليس ضمان حداثة.'};
   }
   function quoteUsableAt(q,now){return quoteUsable(q,now);}
   function quoteUsable(q,now=Date.now()) {const t=validTime(q?.sourceTime)?Date.parse(q.sourceTime):NaN;return q?.status==='available' && Number.isFinite(t) && t<=now+120000 && now-t<=86400000;}
@@ -63,10 +61,11 @@
     return tr;
   }
   function render() {
-    const a=state.sources.isagha,b=state.sources.misr,g=state.sources.gold;
+    const a=state.sources.isagha,b=Q.reference(state.sources),g=state.sources.gold;
     cardPrice('price24',a,a?.['24']?.sell,'جنيه / جرام');
     cardPrice('price21',a,a?.['21']?.sell,'جنيه / جرام');
-    cardPrice('priceBank',b,b?.sell,'جنيه / دولار');{const o=window.DHB_QUOTE&&window.DHB_QUOTE.official(state.sources.cbe);if($('bankLabel'))$('bankLabel').textContent=o?o.label:'الدولار في البنك';if(o){const e=$('priceBank');e.replaceChildren(document.createTextNode(o.value));const sm=document.createElement('small');sm.className='price-unit';sm.textContent='جنيه / دولار';e.appendChild(sm);}}
+    $('bankLabel').textContent='الدولار بالمركزي';
+    $('priceBank').textContent=b?b.value+' جنيه / دولار':'غير متاح';
     cardPrice('priceOunce',g,g?.sell,'دولار / أونصة');
     const quality=assess(state.sources);
     const result=quality.usable?calculate(g.sell,b.sell,a['24'].sell,a['21'].sell):null;
@@ -81,9 +80,10 @@
       $('impWhy').textContent = Number.isFinite(st.value) ? 'محسوب من القراءتين فوق فقط، وكلتاهما أحدث من ' + st.maxAgeHours + ' ساعة. مش بيستخدم سعر البنك، فبيظهر حتى لو سعر البنك قديم. المواقع بتختلف: بعضها بيحسبه بسعر البيع وبعضها بسعر الشراء، والحساب هنا بسعر البيع.' : 'مش بنحسبه لأن ' + st.parts.filter(x => !x.ok).map(x => x.label + ' ' + x.why).join(' و') + '. بنحسبه بس لو القراءتين أحدث من ' + st.maxAgeHours + ' ساعة. سعر البنك مش شرط.';
     }
     $('gapMeaning').textContent=result?(result.gapEGP>=0?'علاوة محلية فوق القيمة العالمية':'خصم محلي عن القيمة العالمية'):'انتظار بيانات صالحة للمقارنة — لا يلزم إدخال أسعار.';
-    $('qualityBadge').textContent=result?'نتيجة المقارنة':'المقارنة معلقة';
+    $('qualityBadge').textContent=result?'مقارنة مرجعية مؤرّخة':'المقارنة معلقة';
     $('qualityBadge').className='badge'+(result&&quality.fresh?' good':'');
-    $('qualityText').textContent=result?'المقارنة محسوبة بسعر بيع بنك مصر وقت قراءته، وهو أحدث من 24 ساعة.':quality.reason;
+    $('qualityText').textContent=quality.reason;
+    $('referenceBasis').textContent=result?'مقارنة مرجعية بسعر بيع متوسط سوق المركزي بتاريخ '+b.quoteDate+'، مش سعر صرف لحظي.':quality.reason;
     $('fetchStatus').textContent=(state.busy?'تحميل الأسعار… • ':'')+window.DHB_QUOTE.connection(state.transport);
     if (!state.dealerEdited) $('dealer').value=usable(a)?a['21'].sell:'';
     calculator();

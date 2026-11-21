@@ -206,7 +206,7 @@
     x.textAlign = 'center'; x.fillStyle = '#d8e3f0'; x.font = F(600, 36);
     x.font=F(500,23);
     const extras=[];
-    if(usable(s.misr)&&Number.isFinite(s.misr.sell))extras.push('دولار البنك '+nf(s.misr.sell)+' • '+window.DHB_QUOTE.when(s.misr.sourceTime)+' القاهرة');
+    {const fx=window.DHB_QUOTE.reference(s);if(fx)extras.push('المركزي (مرجع بيع مؤرّخ) '+nf(fx.sell)+' • '+fx.quoteDate);}
     if(usable(s.gold)&&Number.isFinite(s.gold.sell))extras.push('الأونصة '+nf(s.gold.sell)+' $ • '+window.DHB_QUOTE.when(s.gold.sourceTime)+' القاهرة');
     extras.forEach((text,i)=>x.fillText(text,540,1080+i*32));
     x.fillStyle='#e7bf67';x.font=F(600,25);
