@@ -9,6 +9,10 @@ const asset = p => B + p + '?v=' + ASSET_VERSION;
     <img src={asset('assets/tut-welcome-160.webp')} alt="" width="56" height="56" />
     <span>اسأل توت</span>
   </button>
+  <aside id="helpHint" class="help-hint" hidden aria-label="تلميح المساعد">
+    <button id="helpHintOpen" type="button">أنا توت، مساعدك الذكي. اسألني</button>
+    <button id="helpHintDismiss" type="button" aria-label="إخفاء تلميحات المساعد">×</button>
+  </aside>
   <dialog id="helpDialog" aria-labelledby="helpTitle" aria-describedby="helpPrivacy">
     <header class="help-head"><img src={asset('assets/tut-welcome-160.webp')} alt="" width="44" height="44" /><div><h2 id="helpTitle">مساعد دهبولوجي</h2><small>دليل متخصص على جهازك، مش ChatGPT</small></div><button id="helpClose" type="button" aria-label="إغلاق المساعد">×</button></header>
     <p id="helpPrivacy">لا أقرأ حسابك أو ممتلكاتك ولا أرسل أسئلتك لخدمة ذكاء اصطناعي. بدون حفظ تلقائي.</p>
@@ -22,3 +26,4 @@ const asset = p => B + p + '?v=' + ASSET_VERSION;
 </div>
 <script is:inline src={asset('js/assistant-help.js')}></script>
 <script is:inline src={asset('js/assistant-ui.js')}></script>
+<script is:inline src={asset('js/assistant-hints.js')}></script>
