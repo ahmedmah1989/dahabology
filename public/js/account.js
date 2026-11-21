@@ -200,11 +200,13 @@ export async function commitWithRetry({ load, save, mutate, attempts = 4 }) {
   for (let n = 0; n < attempts; n++) {
     const cur = await load();
     const d = cur && cur.data;
-    const r = mutate(d && d.items, d && d.invoices);
+    const r = mutate(d && d.items, d && d.invoices, d && d.silver);
     if (!r.items) return r;
     // Other keys of the document (invoice records, anything newer) are carried over untouched; a writer may replace `invoices` by returning it.
     const doc = Object.assign({}, d && typeof d === "object" ? d : {}, { v: (d && d.v) || 1, items: r.items });
     if (r.invoices) doc.invoices = r.invoices;
+    // Silver pieces live under their own key so a cached older page, which only reads and writes `items`, can neither misread nor drop them.
+    if (r.silver) doc.silver = r.silver;
     try { await save(doc, cur && cur.version, r.imageOps); return r; }
     catch (e) { if (!e || e.code !== "CONFLICT") throw e; }
   }

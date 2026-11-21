@@ -2,7 +2,8 @@
 // The products board, opened on one product. Used by /products/ and by /products/<id>/.
 import Base from '../layouts/Base.astro';
 import html from '../panels/products.html?raw';
-import { panel, productSpec } from '../lib/site.js';
+import silverHtml from '../panels/silver-products.html?raw';
+import { panel, productSpec, B } from '../lib/site.js';
 const { product, index = false } = Astro.props;
 const swap = (s, a, b) => { if (!s.includes(a)) throw new Error('products panel changed: ' + a); return s.replace(a, b); };
 let body = panel(html, 'products');
@@ -20,4 +21,5 @@ const description = index
 <Base page="products" path={index ? 'products/' : `products/${product.id}/`} scripts={['comparison', 'services']} title={title} description={description}>
   <script slot="config" is:inline define:vars={{ id: product.id }}>window.DHB_PRODUCT = id;</script>
   <Fragment set:html={body} />
+  <Fragment set:html={silverHtml.replace('{{B}}', B)} />
 </Base>

@@ -65,12 +65,16 @@ function render() {
 }
 async function loadItems() {
   const g = gen, uid = A.currentUser()?.uid;
-  try { const d = await A.loadDoc("gold/items"); if (g !== gen || uid !== A.currentUser()?.uid) return; items = d?.items || []; render(); }
+  try { const d = await A.loadDoc("gold/items"); if (g !== gen || uid !== A.currentUser()?.uid) return; items = (d?.items || []).concat(Array.isArray(d?.silver) ? d.silver : []); render(); }
   catch (e) { if (g !== gen) return; loadedFor = null; show($("nMsg"), e.ar, "err"); }
 }
 // Every change goes through the versioned list update: it re-reads the newest list, applies only this change, and refuses (nothing saved)
 // if it cannot do so safely. `items` is replaced by the saved list, so rows another tab changed are kept.
-async function persist(mutate, okText) { const g = gen, uid = A.currentUser()?.uid; const r = await A.updateGoldItems(mutate, uid); if (g !== gen) return; items = r.items; show($("nMsg"), okText, "ok"); render(); }
+const isSilver = (i) => !!i && i.metal === "silver";
+// The page works on one combined list; on save, gold rows go back under `items` untouched and silver rows under `silver`.
+async function persist(mutate, okText) { const g = gen, uid = A.currentUser()?.uid;
+  const split = (gold, _inv, silver) => { const all = (Array.isArray(gold) ? gold : []).concat(Array.isArray(silver) ? silver : []); const r = mutate(all); if (!r || !r.items) return r; return { ...r, all: r.items, items: r.items.filter((i) => !isSilver(i)), silver: r.items.filter(isSilver) }; };
+  const r = await A.updateGoldItems(split, uid); if (g !== gen) return; items = r.all || r.items; show($("nMsg"), okText, "ok"); render(); }
 function resetForm() { editing = null; editSnap = null; $("itemForm").reset(); $("iMetal").disabled = false; metalShown = "gold"; $("iKarat").innerHTML = "<option>24</option><option selected>21</option><option>22</option><option>18</option>"; $("iKaratLbl").textContent = "العيار"; setTimeout(syncSize, 0); $("iPur").hidden = true; $("formTitle").textContent = "إضافة قطعة"; $("iCancel").hidden = true; $("iSave").textContent = "حفظ القطعة"; }
 // Catalog sizes are for 24k bars and 21k coins. A new bar is always 24k. A saved bar that is not 24k keeps its karat and stays editable.
 const LGM = window.DHB_LEDGER;

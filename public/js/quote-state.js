@@ -37,7 +37,7 @@ function official(q,now=Date.now()){
  // Never a future date. Too old (more than 10 days, enough for a long holiday) is not shown as the current official rate.
  if(!Number.isFinite(t)||new Date(t).getUTCMonth()!==+m[2]-1||days<0||days>10)return null;
  const d=new Date(t).toLocaleDateString('ar-EG-u-nu-latn',{timeZone:'UTC',weekday:'long',day:'numeric',month:'long',year:'numeric'});
- return {value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'متوسط الدولار بالمركزي',text:'سعر البيع، '+d};
+ return {value:v.toLocaleString('en-US',{maximumFractionDigits:2}),label:'الدولار بالمركزي',text:'متوسط سوق، سعر البيع، '+d};
 }
 const api={assess,when,describe,connection,lastPublished,official};
 if(typeof module!=='undefined')module.exports=api;

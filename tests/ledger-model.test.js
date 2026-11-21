@@ -291,3 +291,17 @@ t2('pruneInvoices drops an invoice record only when no row uses it', () => {
   assert2.deepEqual(LM.pruneInvoices([{ id: '1', invoiceId: 'A' }], [{ id: 'A' }, { id: 'B' }]), [{ id: 'A' }]);
   assert2.deepEqual(LM.pruneInvoices([], [{ id: 'A' }]), []);
 });
+
+test('silver rows under their own key survive a write by an older page that only knows items and invoices', async () => {
+  const { commitWithRetry } = await import('../public/js/account.js');
+  const silver = [{ id: 's1', type: 'bar', metal: 'silver', fineness: 925, grams: 31.1, purchaseDate: '2026-01-01', extra: 'keep' }];
+  let doc = { v: 1, items: [{ id: 'g1', type: 'bar', karat: 21, grams: 5 }], silver: JSON.parse(JSON.stringify(silver)) }, saved = null;
+  // An older page: reads items only, replaces items only.
+  await commitWithRetry({ load: async () => ({ data: doc, version: 1 }), save: async (d) => { saved = d; }, mutate: it => ({ items: it.concat({ id: 'g2', type: 'bar', karat: 24, grams: 1 }) }) });
+  assert.deepEqual(saved.silver, silver);
+  assert.equal(saved.items.length, 2);
+  // A newer page replacing silver leaves gold items byte-identical.
+  doc = saved;
+  await commitWithRetry({ load: async () => ({ data: doc, version: 2 }), save: async (d) => { saved = d; }, mutate: (it, _i, sv) => ({ items: it, silver: sv.map(r => ({ ...r, grams: 40 })) }) });
+  assert.equal(saved.silver[0].grams, 40); assert.equal(saved.silver[0].extra, 'keep'); assert.deepEqual(saved.items, doc.items);
+});

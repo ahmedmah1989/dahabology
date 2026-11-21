@@ -32,7 +32,7 @@
         const t = document.createElement('table'); t.className = 'silver-t';
         const h = t.insertRow(); ['العيار', 'شراء (جنيه/جرام)', 'بيع (جنيه/جرام)'].forEach(x => { const c = document.createElement('th'); c.textContent = x; h.append(c); });
         lc.rows.forEach(r => { const tr = t.insertRow(); [r.grade, nf(r.buy), nf(r.sell)].forEach(x => tr.insertCell().textContent = x); });
-        const n = document.createElement('p'); n.className = 'x-note'; n.textContent = 'تاجر محلي واحد (آي صاغة) • ' + when(lc.sourceTime) + ' (القاهرة) • بدون مصنعية';
+        const n = document.createElement('p'); n.className = 'x-note'; n.textContent = 'تاجر محلي واحد (آي صاغة) • ' + when(lc.sourceTime) + ' (القاهرة) • بدون مصنعية • وحدة الجرام مستنتجة';
         const d = document.createElement('details'); d.className = 'x-more'; const sm = document.createElement('summary'); sm.textContent = 'تفاصيل المصدر'; const dp = document.createElement('p'); dp.className = 'x-note'; dp.textContent = 'الوحدة (جرام) غير مكتوبة في صفحة المصدر، واتقارنت بصف الجنيه الفضة في نفس الصفحة. ده سعر مصدر واحد فقط.'; d.append(sm, dp); n.append(d);
         l.append(t, n);
       } else l.textContent = local && local.status === 'available' ? 'آخر سعر محلي للفضة أقدم من 24 ساعة أو غير صالح، فمش معروض كسعر حالي.' : local ? 'سعر الفضة المحلي غير متاح الآن. مش هنحوّل السعر العالمي ونسميه سعر محلي.' : 'سعر الفضة في السوق المصري لسه مش في ملف الأسعار، فمش هنحوّل السعر العالمي ونسميه سعر محلي.';
