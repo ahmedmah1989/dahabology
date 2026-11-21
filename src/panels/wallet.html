@@ -16,13 +16,13 @@
 <h3 style="margin:14px 0 8px;font-size:16px;color:var(--x-gold-hot)">١. الفاتورة (كلها)</h3>
 <div class="date" role="group" aria-label="تاريخ الشراء"><div><span class="lab" style="min-height:0">يوم</span><input class="in" id="walDD" inputmode="numeric" maxlength="2" placeholder="يوم" autocomplete="off"></div><div><span class="lab" style="min-height:0">شهر</span><input class="in" id="walMM" inputmode="numeric" maxlength="2" placeholder="شهر" autocomplete="off"></div><div><span class="lab" style="min-height:0">سنة</span><input class="in" id="walYY" inputmode="numeric" maxlength="4" placeholder="سنة" autocomplete="off"></div>
 <label class="cal" aria-label="اختر التاريخ من التقويم"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><input type="date" id="walCal"></label></div>
-<label class="lab" style="margin-top:10px">وصف (اختياري)<input class="in" id="walNoteIn" maxlength="40" placeholder="مثال: جنيه ذهب" autocomplete="off" style="direction:rtl;font-size:16px"></label>
+<label class="lab" id="walNoteWrap" style="margin-top:10px">وصف (اختياري)<input class="in" id="walNoteIn" maxlength="40" placeholder="مثال: جنيه ذهب" autocomplete="off" style="direction:rtl;font-size:16px"></label>
 <details class="d" id="invTax"><summary><span>ضريبة الفاتورة (اختياري)</span><small id="taxSum">غير معروفة</small></summary><div>
 <div class="sg" id="taxMode" role="group" aria-label="ضريبة الفاتورة"><button type="button" data-m="unknown" aria-pressed="true">مش عارف</button><button type="button" data-m="none" aria-pressed="false">بدون ضريبة</button><button type="button" data-m="has" aria-pressed="false">فيها ضريبة</button></div>
 <div id="taxF" hidden><div class="fr"><label class="lab" for="t_pre">قبل الضريبة (جنيه)</label><div><input class="in" id="t_pre" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_vat">الضريبة (جنيه)</label><div><input class="in" id="t_vat" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_post">بعد الضريبة (جنيه)</label><div><input class="in" id="t_post" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div>
 <p class="hint" id="calcNote"></p><button type="button" class="helper" id="h14" hidden>احسب ١٤٪ من «قبل الضريبة» زي فاتورتي</button>
 <p class="hint" id="taxMsg">اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.</p></div></div></details>
-<h3 style="margin:14px 0 4px;font-size:16px;color:var(--x-gold-hot)">٢. القطع</h3><p class="phint">اكتب اللي دفعته في كل قطعة لوحدها.</p>
+<div id="invLines"><h3 style="margin:14px 0 4px;font-size:16px;color:var(--x-gold-hot)">٢. القطع</h3><p class="phint">اكتب اللي دفعته في كل قطعة لوحدها.</p></div>
 <div id="invRows"></div>
 <div id="invAddWrap"><button type="button" class="add" id="invAdd">+ قطعة تانية من نفس الفاتورة</button></div>
 <div class="sum" id="sum" aria-live="polite"></div>

@@ -271,3 +271,23 @@ t2('stones details are kept only for lines with stones and must be lighter than 
   const wo = LM.buildInvoice(baseInv, [Object.assign({}, coinLine, { basis: 'net', stoneG: '1', promise: 'full' })]).rows[0];
   assert2.ok(!('basis' in wo) && !('stoneG' in wo) && !('promise' in wo));
 });
+t2('invoice meta: figures stored once, calculated third kept, bad figures refused', () => {
+  assert2.deepEqual(LM.buildInvoiceMeta({ id: 'a', mode: 'has', sub: '100', vat: '14' }).invoice, { id: 'a', vatMode: 'has', subtotal: 100, vat: 14, total: 114 });
+  assert2.deepEqual(LM.buildInvoiceMeta({ id: 'a', mode: 'none', sub: '5' }).invoice, { id: 'a', vatMode: 'none' });
+  assert2.ok(LM.buildInvoiceMeta({ id: 'a', mode: 'has', sub: '1x', vat: '2' }).error);
+  assert2.ok(LM.buildInvoiceMeta({ id: 'a', mode: 'has', sub: '500', total: '100' }).error);
+  assert2.ok(LM.buildInvoiceMeta({ id: 'a', mode: 'zzz' }).error);
+});
+t2('invoice edit changes the record and only the date on that invoice rows; siblings of other invoices are untouched', () => {
+  const items = [{ id: '1', invoiceId: 'A', purchaseDate: '2026-01-01', paid: 10, making: 5 }, { id: '2', invoiceId: 'A', purchaseDate: '2026-01-01', paid: 20 }, { id: '3', invoiceId: 'B', purchaseDate: '2026-01-01', paid: 30 }, { id: '4', purchaseDate: '2026-01-01' }];
+  const invs = [{ id: 'A', vatMode: 'unknown' }, { id: 'B', vatMode: 'none' }];
+  const r = LM.applyInvoiceEdit(items, invs, { id: 'A', vatMode: 'has', subtotal: 1, vat: 0.14, total: 1.14 }, '2026-02-02');
+  assert2.deepEqual(r.items.map(x => x.purchaseDate), ['2026-02-02', '2026-02-02', '2026-01-01', '2026-01-01']);
+  assert2.equal(r.items[0].paid, 10); assert2.equal(r.items[0].making, 5);
+  assert2.deepEqual(r.items.slice(2), items.slice(2)); assert2.equal(r.invoices[0].vatMode, 'has'); assert2.deepEqual(r.invoices[1], invs[1]);
+  assert2.equal(LM.applyInvoiceEdit(items, [], { id: 'A', vatMode: 'none' }, '2026-02-02').invoices.length, 1);
+});
+t2('pruneInvoices drops an invoice record only when no row uses it', () => {
+  assert2.deepEqual(LM.pruneInvoices([{ id: '1', invoiceId: 'A' }], [{ id: 'A' }, { id: 'B' }]), [{ id: 'A' }]);
+  assert2.deepEqual(LM.pruneInvoices([], [{ id: 'A' }]), []);
+});

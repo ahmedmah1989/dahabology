@@ -248,11 +248,28 @@
       rows.push(rec);
     });
     if (errs.length) return { error: errs };
-    const f = invoiceFigures(inv.mode || 'unknown', optionalNum(inv.sub, 'money').value, optionalNum(inv.vat, 'money').value, optionalNum(inv.total, 'money').value);
-    const meta = { id: String(inv.id), vatMode: inv.mode || 'unknown' };
-    if (f.mode === 'has') { ['sub:subtotal', 'vat:vat', 'total:total'].forEach(p => { const [k, n] = p.split(':'); if (f[k] !== undefined) meta[n] = f[k] / 100; }); }
-    return { rows, invoice: meta };
+    const m = buildInvoiceMeta(inv); if (m.error) return m;
+    return { rows, invoice: m.invoice };
   }
+  // Invoice-level record only: id, tax mode and the figures that were given or calculated (in pounds). Unknown stores no figures.
+  function buildInvoiceMeta(inv) {
+    const mode = inv.mode || 'unknown'; if (!['unknown', 'none', 'has'].includes(mode)) return { error: ['mode'] };
+    const raw = ['sub', 'vat', 'total'].map(k => optionalNum(inv[k], 'money'));
+    if (raw.some(r => r.error)) return { error: ['figures'] };
+    const f = invoiceFigures(mode, raw[0].value, raw[1].value, raw[2].value);
+    if (f.negative) return { error: ['figures'] };
+    const meta = { id: String(inv.id), vatMode: mode };
+    if (f.mode === 'has') { ['sub:subtotal', 'vat:vat', 'total:total'].forEach(p => { const [k, n] = p.split(':'); if (f[k] !== undefined) meta[n] = f[k] / 100; }); }
+    return { invoice: meta };
+  }
+  // Change one invoice: replace its record (or add it) and set the purchase date on its rows only. Nothing else on any row changes.
+  function applyInvoiceEdit(existingItems, existingInvoices, meta, date) {
+    const items = (Array.isArray(existingItems) ? existingItems : []).map(r => (r && r.invoiceId === meta.id && r.purchaseDate !== date ? Object.assign({}, r, { purchaseDate: date }) : r));
+    const invs = Array.isArray(existingInvoices) ? existingInvoices : [];
+    return { items, invoices: invs.some(x => x && x.id === meta.id) ? invs.map(x => (x && x.id === meta.id ? meta : x)) : invs.concat(meta) };
+  }
+  // After a row is removed: an invoice record with no rows left is removed too, so no orphan figures stay behind.
+  const pruneInvoices = (items, invoices) => { const used = new Set((Array.isArray(items) ? items : []).map(r => r && r.invoiceId).filter(Boolean)); return (Array.isArray(invoices) ? invoices : []).filter(x => x && used.has(x.id)); };
   // Append rows and the invoice record in one list change. Same ids already there are kept as they are (retry safe).
   // The doc keeps its list under `items`; invoice records live next to it under `invoices` and are handed back separately so the writer keeps both.
   function mergeInvoice(existingItems, existingInvoices, built) {
@@ -264,6 +281,6 @@
   // Display helpers for rows (old rows have no qty and read exactly as before).
   const qtyOf = r => (Number.isInteger(r && r.qty) && r.qty > 1 ? r.qty : 1);
   const unitGramsOf = r => (qtyOf(r) > 1 && finite(r.unitGrams) ? r.unitGrams : (r && r.grams));
-  const api = { readQty, composeWeight, gramsOfMg, totalMg, BAR_PRESETS, invoiceFigures, reconcile, buildInvoice, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  const api = { readQty, composeWeight, gramsOfMg, totalMg, BAR_PRESETS, invoiceFigures, reconcile, buildInvoice, buildInvoiceMeta, applyInvoiceEdit, pruneInvoices, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();

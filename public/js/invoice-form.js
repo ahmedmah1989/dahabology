@@ -9,9 +9,9 @@
   const fg = n => (Number.isFinite(n) ? n.toLocaleString('en-US', { maximumFractionDigits: 3 }) : '—');
   const cents = p => (p / 100).toFixed(2);
   const money = v => { const r = LG.parseNumber(v, 'money'); return r.value === undefined ? NaN : r.value; };
-  const newRow = () => ({ type: '', k: '21', gw: '', gf: '', p: '', s: '', mk: '', st: '', mkN: false, stN: false, mso: false, qty: '1', pp: '', basis: '', stoneG: '', promise: false });
-  let rows, mode, tax, calc, edit; // tax: {pre, vat, post}; calc: which of the three is a calculated value
-  const reset = () => { rows = [newRow()]; mode = 'unknown'; tax = { pre: '', vat: '', post: '' }; calc = {}; edit = null; $('walDD').value = ''; $('walMM').value = ''; $('walYY').value = ''; $('walNoteIn') && ($('walNoteIn').value = ''); };
+  const newRow = () => ({ type: '', k: '', gw: '', gf: '', p: '', s: '', mk: '', st: '', mkN: false, stN: false, mso: false, qty: '1', pp: '', basis: '', stoneG: '', promise: false });
+  let rows, mode, tax, calc, edit, invMode; // tax: {pre, vat, post}; calc: which of the three is a calculated value
+  const reset = () => { rows = [newRow()]; mode = 'unknown'; tax = { pre: '', vat: '', post: '' }; calc = {}; edit = null; invMode = null; $('walDD').value = ''; $('walMM').value = ''; $('walYY').value = ''; $('walNoteIn') && ($('walNoteIn').value = ''); };
 
   // ---- weight and quantity for one line ----
   const qOf = r => LG.readQty(r.qty);
@@ -33,7 +33,7 @@
     const w = wOf(r), presetOn = v => !w.error && !w.blank && !w.keep && w.mg === Math.round(v * 1000);
     return '<div class="row" data-i="' + i + '"><div class="rh"><span>' + (edit ? 'تعديل القطعة' : 'القطعة ' + (i + 1)) + (mq ? ' · ' + q.value + ' قطع' : '') + '</span>' + (rows.length > 1 && !edit ? '<button type="button" class="del" data-del="' + i + '" aria-label="احذف القطعة ' + (i + 1) + '">احذف</button>' : '') + '</div>' +
       '<div class="g4"><div><span class="lab">النوع</span><select class="in" data-f="type"><option value="">اختر</option>' + Object.keys(typeName).map(v => '<option value="' + v + '"' + (r.type === v ? ' selected' : '') + '>' + typeName[v] + '</option>').join('') + '</select></div>' +
-      (bar && !r.legacyKarat ? '<div><span class="lab">العيار</span><div class="in fixk" aria-label="عيار السبيكة ثابت 24">24 (ثابت)</div></div>' : '<div><span class="lab">العيار</span><select class="in" data-f="k">' + ['21', '24', '18'].map(v => '<option' + (r.k === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>') +
+      (bar && !r.legacyKarat ? '<div><span class="lab">العيار</span><div class="in fixk" aria-label="عيار السبيكة ثابت 24">24 (ثابت)</div></div>' : '<div><span class="lab">العيار</span><select class="in" data-f="k"><option value="">اختر</option>' + ['21', '24', '18'].map(v => '<option' + (r.k === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>') +
       (bar ? '<div class="wgt"><span class="cl" style="margin-top:0">حجم السبيكة الواحدة (جرام)، بيتكتب في الوزن تحت</span><div class="chips" role="group" aria-label="حجم السبيكة بالجرام">' + LG.BAR_PRESETS.map(v => '<button type="button" class="chip" data-w="' + v + '" aria-pressed="' + presetOn(v) + '">' + v + '</button>').join('') + '</div></div>' : '') +
       '<div class="qty"><span class="lab">العدد</span><div class="qs"><button type="button" class="qb" data-q="-1" aria-label="قلّل العدد">−</button><input class="in" data-f="qty" inputmode="numeric" maxlength="3" value="' + esc(r.qty) + '" aria-label="عدد القطع المتطابقة، القطعة ' + (i + 1) + '"><button type="button" class="qb" data-q="1" aria-label="زوّد العدد">+</button></div><p class="hint" style="margin:4px 0 0">' + (mq ? 'نفس النوع والعيار والوزن. اللي بتكتبه تحت للـ ' + q.value + ' كلهم مع بعض.' : 'لو اشتريت أكتر من واحدة بنفس الوزن، زوّد العدد.') + '</p></div>' +
       '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" maxlength="5" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" maxlength="3" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
@@ -69,6 +69,7 @@
   const P = x => LG.piastres(x);
 
   function update(keepRev) {
+    if (invMode) return updateInvoiceMode(keepRev);
     const q = rows.map(qOf), w = rows.map(wOf);
     const unitsAll = rows.reduce((a, _r, i) => a + (q[i].error ? 1 : q[i].value), 0);
     const gMg = rows.reduce((a, _r, i) => a + (!q[i].error && w[i].mg ? LG.totalMg(w[i].mg, q[i].value) : 0), 0);
@@ -101,9 +102,29 @@
     }
     $('sum').innerHTML = '<b><span class="l1">' + unitsAll + ' ' + (unitsAll === 1 ? 'قطعة' : 'قطع') + ' · ' + fg(gMg / 1000) + ' جرام</span><span class="l1">دفعت في القطع ' + fm(okP / 100) + ' جنيه</span></b>' + det + lines.map(l => '<p>' + l + '</p>').join('');
     if (!keepRev) $('walRev').checked = false;
-    const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && Number.isFinite(paids[i]) && r.s && (r.type !== 'jewelry' || r.pp));
+    const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && ['18', '21', '24'].includes(r.k) && Number.isFinite(paids[i]) && r.s && (r.type !== 'jewelry' || r.pp));
     root.dataset.complete = ok ? '1' : '';
-    $('invErr').textContent = ok ? '' : 'كمّل النوع والجرام والمبلغ واختيار الفصوص لكل قطعة.';
+    $('invErr').textContent = ok ? '' : 'كمّل النوع والعيار والجرام والمبلغ واختيار الفصوص لكل قطعة.';
+    $('walAdd').disabled = !(ok && $('walRev').checked) || root.dataset.busy === '1';
+    root.dispatchEvent(new CustomEvent('invform:update'));
+  }
+
+  // Invoice-only edit: date and tax figures of a saved invoice. Lines are not shown; their paid amounts are only compared with the total.
+  function updateInvoiceMode(keepRev) {
+    const figs = mode === 'has' ? taxFigures() : { pre: NaN, vat: NaN, post: NaN };
+    let total = figs.post; if (mode === 'has' && !Number.isFinite(total) && Number.isFinite(figs.pre) && Number.isFinite(figs.vat)) total = (P(figs.pre) + P(figs.vat)) / 100;
+    if (mode === 'has') ['pre', 'vat', 'post'].forEach(k => { const el = $('t_' + k); if (el && document.activeElement !== el) el.value = tax[k]; el && el.classList.toggle('calc', !!calc[k]); });
+    $('calcNote').innerHTML = mode === 'has' && ['pre', 'vat', 'post'].some(k => calc[k]) ? '<span class="tag">محسوب</span> الخانة المحسوبة بخط منقط. اكتب فوقها لو الفاتورة مختلفة.' : '';
+    const bad = mode === 'has' && [figs.pre, figs.vat, figs.post].every(Number.isFinite) && P(figs.pre) + P(figs.vat) !== P(figs.post);
+    $('taxMsg').innerHTML = bad ? '<span style="color:#f0ca78">الأرقام الثلاثة مش متطابقة. راجعها مع الفاتورة. ما اتغيّر أي رقم.</span>' : 'اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.';
+    $('taxSum').textContent = { unknown: 'غير معروفة', none: 'بدون ضريبة', has: 'حسب الفاتورة' }[mode]; $('h14').hidden = mode !== 'has';
+    const paids = invMode.paids, sumP = paids.every(Number.isFinite) ? paids.reduce((a, x) => a + P(x), 0) / 100 : NaN, lines = [];
+    lines.push('قطع الفاتورة: ' + paids.length + (Number.isFinite(sumP) ? ' • مجموع ما دفعته فيها ' + fm(sumP) + ' جنيه' : ''));
+    if (Number.isFinite(total)) { lines.push('إجمالي الفاتورة ' + fm(total) + ' جنيه'); const rc = LG.reconcile(total, paids.map(x => ({ paid: x })));
+      if (rc.state === 'match') lines.push('<span class="ok">مجموع القطع يساوي إجمالي الفاتورة.</span>'); else if (rc.state === 'diff') lines.push('<span class="diff">الفرق بين إجمالي الفاتورة ومجموع القطع: ' + fm(Math.abs(rc.diff)) + ' جنيه. الفرق مش بيتقسّم على القطع ولا بيتغيّر فيها.</span>'); }
+    $('sum').innerHTML = '<div class="sh">ملخص الفاتورة</div>' + lines.map(l => '<p>' + l + '</p>').join('') + '<p class="hint">التعديل هنا بيغيّر تاريخ الفاتورة وأرقام ضريبتها بس. القطع نفسها بتتعدّل من قائمتها.</p>';
+    if (!keepRev) $('walRev').checked = false;
+    const ok = !!LG.parseDMY($('walDD').value, $('walMM').value, $('walYY').value); root.dataset.complete = ok ? '1' : ''; $('invErr').textContent = ok ? '' : 'اكتب تاريخ الفاتورة صح.';
     $('walAdd').disabled = !(ok && $('walRev').checked) || root.dataset.busy === '1';
     root.dispatchEvent(new CustomEvent('invform:update'));
   }
@@ -122,7 +143,7 @@
   $('invRows').addEventListener('change', e => {
     const f = e.target.dataset.f; if (!f) return; const r = rows[e.target.closest('.row').dataset.i];
     if (f === 'qty') { paintRows(); touch(); update(); return; }
-    if (f === 'type' || f === 'k' || f === 'basis') { r[f] = e.target.value; if (f === 'type') { if (r.type === 'bar' && !r.legacyKarat) r.k = '24'; } if (f === 'type' || f === 'basis') paintRows(); touch(); update(); }
+    if (f === 'type' || f === 'k' || f === 'basis') { const was = r.type; r[f] = e.target.value; if (f === 'type' && !r.legacyKarat) { if (r.type === 'bar') r.k = '24'; else if (was === 'bar') r.k = ''; } if (f === 'type' || f === 'basis') paintRows(); touch(); update(); }
   });
   $('invRows').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; const rowEl = b.closest('.row'), r = rows[rowEl.dataset.i];
@@ -145,7 +166,7 @@
   $('walRev').addEventListener('change', () => update(true));
 
   function syncTaxUI() { [...$('taxMode').children].forEach(x => x.setAttribute('aria-pressed', String(x.dataset.m === mode))); $('taxF').hidden = mode !== 'has'; ['pre', 'vat', 'post'].forEach(k => { $('t_' + k).value = tax[k]; $('t_' + k).classList.toggle('calc', !!calc[k]); }); }
-  const full = () => { paintRows(); syncTaxUI(); $('invAddWrap').hidden = !!edit; $('invTax').hidden = !!edit; $('walRev').checked = false; update(); };
+  const full = () => { paintRows(); syncTaxUI(); $('invRows').hidden = !!invMode; $('invAddWrap').hidden = !!edit || !!invMode; $('invTax').hidden = !!edit; $('invTax').open = !!invMode; $('walNoteWrap').hidden = !!invMode; $('invLines').hidden = !!invMode; $('walRev').checked = false; update(); };
 
   // Fill the form from one saved row (edit). Blank stays "not recorded", 0 is shown as "بدون".
   function loadRow(rec) {
@@ -159,10 +180,16 @@
     rows = [r]; const d = String(rec.purchaseDate || '').split('-'); if (d.length === 3) { $('walDD').value = Number(d[2]); $('walMM').value = Number(d[1]); $('walYY').value = d[0]; }
     $('walNoteIn').value = rec.label || ''; full();
   }
+  function loadInvoice(meta, date, paids) {
+    reset(); invMode = { id: meta.id, paids: paids.slice() }; mode = meta.vatMode || 'unknown';
+    tax = { pre: Number.isFinite(meta.subtotal) ? meta.subtotal.toFixed(2) : '', vat: Number.isFinite(meta.vat) ? meta.vat.toFixed(2) : '', post: Number.isFinite(meta.total) ? meta.total.toFixed(2) : '' };
+    const d = String(date || '').split('-'); if (d.length === 3) { $('walDD').value = Number(d[2]); $('walMM').value = Number(d[1]); $('walYY').value = d[0]; } full();
+  }
   function collect() {
+    if (invMode) return { invoiceEdit: invMode.id, date: LG.parseDMY($('walDD').value, $('walMM').value, $('walYY').value), mode, sub: tax.pre, vat: tax.vat, total: tax.post, lines: [] };
     return { date: LG.parseDMY($('walDD').value, $('walMM').value, $('walYY').value), mode, sub: tax.pre, vat: tax.vat, total: tax.post, edit,
       lines: rows.map(r => ({ type: r.type, karat: r.type === 'bar' && !r.legacyKarat ? '24' : r.k, qty: r.qty, whole: r.gw, frac: r.gf, keepWeight: r.keepWeight && r.gw === '' && r.gf === '' ? r.keepWeight : null, paid: r.p, making: r.mk, makingNone: r.mkN, stamp: r.st, stampNone: r.stN, stones: r.s, purpose: r.pp, basis: r.basis, stoneG: r.stoneG, promise: r.promise ? 'full' : '', note: $('walNoteIn').value.trim() })) };
   }
-  window.DHB_INVFORM = { reset() { reset(); full(); }, loadRow, collect, update: () => update(true), setBusy(b) { root.dataset.busy = b ? '1' : ''; update(true); } };
+  window.DHB_INVFORM = { reset() { reset(); full(); }, loadRow, loadInvoice, collect, update: () => update(true), setBusy(b) { root.dataset.busy = b ? '1' : ''; update(true); } };
   reset(); full();
 })();

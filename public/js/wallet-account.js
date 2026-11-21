@@ -87,13 +87,13 @@
   // ---- add an invoice (one or more lines) or edit one line: needs an account ----
   const LG = () => window.DHB_LEDGER, FM = () => window.DHB_INVFORM;
   const radio = n => (document.querySelector('input[name=' + n + ']:checked') || {}).value;
-  let editingId = null, editBase = null;
-  window.DHB_WAL_EDITING = () => !!editingId;
+  let editingId = null, editBase = null, editingInv = null;
+  window.DHB_WAL_EDITING = () => !!editingId || !!editingInv;
   let attempt = null, unsure = false; // attempt: one invoice id and one id per line for the whole attempt, so a retry can never create a second record
   const uid = () => (typeof crypto.randomUUID === 'function' ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2));
   async function rowState(id) { try { const d = await (await lib()).loadDoc('gold/items'); return d && Array.isArray(d.items) && d.items.some(i => i && i.id === id) ? 'found' : 'absent'; } catch (_) { return 'unknown'; } }
   function resetForm() {
-    editingId = null; editBase = null; attempt = null; unsure = false;
+    editingId = null; editBase = null; editingInv = null; attempt = null; unsure = false;
     FM().reset(); $('walAdd').textContent = 'احفظ الفاتورة'; $('walCancel').hidden = true;
     document.querySelectorAll('input[name=walAtt]').forEach(x => { x.checked = false; });
   }
@@ -106,6 +106,31 @@
     say('walMsg', Number.isFinite(rec.additions) && rec.additions > 0 ? 'القطعة دي فيها مبلغ "إضافات" قديم محفوظ زي ما هو. التعديل ما بيغيّرهوش.' : '');
     $('walForm').scrollIntoView({ block: 'start' });
   };
+  // Edit the invoice-level record (date and tax figures) of a saved invoice. Rows keep every other field.
+  window.DHB_CLOUD_EDIT_INVOICE = id => {
+    const rows = (window.DHB_CLOUD_ITEMS || []).filter(x => x.rec && x.rec.invoiceId === id); if (!rows.length) return;
+    const meta = (window.DHB_CLOUD_INVOICES || []).find(x => x && x.id === id) || null;
+    resetForm(); editingInv = { id, base: meta ? JSON.parse(JSON.stringify(meta)) : null };
+    FM().loadInvoice(meta || { id, vatMode: 'unknown' }, rows[0].rec.purchaseDate, rows.map(x => x.rec.paid));
+    $('walAdd').textContent = 'احفظ تعديل الفاتورة'; $('walCancel').hidden = false; say('walMsg', '');
+    $('walForm').scrollIntoView({ block: 'start' });
+  };
+  async function saveInvoiceEdit(c) {
+    const btn = $('walAdd'), m = LG().buildInvoiceMeta({ id: c.invoiceEdit, mode: c.mode, sub: c.sub, vat: c.vat, total: c.total });
+    if (m.error) return say('walMsg', 'راجع أرقام الضريبة. ما اتحفظش أي حاجة.', 'err');
+    btn.disabled = true; FM().setBusy(true);
+    try {
+      const base = editingInv.base;
+      const r = await writeAccount((items, invs) => {
+        const cur = (Array.isArray(invs) ? invs : []).find(x => x && x.id === m.invoice.id) || null;
+        if (!(Array.isArray(items) ? items : []).some(x => x && x.invoiceId === m.invoice.id)) throw Object.assign(new Error('gone'), { ar: LG().GONE_AR });
+        if ((base || cur) && !(base && cur && LG().sameRow(cur, base))) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
+        return LG().applyInvoiceEdit(items, invs, m.invoice, c.date);
+      }, 'walMsg', 'walLogin');
+      if (r) { say('walMsg', 'اتعدّلت الفاتورة في حسابك.', 'ok'); resetForm(); }
+    } catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحفظ. ما اتغيّر أي حاجة.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) { resetForm(); refresh(); say('walMsg', e.ar, 'err'); } }
+    finally { FM().setBusy(false); }
+  }
   const OWNED = ['stones', 'basis', 'stoneG', 'promise', 'making', 'stamp', 'qty', 'unitGrams', 'purpose'];
   $('walForm').addEventListener('submit', async () => {
     const btn = $('walAdd'); if (btn.disabled) return;
@@ -120,6 +145,7 @@
     if (photo && !radio('walAtt')) return say('walMsg', 'اختر: هل تريد إرفاق صورة الفاتورة ولا لا؟', 'err');
     const c = FM().collect();
     if (!c.date) return say('walMsg', 'اكتب تاريخ الشراء صح: يوم / شهر / سنة.', 'err');
+    if (c.invoiceEdit) return saveInvoiceEdit(c);
     if (!attempt) attempt = { invId: editingId ? (editBase.invoiceId || uid()) : uid(), rowIds: c.lines.map(() => uid()) };
     if (editingId) attempt.rowIds = [editingId];
     if (attempt.rowIds.length !== c.lines.length) attempt.rowIds = c.lines.map(() => uid());
@@ -243,12 +269,12 @@
   // ---- delete a piece from the account ----
   window.DHB_CLOUD_DELETE = async (id, base) => {
     let gone = null, lastRef = false;
-    try { const r = await writeAccount(items => {
+    try { const r = await writeAccount((items, invs) => {
         const cur = Array.isArray(items) ? items : [], now = cur.find(i => i && i.id === id);
         if (!now) return { already: true }; // already deleted elsewhere: nothing to remove, nothing resurrected
         if (base && !LG().sameRow(now, base)) throw Object.assign(new Error('changed'), { ar: LG().CHANGED_AR });
         if (now.invoiceImage) { gone = now.invoiceImage.id; lastRef = !refs(cur, gone, id); }
-        return { items: removeItem(cur, id), imageOps: gone && lastRef ? [{ op: 'delete', id: gone }] : [] }; }, 'walMsg', 'walLogin');
+        const next = removeItem(cur, id); return { items: next, invoices: LG().pruneInvoices(next, invs), imageOps: gone && lastRef ? [{ op: 'delete', id: gone }] : [] }; }, 'walMsg', 'walLogin');
       if (r && r.already) { await refresh(); say('walMsg', 'القطعة دي كانت اتحذفت من مكان تاني، ما اتغيّر حاجة.', 'ok'); } else if (r) say('walMsg', 'اتحذفت من حسابك.', 'ok'); }
     catch (e) { say('walMsg', (e && e.ar) || 'تعذّر الحذف. حاول مرة أخرى.', 'err'); if (e && (e.message === 'changed' || e.message === 'gone')) refresh(); }
   };

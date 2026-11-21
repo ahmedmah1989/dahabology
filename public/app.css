@@ -542,3 +542,4 @@ html{scroll-padding-bottom:150px}
 .ivx .pr .n{font-size:14px}
 .ivx .paidb{grid-column:1/-1}
 .ivx .fixk{display:flex;align-items:center;justify-content:center;direction:rtl}
+.ivx .row,.ivx .date,.ivx input,.ivx select,.ivx .sum,.ivx .gate,.ivx details.d{scroll-margin-top:96px}
