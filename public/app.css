@@ -549,3 +549,4 @@ body:has(.ivx)::after{display:none}
 /* wallet only: solid top bar and bottom bar so figures never show through */
 body:has(.ivx) header.x-top{background:#0a1628;-webkit-backdrop-filter:none;backdrop-filter:none}
 body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(safe-area-inset-bottom)) calc(50% - 50vw);background:#0a1628;border-top:1px solid var(--x-line);-webkit-backdrop-filter:none;backdrop-filter:none;-webkit-mask-image:none;mask-image:none}
+#h14[hidden]+#h14note{display:none}

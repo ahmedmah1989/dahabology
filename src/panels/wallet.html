@@ -20,7 +20,7 @@
 <details class="d" id="invTax"><summary><span>ضريبة الفاتورة (اختياري)</span><small id="taxSum">غير معروفة</small></summary><div>
 <div class="sg" id="taxMode" role="group" aria-label="ضريبة الفاتورة"><button type="button" data-m="unknown" aria-pressed="true">مش عارف</button><button type="button" data-m="none" aria-pressed="false">بدون ضريبة</button><button type="button" data-m="has" aria-pressed="false">فيها ضريبة</button></div>
 <div id="taxF" hidden><div class="fr"><label class="lab" for="t_pre">قبل الضريبة (جنيه)</label><div><input class="in" id="t_pre" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_vat">الضريبة (جنيه)</label><div><input class="in" id="t_vat" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div><div class="fr"><label class="lab" for="t_post">بعد الضريبة (جنيه)</label><div><input class="in" id="t_post" inputmode="decimal" placeholder="0.00" autocomplete="off"></div></div>
-<p class="hint" id="calcNote"></p><button type="button" class="helper" id="h14" hidden>احسب ١٤٪ من «قبل الضريبة» زي فاتورتي</button>
+<p class="hint" id="calcNote"></p><button type="button" class="helper" id="h14" hidden>اختصار: احسب ١٤٪ من «قبل الضريبة»</button><p class="hint" id="h14note">الاختصار ده حساب حسابي فقط (١٤٪ × قبل الضريبة)، مش تحديد رسمي للضريبة. اكتب فوقه الرقم اللي في فاتورتك لو مختلف.</p>
 <p class="hint" id="taxMsg">اكتب رقمين والتالت بيتحسب. بنسجّل اللي في فاتورتك فقط.</p></div></div></details>
 <div id="invLines"><h3 style="margin:14px 0 4px;font-size:16px;color:var(--x-gold-hot)">٢. القطع</h3><p class="phint">اكتب اللي دفعته في كل قطعة لوحدها.</p></div>
 <div id="invRows"></div>
