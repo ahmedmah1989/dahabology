@@ -116,14 +116,12 @@ test('returning to الحاسبة restores its identity', () => {
   assert.equal(s.context.location.hash, '#calculator');
 });
 
-test('deep link #invoice opens the invoice pane at load and re-asserts the tab strip', () => {
+test('deep link #invoice opens the invoice pane at load without scripted scrolling', () => {
   const s = setup('#invoice');
   assert.equal(s.panes['pane-invoice'].hidden, false);
   assert.deepEqual(s.scriptsAppended.map(x => x.src), ['/js/tools.js?v=TESTV']);
-  assert.equal(s.scrollCalls.length, 1, 'instant reveal at boot');
-  assert.equal(s.rafQueue.length, 1, 're-assert queued after load settles');
-  s.rafQueue.forEach(f => f());
-  assert.equal(s.scrollCalls.length, 2);
+  assert.equal(s.scrollCalls.length, 0, 'no scripted scroll at boot - scroll-margin-top lands the strip');
+  assert.equal(s.rafQueue.length, 0, 'no re-assert queued');
   const b = setup('#nonsense');
   assert.equal(b.panes['pane-calculator'].hidden, false);
   assert.deepEqual(b.scriptsAppended, []);
@@ -144,60 +142,29 @@ test('RTL keyboard: left arrow moves to next tab with focus, End jumps to last',
   assert.equal(s.tabs[0].focused, true);
 });
 
-test('hashchange switches panes and re-asserts the tab strip after the smooth scroll settles', async () => {
+test('hashchange switches panes and never scrolls from script (native fragment scroll owns landing)', async () => {
   const s = setup();
   assert.ok(Array.isArray(s.listeners.hashchange) && s.listeners.hashchange.length === 1);
   const fireHash = () => s.listeners.hashchange.forEach(f => f());
   s.context.location.hash = '#invoice';
   fireHash();
   assert.equal(s.panes['pane-invoice'].hidden, false);
-  assert.equal(s.rafQueue.length, 1, 'immediate re-assert queued');
-  s.rafQueue.forEach(f => f());
+  assert.equal(s.rafQueue.length, 0, 'no scripted re-assert queued');
   await new Promise(r => setTimeout(r, 750));
-  assert.ok(s.scrollCalls.length >= 2, 'strip re-asserted after the settle delay: ' + s.scrollCalls.length);
+  assert.equal(s.scrollCalls.length, 0, 'no scripted scroll on hashchange');
   s.context.location.hash = '#calculator';
   fireHash();
   assert.equal(s.panes['pane-calculator'].hidden, false);
   s.context.location.hash = '#nonsense';
-  s.rafQueue.length = 0;
   fireHash();
-  assert.equal(s.rafQueue.length, 0, 'unknown hash triggers no re-assert');
+  assert.equal(s.panes['pane-calculator'].hidden, false, 'unknown hash leaves current pane');
 });
 
-test('user takeover cancels a pending settle re-assert (hashchange, tab click, scroll input)', async () => {
+test('tab click still brings the strip into view (user-initiated scroll stays)', () => {
   const s = setup();
-  const fireHash = () => s.listeners.hashchange.forEach(f => f());
-  /* reviewer repro 2: #invoice then clear hash + scroll -> no yank back */
-  s.context.location.hash = '#invoice';
-  fireHash();
-  s.rafQueue.forEach(f => f());
-  s.context.location.hash = '';
-  fireHash();
-  s.listeners.wheel.forEach(f => f());
-  let n = s.scrollCalls.length;
-  await new Promise(r => setTimeout(r, 750));
-  assert.equal(s.scrollCalls.length, n, 'cleared hash + scroll cancelled the pending re-assert');
-  /* reviewer repro 1: #invoice then tab click + scroll -> no yank back */
-  s.context.location.hash = '#invoice';
-  fireHash();
-  s.rafQueue.forEach(f => f());
-  s.tabs[0].click();
-  n = s.scrollCalls.length;
-  await new Promise(r => setTimeout(r, 750));
-  assert.equal(s.scrollCalls.length, n, 'tab click cancelled the pending re-assert');
-  /* touchstart and scroll keys cancel too */
-  for (const fire of [
-    () => s.listeners.touchstart.forEach(f => f()),
-    () => s.listeners.keydown.forEach(f => f({ key: 'PageDown' }))
-  ]) {
-    s.context.location.hash = '#invoice';
-    fireHash();
-    s.rafQueue.forEach(f => f());
-    fire();
-    n = s.scrollCalls.length;
-    await new Promise(r => setTimeout(r, 750));
-    assert.equal(s.scrollCalls.length, n, 'scroll input cancelled the pending re-assert');
-  }
+  const n = s.scrollCalls.length;
+  s.tabs[1].click();
+  assert.ok(s.scrollCalls.length > n, 'explicit tab click scrolls the strip into view');
 });
 
 test('offline first activation: error shows honest note with retry, retry reloads, success hides note', () => {

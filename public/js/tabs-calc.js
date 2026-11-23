@@ -88,39 +88,12 @@
     });
   });
   function fromHash() { const n = (location.hash || '').slice(1); if (panes[n]) { activate(n); return true; } return false; }
-  const revealTabs = () => { const bar = document.querySelector('.market-tabs'); if (bar) bar.scrollIntoView({ block: 'start', behavior: 'instant' }); };
-  let stripSettleT = 0;
-  const cancelStripSettle = () => { clearTimeout(stripSettleT); stripSettleT = 0; };
-  window.addEventListener('hashchange', () => {
-    cancelStripSettle();          /* any new fragment (including a cleared hash) supersedes a pending re-assert */
-    if (!fromHash()) return;
-    /* Same-document fragment navigation (dock/assistant links while already on this
-       page) anchor-scrolls the pane, which slides the tab strip under the sticky
-       header once the smooth scroll settles. Re-assert the strip immediately and
-       again after the UA's smooth fragment scroll finishes - unless the user has
-       already taken over navigation, which the cancel paths below detect. */
-    requestAnimationFrame(revealTabs);
-    stripSettleT = setTimeout(revealTabs, 700);
-  });
-  /* Explicit tab interaction takes over scrolling; a pending re-assert must not yank back. */
-  tabs.forEach(t => {
-    t.addEventListener('click', cancelStripSettle);
-    t.addEventListener('keydown', cancelStripSettle);
-  });
-  /* Deliberate user scroll input cancels a pending re-assert. UA smooth scrolling fires
-     none of these events, so the automatic fragment scroll is never confused with intent. */
-  ['wheel', 'touchstart'].forEach(k => window.addEventListener(k, cancelStripSettle, { passive: true }));
-  window.addEventListener('keydown', e => {
-    if (/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key)) cancelStripSettle();
-  });
-  /* Deep-link landing: the panel's own section id makes the browser anchor-scroll past the
-     tab strip; bring the strip back into view (scroll-padding-top keeps it below the sticky
-     header) so the other tool stays discoverable from a direct entry. */
-  if (fromHash()) {
-    revealTabs();
-    /* The browser's own fragment jump to the section id lands after module scripts run;
-       re-assert the tab strip position once loading settles. */
-    if (document.readyState !== 'complete') window.addEventListener('load', () => requestAnimationFrame(revealTabs));
-    else requestAnimationFrame(revealTabs);
-  }
+  /* Fragment scrolling is left to the browser: the pane sections carry scroll-margin-top so the
+     native jump - initial load AND same-document hashchange, at any load speed - lands with the
+     tab strip visible below the sticky header. A scripted re-assert raced the browser's own
+     fragment scroll and either jumped late or lost entirely, so there is deliberately none. */
+  window.addEventListener('hashchange', () => { fromHash(); });
+  /* Deep-link landing: open the requested pane so its section exists in layout before the
+     browser's own fragment scroll looks for it. */
+  fromHash();
 })();
