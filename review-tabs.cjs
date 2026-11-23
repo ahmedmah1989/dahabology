@@ -176,8 +176,9 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       await p5.goto(base + '/wallet/');
       await p5.click('.x-dock summary');
       const hrefs = await p5.locator('.x-more-menu a').evaluateAll(as => as.map(a => a.getAttribute('href')));
-      ok(hrefs.some(h => h.includes('market/#analysis')), 'dock المزيد links التحليل directly to the tab');
-      ok(hrefs.some(h => h.includes('market/#live')), 'dock المزيد links الرسم الحي directly to the tab');
+      /* Post-fold contract: merged screens live under their parents, not as duplicate entries */
+      ok(!hrefs.some(h => /#(analysis|live|invoice)/.test(h)), 'dock المزيد lists no merged-screen duplicates');
+      ['products', 'guide', 'about', 'assistant'].forEach(k => ok(hrefs.some(h => h.includes(k)), 'dock المزيد keeps ' + k));
       await p5.close();
 
       await p.close(); await c.close();

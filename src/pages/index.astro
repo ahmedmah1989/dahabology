@@ -6,7 +6,10 @@ import Brand from '../components/Brand.astro';
 import Watermark from '../components/Watermark.astro';
 import { B, DATA, PAGES, page, ASSET_VERSION } from '../lib/site.js';
 // The account preview is home-only for now (not in PAGES, so not in the dock, nav or sitemap).
-const HOME_PAGES = [...PAGES, page('about'), { k: 'account-preview', t: 'حسابي', d: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0' }];
+/* الفاتورة/التحليل/الرسم الحي live inside الحاسبة/السوق as tabs now - one orb per screen,
+     with the merged features named under the parent. Old addresses keep working (redirects). */
+const MERGED = ['invoice', 'analysis', 'live'];
+const HOME_PAGES = [...PAGES.filter(p => !MERGED.includes(p.k)), page('about'), { k: 'account-preview', t: 'حسابي', d: 'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0' }];
 const logo = `url(${B}assets/logo-900.webp?v=${ASSET_VERSION})`;
 const emblem = `url(${B}assets/emblem.webp?v=${ASSET_VERSION})`;
 ---
@@ -156,7 +159,8 @@ body::after{
 
 .hero-price{width:min(100%,390px);min-height:124px}
 .top,.ticker,.home-shortcuts{min-width:0;max-width:100%}
-.home-hint{position:relative;z-index:2;text-align:center;color:var(--muted);font-size:13px;margin:0 0 14px}
+.home-hint{position:relative;z-index:2;text-align:center;color:var(--muted);font-size:13px;margin:0 0 4px}
+.home-legend{position:relative;z-index:2;text-align:center;color:var(--ink);font-size:14px;line-height:1.9;margin:0 12px 14px}
 .home-primary{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:10px;width:min(100%,620px);margin:12px 0 0}
 .home-primary a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 8px;border:1.5px solid #efc66c88;border-radius:16px;background:#10213bcc;color:#fff;font-size:16px;font-weight:700;text-decoration:none}
 .home-primary a.go{background:linear-gradient(180deg,#f3d07a,#d4a643);color:#0a1628;border-color:#f3d07a}
@@ -218,13 +222,14 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <div class="core" role="img" aria-label="شعار دهبولوجي"></div>
   {HOME_PAGES.map((tab,i)=>{
     const angle=(-90+i*360/HOME_PAGES.length)*Math.PI/180;
-    return <a class="orb" href={B + (tab.k === 'analysis' || tab.k === 'live' ? 'market/#' + tab.k : tab.k === 'invoice' ? 'calculator/#invoice' : tab.k + '/')} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
+    return <a class="orb" href={B + tab.k + '/'} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
       <svg class="zap" viewBox="-60 -60 120 120" aria-hidden="true"><path class="ring"/><path class="spk"/></svg>
-      <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.k === 'invoice' ? 'الفاتورة' : tab.t}</span>
+      <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.t}</span>
     </a>;
   })}
 </main>
 <p class="home-hint">اختار دائرة لفتح القسم اللي تحتاجه</p>
+<p class="home-legend">السوق فيه الأسعار والتحليل والرسم الحي · الحاسبة فيها فحص الفاتورة</p>
 <nav class="home-shortcuts" aria-label="ابدأ من هنا">
   <a href={B+'products/'}><strong>اختار منتجك</strong><span>سبائك وجنيهات</span></a>
   <a href={B+'about/'}><strong>حكايتنا</strong><span>اعرف دهبولوجي</span></a>

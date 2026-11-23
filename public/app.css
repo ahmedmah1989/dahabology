@@ -576,3 +576,24 @@ body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(saf
 .market-tabs [role="tab"]:focus-visible{outline:2px solid #9bd2ed;outline-offset:2px}
 @media(max-width:340px){.market-tabs [role="tab"]{font-size:14px;padding:8px 4px}}
 [role="tabpanel"][hidden]{display:none!important}
+/* Deep links (/analysis/, /live/, /invoice/ redirect here; dock/home/manifest entries use the hashes)
+   point at the section INSIDE a pane, which sits below the tab strip. The browser's own fragment
+   scroll aligns that section to scroll-padding-top (90px), which would park the strip behind the
+   sticky header. scroll-margin-top makes the browser's own jump land with the strip visible below
+   the header, so the landing is deterministic at any load speed - no scripted re-assert race. */
+#analysis,#live,#invoice,#calculator{scroll-margin-top:100px}
+/* Short viewports: the fixed dock overlaps the bottom of the first screen. Move the trader buy /
+   spread chips above the big sell-price circle (visual order only, DOM/reading order unchanged) so
+   the master numbers are never parked under the dock on the market tab's first view. */
+@media(max-height:800px){
+  #prices{display:flex;flex-direction:column}
+  #prices>.x-karats{order:1}
+  #prices>.x-pair{order:2}
+  #prices>.x-hero{order:3; width:min(78vw,290px)}   /* keeps the in-circle date line above the dock too */
+  #prices>#heroTime{order:4}
+  #prices>.x-actions{order:5}
+  #prices>#shareMsg{order:6}
+}
+@media(max-height:700px){
+  #prices>.x-hero{width:min(70vw,250px)}   /* very short windows: circle small enough that its date line clears the dock */
+}
