@@ -27,6 +27,7 @@ function render(){
  else{el('text',{x:L,y:240,fill:'#cdd8e8','font-size':12},label(points[0]));el('text',{x:R,y:240,fill:'#cdd8e8','font-size':12,'text-anchor':'end'},label(points.at(-1)));}
  host.append(svg);$('liveChartStatus').textContent=mode==='session'?(points.length===1?'وصلت قراءة واحدة؛ النقطة تمثل السعر المرصود، وليست مسار حركة.':'حركة الأونصة خلال جلستك • '+points.length+' قراءة')+' • وقت آخر قراءة: '+new Date(points.at(-1).label).toLocaleString('ar-EG-u-nu-latn',{timeZone:'Africa/Cairo',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})+' القاهرة':'آخر '+points.length+' قراءة يومية';
 }
+window.DHB_LIVE_RENDER=render;
 render();
 $('chartSession').onclick=()=>{mode='session';render();};$('chartHistory').onclick=()=>{mode='history';render();};
 window.addEventListener('gold-board-updated',e=>{const q=e.detail.sources.gold,t=Date.parse(q?.sourceTime);if(q?.status!=='available'||!Number.isFinite(q.sell)||q.sell<=0||!Number.isFinite(t)||Date.now()-t>86400000||t-Date.now()>120000)return;if(session.at(-1)?.label!==q.sourceTime){session.push({label:q.sourceTime,value:q.sell});if(session.length>360)session.shift();}render();});

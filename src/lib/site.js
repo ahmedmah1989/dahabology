@@ -49,7 +49,7 @@ export const productSpec = c => (c.kind === 'ounce' ? 'أونصة ترويسية
 // Section ids of the old single page -> the page that now holds them.
 const HOME_OF = {
   market: 'market', prices: 'market', comparison: 'market',
-  products: 'products', live: 'live', analysis: 'analysis', calculator: 'calculator',
+  products: 'products', live: 'market', analysis: 'market', calculator: 'calculator', invoice: 'calculator',
   sources: 'guide', guide: 'guide', faq: 'guide', coverage: 'guide', method: 'guide',
 };
 

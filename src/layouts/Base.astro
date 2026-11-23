@@ -48,7 +48,7 @@ const name = heading || find(page)?.t || 'دهبولوجي';
   <details class={MORE.includes(page) ? 'on' : undefined}>
     <summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d={moreIcon} stroke-width="3" /></svg><span>المزيد</span></summary>
     <div class="x-more-menu">
-      {MORE.map(k => <a href={B + k + '/'} aria-current={k === page ? 'page' : undefined}>
+      {MORE.map(k => <a href={B + (k === 'analysis' || k === 'live' ? 'market/#' + k : k === 'invoice' ? 'calculator/#invoice' : k + '/')} aria-current={k === page ? 'page' : undefined}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d={find(k).d} /></svg><span>{label(k)}</span>
       </a>)}
     </div>

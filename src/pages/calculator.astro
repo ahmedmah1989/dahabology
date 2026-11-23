@@ -1,10 +1,20 @@
 ---
 import Base from '../layouts/Base.astro';
-import html from '../panels/calculator.html?raw';
+import calcHtml from '../panels/calculator.html?raw';
+import invoiceHtml from '../panels/invoice.html?raw';
 import { panel } from '../lib/site.js';
 ---
-<Base page="calculator" scripts={['calc', 'monitor', 'ui', 'calc-live']}
+<Base page="calculator" heading="الحاسبة" scripts={['calc', 'monitor', 'ui', 'calc-live', 'tabs-calc']}
   title="حاسبة الذهب: شراء وبيع بالمصنعية لعيار 24 و21 و18 — دهبولوجي"
-  description="احسب كم جرام يشتريه مبلغك أو تكلفة وزن معين لعيار 24 و21 و18، مع المصنعية والدمغة والضريبة كما تفترضها (تقدير)، واحسب ما تستلمه عند البيع بآخر سعر منشور.">
-  <Fragment set:html={panel(html, 'calculator')} />
+  description="احسب كم جرام يشتريه مبلغك أو تكلفة وزن معين لعيار 24 و21 و18، مع المصنعية والدمغة والضريبة كما تفترضها (تقدير)، وافحص فاتورة اشتريتها بالفعل في نفس الصفحة.">
+  <div class="market-tabs" role="tablist" aria-label="الحاسبة وفحص الفاتورة">
+    <button type="button" role="tab" id="tab-calculator" data-pane="calculator" aria-controls="pane-calculator" aria-selected="true">الحاسبة</button>
+    <button type="button" role="tab" id="tab-invoice" data-pane="invoice" aria-controls="pane-invoice" aria-selected="false" tabindex="-1">افحص الفاتورة</button>
+  </div>
+  <div id="pane-calculator" data-panel role="tabpanel" aria-labelledby="tab-calculator">
+    <Fragment set:html={panel(calcHtml, 'calculator')} />
+  </div>
+  <div id="pane-invoice" data-panel role="tabpanel" aria-labelledby="tab-invoice" hidden>
+    <Fragment set:html={panel(invoiceHtml, 'calculator')} />
+  </div>
 </Base>
