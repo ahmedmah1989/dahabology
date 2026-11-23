@@ -189,6 +189,39 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 .chip small{display:block;font-size:12px;line-height:1.65;color:var(--muted);margin-top:6px}
 .hero-price{max-width:min(100%,680px)}
 .hero-price b,.ticker b,.home-market b{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+
+/* A single quote board replaces the stack of independent price boxes. */
+.hero-price{width:min(100%,620px);padding:20px 12px 18px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;margin-top:8px;position:relative}
+.hero-price::after{content:"";display:block;width:58px;height:3px;margin:16px auto 0;border-radius:4px;background:linear-gradient(90deg,transparent,var(--gold-hot),transparent)}
+.hero-price>b{font-size:clamp(48px,13vw,66px);line-height:1.2;letter-spacing:-1px}
+.hero-price .cap{font-size:13px;color:var(--muted)}
+.hero-price .cap .home-karat-label{display:block;font-size:23px;margin-inline:3px}
+.hero-quote-kind{display:block;margin-top:3px;font-size:12px}
+.hero-price .when{font-size:12px}
+.price-board{position:relative;z-index:2;width:min(100%,620px);margin-top:14px;padding:18px 14px 14px;background:linear-gradient(145deg,#183049f5,#102139f5);border:1px solid #efc66c22;border-radius:26px;box-shadow:inset 0 1px 0 #ffffff07;overflow:hidden}
+.price-board .ticker{width:100%;margin:0;gap:0}
+.price-board .chip{border:0;border-radius:0;background:none;padding:0 6px 13px;box-shadow:none;min-width:0}
+.price-board .chip+.chip{border-inline-start:1px solid #efc66c22}
+.price-board .chip b{font-size:clamp(20px,5.5vw,27px);line-height:1.4;min-height:0;margin-top:6px}
+.price-board .chip .karat-note{display:inline;font-size:10px}
+.price-board .ticker .home-karat-label{font-size:17px}
+.price-board .home-market{width:100%;margin:0;gap:0;border-top:1px solid #efc66c22;padding-top:16px}
+.price-board .home-market .mini{border:0;border-radius:0;background:none;box-shadow:none;padding:0 8px 15px;overflow-wrap:anywhere}
+.price-board .home-market .mini:nth-child(2){border-inline-start:1px solid #efc66c22}
+.price-board .home-market .mini>span{font-size:13px;line-height:1.6}
+.price-board .home-market b{font-size:clamp(23px,6vw,28px);line-height:1.5;margin-top:3px}
+.price-board .home-market small{font-size:10px}
+.price-board .home-market .silver-mini{padding:13px 0 0;border-top:1px solid #efc66c22}
+.price-board .silver-mini>span{margin-bottom:5px}
+.price-board .silver-mini b{font-size:clamp(21px,5.5vw,25px)}
+.price-board .silver-mini>div{gap:0}
+.price-board .silver-mini section{padding:0 8px}
+.price-board .silver-mini section+section{border-inline-start:1px solid #efc66c22}
+.home-shortcuts{gap:0;border-block:1px solid #efc66c22;border-radius:0;background:none}
+.home-shortcuts a{border:0;border-radius:0;background:none;box-shadow:none;padding:12px 10px}
+.home-shortcuts a+a{border-inline-start:1px solid #efc66c22}
+.price-board a:focus-visible{outline-offset:-2px;border-radius:10px}
+@media(max-width:340px){.price-board{padding:16px 8px 12px}.price-board .chip{padding-inline:4px}.price-board .home-market .mini{padding-inline:5px}}
 </style>
 </head>
 <body class="home-shell" style={`--logo:${logo};--emblem:${emblem}`}>
@@ -199,7 +232,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 </header>
 
 <div class="hero-price" aria-live="polite">
-  <span class="cap">جرام <strong class="home-karat-label">عيار 21</strong> الآن • بيع • بدون مصنعية</span>
+  <span class="cap"><strong class="home-karat-label">عيار 21</strong><span class="hero-quote-kind">سعر بيع الجرام · بدون مصنعية</span></span>
   <b class="fit-number"><span id="p21">—</span><small>جنيه</small></b>
   <span class="when" id="pWhen">تحميل السعر…</span>
   <span class="when" id="pSourceTime"></span>
@@ -210,6 +243,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a href={B+'market/'}>تابع السوق</a>
 </nav>
 
+<div class="price-board">
 <div class="ticker">
   <div class="chip"><span><strong class="home-karat-label">عيار 18</strong><small class="karat-note">محسوب</small></span><b id="p18">—</b></div>
   <div class="chip"><span class="home-karat-label">عيار 24</span><b id="p24">—</b></div>
@@ -220,6 +254,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <a class="mini" href={B+'market/#impCard'}><span>دولار الصاغة</span><b id="pImplied">—</b><small>جنيه / دولار · محسوب</small><small id="pImpliedTime"></small></a>
   <a class="mini silver-mini" href={B+'market/#silverCard'}><span>الفضة</span><div><section><b id="pSilver">—</b><small>دولار / أونصة عالمية</small><small id="pSilverTime"></small></section><section><b id="pSilverLocal">—</b><small>جنيه / جرام 999 محلي</small><small id="pSilverLocalTime"></small></section></div></a>
 </section>
+</div>
 
 <main class="stage" id="stage" aria-label="أقسام دهبولوجي">
   <div class="rays"></div>

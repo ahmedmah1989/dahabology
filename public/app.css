@@ -597,3 +597,11 @@ body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(saf
 @media(max-height:700px){
   #prices>.x-hero{width:min(70vw,250px)}   /* very short windows: circle small enough that its date line clears the dock */
 }
+
+/* Page, section and subheading hierarchy. Numeric values and form labels
+   retain their independent styles and status colors. */
+body.app-shell header.x-top h1{color:var(--x-gold-hot);font-size:clamp(18px,4.7vw,24px);font-weight:800;line-height:1.45;min-width:0;overflow-wrap:anywhere}
+body.app-shell main :is(h2,h3){color:var(--x-gold-hot)!important;font-weight:800!important;line-height:1.6!important;overflow-wrap:anywhere}
+body.app-shell main h2{font-size:clamp(23px,5.7vw,28px)!important}
+body.app-shell main h3{font-size:clamp(18px,4.6vw,21px)!important}
+body.app-shell main #faq>details>summary,body.app-shell main #method>details>summary{color:var(--x-gold-hot);font-size:clamp(18px,4.6vw,20px);font-weight:800;line-height:1.7}
