@@ -75,6 +75,11 @@ body::after{
 .hero-price .cap{font-size:clamp(14px,3.8vw,16px); font-weight:600; color:var(--muted); display:block; line-height:1.6}
 .hero-price b{display:block;min-height:1.2em;direction:ltr;unicode-bidi:isolate;font-size:clamp(40px,11vw,56px); font-weight:700; color:var(--gold); font-variant-numeric:tabular-nums; line-height:1.2; text-shadow:0 0 24px #efc66c55}
 .hero-price b small{font-size:.4em; color:#fff; font-weight:600; margin-inline-start:8px}
+.hero-price b{color:#fff;text-shadow:none}
+.home-karat-label{color:var(--gold-hot);font-size:17px;font-weight:800;line-height:1.5}
+.hero-price .cap .home-karat-label{font-size:18px}
+.ticker .chip .home-karat-label{display:block;color:var(--gold-hot);font-size:17px;font-weight:800}
+.ticker .chip .karat-note{font-size:11px;color:var(--muted);font-weight:400}
 .hero-price .when:empty,.ticker small:empty,.home-market small:empty{display:none}
 .hero-price .when{display:block; font-size:clamp(13px,3.4vw,14px); color:var(--muted); line-height:1.6}
 
@@ -194,7 +199,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 </header>
 
 <div class="hero-price" aria-live="polite">
-  <span class="cap">جرام عيار 21 الآن • بيع • بدون مصنعية</span>
+  <span class="cap">جرام <strong class="home-karat-label">عيار 21</strong> الآن • بيع • بدون مصنعية</span>
   <b class="fit-number"><span id="p21">—</span><small>جنيه</small></b>
   <span class="when" id="pWhen">تحميل السعر…</span>
   <span class="when" id="pSourceTime"></span>
@@ -206,8 +211,8 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 </nav>
 
 <div class="ticker">
-  <div class="chip"><span>عيار 18 · محسوب</span><b id="p18">—</b></div>
-  <div class="chip"><span>عيار 24</span><b id="p24">—</b></div>
+  <div class="chip"><span><strong class="home-karat-label">عيار 18</strong><small class="karat-note">محسوب</small></span><b id="p18">—</b></div>
+  <div class="chip"><span class="home-karat-label">عيار 24</span><b id="p24">—</b></div>
   <div class="chip"><span>الأونصة $</span><b id="pOz">—</b><small id="pOzTime"></small></div>
 </div>
 <section class="home-market" aria-label="الدولار والفضة">
