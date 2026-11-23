@@ -116,6 +116,34 @@ const server = http.createServer((req, res) => {
       await c.close();
     }
 
+    /* F - same first-activation case for the merged invoice tab: /calculator/ cached without
+       ever opening #invoice, then offline deep link -> explicit note + retry, and after
+       reconnect the lazy tools.js actually computes from a manually entered price. */
+    {
+      const c = await mk(); const p = await c.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
+      await p.goto(base + '/calculator/'); await swReady(p);
+      await p.reload(); await swReady(p);   // cache the calculator page under SW control, WITHOUT opening invoice
+      await c.setOffline(true);
+      await p.goto(base + '/calculator/#invoice');
+      await p.waitForSelector('#invoiceLoadNote:not([hidden])', { timeout: 10000 });
+      ok(true, 'F1 offline first activation of #invoice shows the connection-needed state, not a silent shell');
+      ok(await p.locator('#invoiceRetry').isVisible(), 'F2 retry offered in the offline state');
+      ok(await p.locator('#invoiceLoadNote').evaluate(n => n.textContent.includes('لن نعرض أرقامًا قديمة')), 'F3 note carries the no-stale-numbers promise');
+      await c.setOffline(false);
+      try { await p.click('#invoiceRetry', { timeout: 1500 }); ok(true, 'F4 manual retry clicked after reconnect'); }
+      catch (_) { ok(true, 'F4 auto-retry on the online event beat the manual click (self-healing)'); }
+      await p.waitForFunction(() => { const n = document.getElementById('invoiceLoadNote'); return n && n.hidden && performance.getEntriesByType('resource').some(r => r.name.includes('tools.js')); }, null, { timeout: 10000 });
+      ok(true, 'F5 tools.js loaded after reconnect and the note hid itself');
+      await p.click('#pane-invoice details.x-more summary');   // the price field lives under "تفاصيل أكثر وتعديل السعر"
+      await p.fill('#invPrice', '6000');
+      await p.fill('#invGrams', '8');
+      await p.fill('#invTotal', '50000');
+      await p.waitForFunction(() => document.getElementById('invNote').textContent.includes('الحساب بسعر الجرام الذي أدخلته'), null, { timeout: 8000 });
+      ok(true, 'F6 invoice check computes from a manually entered price after self-heal');
+      ok(errs.length === 0, 'F7 no page errors: ' + errs.join(' | '));
+      await c.close();
+    }
+
     console.log(checks + ' PWA upgrade/offline assertions passed.');
   } finally { await b.close(); server.close(); }
 })().catch(e => { console.error(e); process.exitCode = 1; server.close(); });

@@ -1,6 +1,6 @@
 # Plan: merge افحص الفاتورة into الحاسبة as a third mode (stage 2)
 
-Status: PLAN ONLY. Not implemented, not approved for implementation yet. Grounded in the
+Status: IMPLEMENTED on branch merge-market-tabs (commits cf70f97, e9206b8, a33c4e6), not published, pending final independent review. Grounded in the
 UX review (worker agent-01M82ZVRPCX11X33MQVEK3WM3H, v2 proposal 2026-11-23 04:25):
 "Next candidate: الحاسبة + فحص الفاتورة as a third mode (invoice logic stays separate,
 PWA shortcut must keep working)." User 05:08 authorized beneficial merges in principle;
@@ -86,3 +86,45 @@ or publish.
   edited-price wording intact, donut percentage complete on one line.
 - Full suites green: npm test, review.cjs, review-assistant.cjs, review-hints.cjs.
 - Before/after mobile screenshots at 320/390 for the user's visuals.
+
+## Implementation status (2026-11-23, local only, not published)
+
+Implemented as planned, with one deviation and two review-driven fixes:
+
+- Deviation: the board-state replay after lazy tools.js load uses a captured
+  `gold-board-updated` detail inside tabs-calc.js (`lastDetail`), not the
+  `DHB_BOARD.detail()` accessor - tools.js keeps no board.js dependency on this page.
+- Fix 1 (parent finding): the tab strip styles moved from market-only CSS into the shared
+  app.css so calculator/invoice tabs render the same selected/inactive gold distinction
+  (they initially appeared identical). Pixel-verified at 320/390/1280.
+- Fix 2 (parent finding): deep-link landing on /calculator/#invoice anchor-scrolled past
+  the tab strip; tabs-calc.js now re-asserts the strip position at boot and again after
+  load (the UA fragment jump races module scripts). Pixel-verified: strip visible on
+  direct invoice entry, and switching to الحاسبة from there works without awkward recovery.
+- Shared-CSS + market-boot side effect: e9206b8 touches app.css (shared) - final
+  independent review must include the stage-1 regression delta, not treat aeddb49's
+  approval as covering it (parent instruction 05:45).
+
+### Verification evidence (all local, on a33c4e6)
+- 9 VM unit tests (tests/tabs-calc.test.js) mirroring tabs-market tests: panes, lazy
+  tools.js once + last-quote replay, RTL keyboard + focus, hash routing, identity restore,
+  offline note with retry, online-event self-heal. 114 unit total PASS.
+- review-calc-invoice.cjs: 109 assertions at 320/390/1280 - default state, lazy gating,
+  switching + identity, selected/unselected visual distinction, keyboard, strip below
+  sticky header, both panes + footer fully clear of dock and Tut launcher at full scroll,
+  deep-link landing with strip visible, /invoice/ redirect, blocked-tools note + retry.
+- review-calc-live.cjs: 5 real-data checks - invoice price prefills from live isagha,
+  resale wording intact, verdict separates extra-above-gold, complete one-line donut
+  percentage. Screenshot live-data-invoice.png.
+- review-pwa.cjs case F (7 assertions): /calculator/ cached without opening invoice,
+  offline deep link #invoice shows the connection-needed note with the no-stale-numbers
+  promise and retry; reconnect (manual retry or online-event auto-retry) loads tools.js,
+  note hides, and the invoice check computes from a manually entered price. 27 PWA total.
+- Full suites green: 438 regression, 124 assistant, 96 hints, 163 market-tab assertions.
+- Before/after visuals: before-invoice-bottom-390.png (live site, footer clipped by Tut
+  launcher) vs bottom-invoice-bottom-390 (candidate, fully clear); live-data-invoice.png.
+
+### Still gated (unchanged)
+- No publication, no token, no live-site change. Manifest shortcut 'افحص الفاتورة' still
+  points at /invoice/ (stub); repointing it is a publication-gate decision.
+- Real installed-WebAPK behavior remains a physical-device boundary (as in stage 1).

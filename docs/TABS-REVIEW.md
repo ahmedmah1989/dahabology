@@ -62,3 +62,11 @@ real-device next-open timing was not proven by automation.
 
 ## Deliberately not done
 - No publication, no token, no live-site change. No calculator+invoice merge yet (next stage). No wallet+account (not ready per review). No assistant/about/guide merge (later). No performance guarantee wording for the user.
+
+## Stage 2 cross-reference (calculator + invoice)
+Stage 2 (merge /invoice/ into /calculator/ as tabs) is implemented on the same branch and
+documented in docs/CALC-INVOICE-PLAN.md (status section). Note for the final independent
+review: commit e9206b8 moved the tab-strip styles into the SHARED app.css, so the stage-1
+screens' regression delta after aeddb49 must be re-verified - aeddb49's approval does not
+cover that shared change (parent instruction 05:45). PWA evidence now includes case F
+(invoice lazy path offline), 27 assertions total.
