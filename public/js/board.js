@@ -34,7 +34,7 @@
   }
   if (typeof module !== 'undefined') module.exports = { pin, verdict, karat, change, compare };
   if (typeof document === 'undefined') return;
-  window.DHB_BOARD = { pin, verdict, karat, change, compare };
+  window.DHB_BOARD = { pin, verdict, karat, change, compare, detail: () => last };
 
   const $ = id => document.getElementById(id);
   const set =(id, text) => { const e = $(id); if (e) e.textContent = text; };

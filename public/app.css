@@ -398,6 +398,9 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  #calculator>.x-lead{order:0}#calculator>.x-seg{order:1}#calculator>.x-karats{order:2}#calculator>.x-card:has(#cAmount){order:3}#calculator>#cQuoteStatus{order:4}#calculator>.x-hero.sm{order:5}#calculator>.x-card:has(#cExplain){order:6}
  .x-hero.sm .x-ring .val.fit{font-size:clamp(24px,17cqi,34px)}
  main.wrap{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+ /* The fixed Tut launcher reaches ~182px up from the viewport bottom on the left; lift the
+    footer's last line fully above it at full scroll so its links stay readable and tappable. */
+ footer{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
  .x-field input,.x-field select{min-height:46px;font-size:16px}
 }
 

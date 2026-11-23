@@ -1,15 +1,37 @@
 ---
 import Base from '../layouts/Base.astro';
-import html from '../panels/market.html?raw';
+import marketHtml from '../panels/market.html?raw';
+import analysisHtml from '../panels/analysis.html?raw';
+import liveHtml from '../panels/live.html?raw';
 import { panel } from '../lib/site.js';
 ---
-<Base page="market" heading="سعر الذهب الآن" scripts={['services', 'alerts', 'monitor', 'board', 'tools', 'market-view', 'silver-view']}
+<Base page="market" heading="سعر الذهب الآن" scripts={['services', 'alerts', 'monitor', 'board', 'tools', 'market-view', 'silver-view', 'live-view', 'tabs-market']}
   title="سعر الذهب اليوم في مصر | عيار 21 و24 و18 والدولار الضمني — دهبولوجي"
-  description="سعر بيع وشراء الذهب في مصر لعيار 21 و24 و18، سعر الدولار في البنك، الأونصة العالمية، ومؤشر الفجوة بين السعر المحلي والعالمي.">
-  <Fragment set:html={panel(html, 'market')} />
+  description="سعر بيع وشراء الذهب في مصر لعيار 21 و24 و18، سعر الدولار في البنك، الأونصة العالمية، ومؤشر الفجوة بين السعر المحلي والعالمي، مع التحليل والرسم الحي في صفحة واحدة.">
+  <div class="market-tabs" role="tablist" aria-label="أقسام صفحة السوق">
+    <button type="button" role="tab" id="tab-market" data-pane="market" aria-controls="pane-market" aria-selected="true">السوق</button>
+    <button type="button" role="tab" id="tab-analysis" data-pane="analysis" aria-controls="pane-analysis" aria-selected="false" tabindex="-1">التحليل</button>
+    <button type="button" role="tab" id="tab-live" data-pane="live" aria-controls="pane-live" aria-selected="false" tabindex="-1">الرسم الحي</button>
+  </div>
+  <div id="pane-market" data-panel role="tabpanel" aria-labelledby="tab-market">
+    <Fragment set:html={panel(marketHtml, 'market')} />
+  </div>
+  <div id="pane-analysis" data-panel role="tabpanel" aria-labelledby="tab-analysis" hidden>
+    <Fragment set:html={panel(analysisHtml, 'market')} />
+  </div>
+  <div id="pane-live" data-panel role="tabpanel" aria-labelledby="tab-live" hidden>
+    <Fragment set:html={panel(liveHtml, 'market')} />
+  </div>
 </Base>
 
 <style is:global>
+.market-tabs{display:flex;gap:6px;margin:6px 0 4px;padding:5px;background:#0c192bf2;border:1px solid #344359;border-radius:16px}
+.market-tabs [role="tab"]{flex:1 1 0;min-height:44px;padding:10px 8px;border:1px solid transparent;border-radius:12px;background:transparent;color:#b4c4d8;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.market-tabs [role="tab"][aria-selected="true"]{background:linear-gradient(120deg,#eac674,#d4a44a);color:#14243c;border-color:#f3d99f}
+.market-tabs [role="tab"]:hover:not([aria-selected="true"]),.market-tabs [role="tab"]:focus-visible:not([aria-selected="true"]){color:#f1ce86;border-color:#8c7447}
+.market-tabs [role="tab"]:focus-visible{outline:2px solid #9bd2ed;outline-offset:2px}
+@media(max-width:340px){.market-tabs [role="tab"]{font-size:14px;padding:8px 4px}}
+[role="tabpanel"][hidden]{display:none!important}
 .market-reference-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start;margin:14px 0}
 .market-reference-grid>.x-card{margin:0;min-width:0;overflow-wrap:anywhere;padding:14px 10px}.market-reference-grid h2{font-size:17px}.market-reference-grid .x-sub,.market-reference-grid .x-note{font-size:12px;line-height:1.7}.market-reference-grid #priceBank,.market-reference-grid #impVal{font-size:22px;line-height:1.6;display:block}.market-reference-grid #silverCard{grid-column:1/-1}.market-reference-grid #silverCard h3{font-size:14px;margin:8px 0}.market-reference-grid details{font-size:12px}.market-reference-grid .price-unit{display:block}
 @media(min-width:850px){.market-reference-grid{grid-template-columns:1fr 1fr}.market-reference-grid #silverCard{grid-column:1/-1}}

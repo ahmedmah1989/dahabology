@@ -218,7 +218,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <div class="core" role="img" aria-label="شعار دهبولوجي"></div>
   {HOME_PAGES.map((tab,i)=>{
     const angle=(-90+i*360/HOME_PAGES.length)*Math.PI/180;
-    return <a class="orb" href={B+tab.k+'/'} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
+    return <a class="orb" href={B + (tab.k === 'analysis' || tab.k === 'live' ? 'market/#' + tab.k : tab.k + '/')} style={`--i:${i};left:${50+38.5*Math.cos(angle)}%;top:${50+38.5*Math.sin(angle)}%`}>
       <svg class="zap" viewBox="-60 -60 120 120" aria-hidden="true"><path class="ring"/><path class="spk"/></svg>
       <span class="ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d={tab.d}/></svg></span><span class="lbl">{tab.k === 'invoice' ? 'الفاتورة' : tab.t}</span>
     </a>;
