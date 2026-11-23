@@ -3,7 +3,7 @@
 const H=window.DHB_HELP,Q=window.DHB_QUOTE,dialog=document.getElementById('helpDialog');if(!dialog||!H)return;
 const launcher=document.getElementById('helpLauncher'),input=document.getElementById('helpQuestion'),log=document.getElementById('helpLog');
 let previous=null,busy=false,revision=0,controller=null;
-const paths=new Set(['','account-preview/','wallet/','invoice/','calculator/','market/','market/#analysis','products/','guide/','assistant/']);
+const paths=new Set(['','account-preview/','wallet/','invoice/','calculator/','calculator/#invoice','market/','market/#analysis','products/','guide/','assistant/']);
 function viewport(){const v=window.visualViewport;dialog.style.setProperty('--help-vh',(v?.height||innerHeight)+'px');dialog.style.setProperty('--help-top',(v?.offsetTop||0)+'px');}
 function add(speaker,text,topic){
  const row=document.createElement('div');row.className='help-message';row.dataset.speaker=speaker;

@@ -10,6 +10,6 @@ test('price responses use shared dated reference and exclude missing/stale input
  sources.isagha.sourceTime='2025-01-01T00:00:00Z';s=H.priceAnswer(sources,Q,now);assert.doesNotMatch(s,/5,600/);assert.match(s,/أقدم من 24 ساعة/);
 });
 test('guide has safe internal paths, no unsupported autonomous functions',()=>{
- for(const t of H.topics){assert.match(t.path,/^(account-preview|wallet|invoice|calculator|market|analysis|products|guide|assistant)\/$|^market\/#(analysis|live)$/);assert.ok(t.text.length>70);}
+ for(const t of H.topics){assert.match(t.path,/^(account-preview|wallet|invoice|calculator|market|analysis|products|guide|assistant)\/$|^market\/#(analysis|live)$|^calculator\/#invoice$/);assert.ok(t.text.length>70);}
  assert.match(H.find('دهبي').text,/الحفظ الجديد يحتاج تسجيل الدخول/);
 });
