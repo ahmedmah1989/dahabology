@@ -190,34 +190,38 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 .hero-price{max-width:min(100%,680px)}
 .hero-price b,.ticker b,.home-market b{white-space:nowrap;overflow-wrap:normal;word-break:normal}
 
-/* Three related quote sections: gold, silver, then dollar. */
-.quote-section{position:relative;z-index:2;width:min(100%,620px);margin-top:18px;padding:18px 14px;background:linear-gradient(145deg,#183049f5,#102139f5);border:1px solid #d9ae5b99;border-radius:28px 9px 28px 9px;box-shadow:0 0 20px #efc66c0b,inset 0 1px 0 #fff6d610;isolation:isolate}
-.quote-section::before{content:"";position:absolute;inset:-1px;border:1px solid #ffe6aa;border-radius:inherit;pointer-events:none;opacity:.2;box-shadow:0 0 15px #efc66c30;animation:quote-glow 6s ease-in-out infinite}
-.silver-section::before{animation-delay:2s}.dollar-section::before{animation-delay:4s}
-@keyframes quote-glow{0%,100%{opacity:.15;box-shadow:0 0 10px #efc66c12}50%{opacity:.7;box-shadow:0 0 21px #efc66c35}}
-.quote-heading{margin:0 0 12px;text-align:center;color:var(--gold-hot);font-size:24px;font-weight:800;line-height:1.5}
-.quote-mark{font-size:17px;vertical-align:middle;margin-inline-end:5px;color:#efc66c}
-.silver-section .quote-mark{color:#dae6f4}
-.hero-price{width:100%;padding:0 4px 15px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;margin-top:0;position:relative}
-.hero-price>b{font-size:clamp(45px,12vw,62px);line-height:1.2;letter-spacing:-1px}
-.hero-price .cap{font-size:13px;color:var(--muted)}
-.hero-price .cap .home-karat-label{display:block;font-size:21px;margin-inline:3px}
-.hero-quote-kind{display:block;margin-top:2px;font-size:11px}
+/* Home only: keep the brand watermark from competing with prices and warnings. */
+.dhb-watermark img{opacity:.02}
+/* Direction B: one unified framed board holding gold, silver and dollar zones. */
+.board-frame{position:relative;z-index:2;width:min(100%,620px);margin-top:14px;padding:8px 18px 16px;border:1px solid #d9ae5b5c;border-radius:22px;background:linear-gradient(165deg,#1a3252d9,#102138d9);box-shadow:0 8px 28px #08122259,inset 0 1px 0 #fff6d60f;isolation:isolate}
+.quote-section{position:relative;width:100%;margin:0;padding:12px 2px}
+.quote-section::before{content:"";position:absolute;inset:0;pointer-events:none}
+.quote-section+.quote-section{border-top:1px solid #efc66c24}
+.quote-heading{display:flex;align-items:center;gap:8px;margin:0 0 8px;text-align:start;color:var(--gold-hot);font-size:15px;font-weight:800;line-height:1.4}
+.quote-heading::after{content:"";flex:1;height:1px;background:linear-gradient(to left,#efc66c4d,transparent)}
+.quote-mark{font-size:12px;color:#efc66c}
+.silver-section .quote-heading{color:#cfe0f2}
+.silver-section .quote-mark{color:#cfe0f2}
+.silver-section .quote-heading::after{background:linear-gradient(to left,#cfe0f240,transparent)}
+.hero-price{width:100%;min-height:0;padding:0 2px 4px;border:0;border-radius:0;background:none;box-shadow:none;backdrop-filter:none;margin-top:0;position:relative;text-align:center}
+.hero-price>b{font-size:clamp(44px,11.5vw,56px);line-height:1.15;letter-spacing:-1px;text-shadow:0 0 24px #efc66c30}
+.hero-price .cap{font-size:12px;color:var(--muted)}
+.hero-price .cap .home-karat-label{display:block;font-size:18px;margin-inline:3px}
 .hero-price .when{font-size:11px}
-.quote-section .ticker{width:100%;margin:0;gap:0;border-top:1px solid #efc66c26;padding-top:14px}
+.quote-section .ticker{width:100%;margin:4px 0 0;gap:0;border-top:1px solid #efc66c1f;padding-top:9px}
 .quote-section .chip{border:0;border-radius:0;background:none;padding:0 6px;box-shadow:none;min-width:0}
 .quote-section .chip+.chip{border-inline-start:1px solid #efc66c26}
-.quote-section .chip b{font-size:clamp(19px,5.3vw,26px);line-height:1.4;min-height:0;margin-top:6px}
+.quote-section .chip b{font-size:clamp(18px,4.9vw,23px);line-height:1.35;min-height:0;margin-top:2px}
 .quote-section .chip .karat-note{display:inline;font-size:10px}
 .quote-section .ticker .home-karat-label{font-size:17px}
-.quote-section .home-primary{width:100%;margin-top:16px;gap:8px}
-.quote-section .home-primary a{padding:9px 6px;font-size:14px}
+.quote-section .home-primary{width:100%;margin-top:12px;gap:8px}
+.quote-section .home-primary a{min-height:44px;padding:7px 6px;font-size:14px}
 .quote-section .home-market{width:100%;margin:0;gap:0}
 .quote-section .home-market .mini{border:0;border-radius:0;background:none;box-shadow:none;padding:0 8px;overflow-wrap:anywhere}
 .dollar-market .mini+.mini{border-inline-start:1px solid #efc66c26}
-.quote-section .home-market .mini>span{font-size:14px;line-height:1.6}
-.quote-section .home-market b{font-size:clamp(24px,6.3vw,30px);line-height:1.5;margin-top:3px}
-.quote-section .home-market small{font-size:11px}
+.quote-section .home-market .mini>span{font-size:13px;line-height:1.45}
+.quote-section .home-market b{font-size:clamp(21px,5.7vw,26px);line-height:1.35;margin-top:1px}
+.quote-section .home-market small{font-size:11px;line-height:1.45}
 .quote-section .home-market .silver-mini{padding:0}
 .quote-section .silver-mini>div{gap:0}
 .quote-section .silver-mini section{padding:0 8px}
@@ -226,8 +230,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 .home-shortcuts{gap:0;border-block:1px solid #efc66c22;border-radius:0;background:none}
 .home-shortcuts a{border:0;border-radius:0;background:none;box-shadow:none;padding:12px 10px}
 .home-shortcuts a+a{border-inline-start:1px solid #efc66c22}
-@media(max-width:340px){.quote-section{padding:16px 8px}.quote-section .chip{padding-inline:4px}.quote-section .home-market .mini{padding-inline:5px}}
-@media(prefers-reduced-motion:reduce){.quote-section::before{animation:none;opacity:.35}}
+@media(max-width:340px){.board-frame{padding-inline:12px}.quote-section .chip{padding-inline:4px}.quote-section .home-market .mini{padding-inline:5px}}
 </style>
 </head>
 <body class="home-shell" style={`--logo:${logo};--emblem:${emblem}`}>
@@ -237,10 +240,11 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
   <Motto />
 </header>
 
+<div class="board-frame">
 <section class="quote-section gold-section price-board" aria-labelledby="goldHeading">
   <h2 class="quote-heading" id="goldHeading"><span class="quote-mark" aria-hidden="true">✦</span> الذهب</h2>
   <div class="hero-price" aria-live="polite">
-    <span class="cap"><strong class="home-karat-label">عيار 21</strong><span class="hero-quote-kind">سعر بيع الجرام · بدون مصنعية</span></span>
+    <span class="cap"><strong class="home-karat-label">عيار 21</strong></span>
     <b class="fit-number"><span id="p21">—</span><small>جنيه</small></b>
     <span class="when" id="pWhen">تحميل السعر…</span>
     <span class="when" id="pSourceTime"></span>
@@ -266,6 +270,7 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
     <a class="mini" href={B+'market/#impCard'}><span>دولار الصاغة</span><b id="pImplied">—</b><small>جنيه / دولار · محسوب</small><small id="pImpliedTime"></small></a>
   </div>
 </section>
+</div>
 
 <main class="stage" id="stage" aria-label="أقسام دهبولوجي">
   <div class="rays"></div>
