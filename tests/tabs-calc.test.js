@@ -65,7 +65,7 @@ function setup(hash = '') {
     history: { replaceState(u, t, h) { context.location.hash = h; } },
     CustomEvent: function (n, o) { return { type: n, detail: o && o.detail }; },
     requestAnimationFrame: f => { rafQueue.push(f); },
-    setTimeout
+    setTimeout, clearTimeout,
   };
   vm.createContext(context);
   vm.runInContext(SRC, context);
@@ -144,15 +144,23 @@ test('RTL keyboard: left arrow moves to next tab with focus, End jumps to last',
   assert.equal(s.tabs[0].focused, true);
 });
 
-test('hashchange switches panes', () => {
+test('hashchange switches panes and re-asserts the tab strip after the smooth scroll settles', async () => {
   const s = setup();
   assert.equal(typeof s.listeners.hashchange, 'function');
   s.context.location.hash = '#invoice';
   s.listeners.hashchange();
   assert.equal(s.panes['pane-invoice'].hidden, false);
+  assert.equal(s.rafQueue.length, 1, 'immediate re-assert queued');
+  s.rafQueue.forEach(f => f());
+  await new Promise(r => setTimeout(r, 750));
+  assert.ok(s.scrollCalls.length >= 2, 'strip re-asserted after the settle delay: ' + s.scrollCalls.length);
   s.context.location.hash = '#calculator';
   s.listeners.hashchange();
   assert.equal(s.panes['pane-calculator'].hidden, false);
+  s.context.location.hash = '#nonsense';
+  s.rafQueue.length = 0;
+  s.listeners.hashchange();
+  assert.equal(s.rafQueue.length, 0, 'unknown hash triggers no re-assert');
 });
 
 test('offline first activation: error shows honest note with retry, retry reloads, success hides note', () => {

@@ -23,11 +23,13 @@ function setup(hash = '') {
   ['market', 'analysis', 'live'].forEach(n => { panes['pane-' + n] = { hidden: n !== 'market' }; });
   const h1 = { textContent: 'سعر الذهب الآن' };
   const scriptsAppended = [];
+  const scrollCalls = [];
+  const rafQueue = [];
   const context = {
     document: {
       querySelectorAll: s => (s.includes('role="tab"') ? tabs : []),
       getElementById: id => panes[id] || null,
-      querySelector: s => s === '.x-top h1' ? h1 : s === '.market-tabs' ? { scrollIntoView() {} } : s.startsWith('script') ? { src: '/js/quote-state.js?v=TESTV' } : null,
+      querySelector: s => s === '.x-top h1' ? h1 : s === '.market-tabs' ? { scrollIntoView() { scrollCalls.push(1); } } : s.startsWith('script') ? { src: '/js/quote-state.js?v=TESTV' } : null,
       createElement: () => ({ src: '', onload: null }),
       head: { append(el) { scriptsAppended.push(el.src); if (el.onload) setTimeout(() => el.onload(), 0); } },
       title: ''
@@ -42,11 +44,12 @@ function setup(hash = '') {
     location: { hash },
     history: { replaceState(u, t, h) { context.location.hash = h; } },
     CustomEvent: function (n, o) { return { type: n, detail: o && o.detail }; },
-    setTimeout
+    requestAnimationFrame: f => { rafQueue.push(f); },
+    setTimeout, clearTimeout,
   };
   vm.createContext(context);
   vm.runInContext(SRC, context);
-  return { tabs, panes, h1, scriptsAppended, context, listeners };
+  return { tabs, panes, h1, scriptsAppended, context, listeners, scrollCalls, rafQueue };
 }
 const tick = () => new Promise(r => setTimeout(r, 10));
 
@@ -125,13 +128,22 @@ test('RTL keyboard: left arrow moves to next tab with focus, End jumps to last',
   assert.equal(s.panes['pane-analysis'].hidden, false, 'right arrow wraps back');
 });
 
-test('hashchange switches panes', () => {
+test('hashchange switches panes and re-asserts the tab strip after the smooth scroll settles', async () => {
   const s = setup();
   assert.equal(typeof s.listeners.hashchange, 'function');
   s.context.location.hash = '#live';
   s.listeners.hashchange();
   assert.equal(s.panes['pane-live'].hidden, false);
+  assert.equal(s.rafQueue.length, 1, 'immediate re-assert queued');
+  s.rafQueue.forEach(f => f());
+  await new Promise(r => setTimeout(r, 750));
+  assert.ok(s.scrollCalls.length >= 2, 'strip re-asserted after the settle delay: ' + s.scrollCalls.length);
   s.context.location.hash = '#market';
   s.listeners.hashchange();
   assert.equal(s.panes['pane-market'].hidden, false);
+  s.context.location.hash = '#nonsense';
+  const before = s.scrollCalls.length;
+  s.rafQueue.length = 0;
+  s.listeners.hashchange();
+  assert.equal(s.rafQueue.length, 0, 'unknown hash triggers no re-assert');
 });

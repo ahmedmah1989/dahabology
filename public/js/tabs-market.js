@@ -92,11 +92,21 @@
     });
   });
   function fromHash() { const n = (location.hash || '').slice(1); if (panes[n]) { activate(n); return true; } return false; }
-  window.addEventListener('hashchange', fromHash);
+  const revealTabs = () => { const bar = document.querySelector('.market-tabs'); if (bar) bar.scrollIntoView({ block: 'start', behavior: 'instant' }); };
+  let stripSettleT = 0;
+  window.addEventListener('hashchange', () => {
+    if (!fromHash()) return;
+    /* Same-document fragment navigation (dock/assistant links while already on this
+       page) anchor-scrolls the pane, which slides the tab strip under the sticky
+       header once the smooth scroll settles. Re-assert the strip immediately and
+       again after the UA's smooth fragment scroll finishes. */
+    requestAnimationFrame(revealTabs);
+    clearTimeout(stripSettleT);
+    stripSettleT = setTimeout(revealTabs, 700);
+  });
   /* Deep-link landing: the panel's own section id makes the browser anchor-scroll past the
      tab strip; bring the strip back into view (scroll-padding-top keeps it below the sticky
      header) so the other tabs stay discoverable from a direct entry. */
-  const revealTabs = () => { const bar = document.querySelector('.market-tabs'); if (bar) bar.scrollIntoView({ block: 'start', behavior: 'instant' }); };
   if (fromHash()) {
     revealTabs();
     /* The browser's own fragment jump to the section id lands after module scripts run;

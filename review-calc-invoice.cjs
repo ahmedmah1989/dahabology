@@ -88,6 +88,27 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       ok(await p2.locator('#pane-calculator').isVisible(), 'switching to الحاسبة works from a direct invoice entry (' + width + 'px)');
       await p2.close();
 
+      /* Same-document fragment navigation (dock/assistant links while already on the page):
+         the UA smooth-scrolls the pane anchor; assert the SETTLED strip position, not the
+         transient one (regression found by final review: strip ended under the header). */
+      const p4 = await c.newPage();
+      await p4.goto(base + '/calculator/');
+      await p4.waitForSelector('.market-tabs');
+      const settledStrip = () => { const r = document.querySelector('.market-tabs').getBoundingClientRect(); const h = document.querySelector('header.x-top').getBoundingClientRect(); return { top: r.top, hdr: h.bottom, ok: r.top >= h.bottom - 1 && r.top < 200 && r.bottom <= innerHeight }; };
+      await p4.evaluate(() => { window.location.hash = 'invoice'; });
+      await p4.waitForSelector('#pane-invoice:not([hidden])');
+      ok(true, 'same-document hash nav opens the invoice pane (' + width + 'px)');
+      await p4.waitForTimeout(2600);
+      let st = await p4.evaluate(settledStrip);
+      ok(st.ok, 'SETTLED strip below sticky header after same-doc #invoice nav (' + width + 'px): stripTop=' + st.top.toFixed(1) + ' hdrBottom=' + st.hdr.toFixed(1));
+      if (width === 390) await p4.screenshot({ path: out + '/samedoc-invoice-390.png' });
+      await p4.evaluate(() => { window.location.hash = 'calculator'; });
+      await p4.waitForSelector('#pane-calculator:not([hidden])');
+      await p4.waitForTimeout(2600);
+      st = await p4.evaluate(settledStrip);
+      ok(st.ok, 'SETTLED strip below sticky header after same-doc #calculator nav back (' + width + 'px): stripTop=' + st.top.toFixed(1) + ' hdrBottom=' + st.hdr.toFixed(1));
+      await p4.close();
+
       const p3 = await c.newPage();
       await p3.goto(base + '/invoice/');
       await p3.waitForURL(u => u.pathname.endsWith('/calculator/') && u.hash === '#invoice', { timeout: 5000 });

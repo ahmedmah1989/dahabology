@@ -118,6 +118,23 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       ok(true, 'deep link lands with the tab strip visible below the sticky header (' + width + 'px)');
       await p2.close();
 
+      /* Same-document fragment navigation (dock/assistant links while already on /market/):
+         the UA smooth-scrolls the pane anchor; assert the SETTLED strip position, not the
+         transient one (regression found by final review: strip ended under the header). */
+      const ps = await c.newPage();
+      await ps.goto(base + '/market/');
+      await ps.waitForSelector('.market-tabs');
+      const settledStrip = () => { const r = document.querySelector('.market-tabs').getBoundingClientRect(); const h = document.querySelector('header.x-top').getBoundingClientRect(); return { top: r.top, hdr: h.bottom, ok: r.top >= h.bottom - 1 && r.top < 200 && r.bottom <= innerHeight }; };
+      for (const frag of ['analysis', 'live']) {
+        await ps.evaluate(f => { window.location.hash = f; }, frag);
+        await ps.waitForSelector('#pane-' + frag + ':not([hidden])');
+        await ps.waitForTimeout(2600);
+        const st = await ps.evaluate(settledStrip);
+        ok(st.ok, 'SETTLED strip below sticky header after same-doc #' + frag + ' nav (' + width + 'px): stripTop=' + st.top.toFixed(1) + ' hdrBottom=' + st.hdr.toFixed(1));
+      }
+      if (width === 390) await ps.screenshot({ path: out + '/samedoc-live-390.png' });
+      await ps.close();
+
       const p3 = await c.newPage();
       await p3.goto(base + '/analysis/');
       await p3.waitForURL(u => u.pathname.endsWith('/market/') && u.hash === '#analysis', { timeout: 5000 });
