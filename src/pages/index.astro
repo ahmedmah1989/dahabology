@@ -194,6 +194,10 @@ body.page-away *,body.page-away *::before,body.page-away *::after{animation-play
 .dhb-watermark img{opacity:.02}
 /* Direction B: one unified framed board holding gold, silver and dollar zones. */
 .board-frame{position:relative;z-index:2;width:min(100%,620px);margin-top:14px;padding:8px 18px 16px;border:1px solid #d9ae5b5c;border-radius:22px;background:linear-gradient(165deg,#1a3252d9,#102138d9);box-shadow:0 8px 28px #08122259,inset 0 1px 0 #fff6d60f;isolation:isolate}
+/* Outer-only halo shares the navigation circles' gold, strike and fade timing.
+   A non-interactive overlay leaves the prices, layout and links unchanged. */
+.board-frame::after{content:"";position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;border:2px solid var(--gold-hot);box-shadow:0 0 18px #ffd84a99,inset 0 0 18px #efc66c44;opacity:0;transition:opacity .45s ease-out}
+.board-frame.halo-lit::after{opacity:1;transition:none}
 .quote-section{position:relative;width:100%;margin:0;padding:12px 2px}
 .quote-section::before{content:"";position:absolute;inset:0;pointer-events:none}
 .quote-section+.quote-section{border-top:1px solid #efc66c24}
@@ -364,11 +368,19 @@ function strike(it){
     if(++n > 4){ clearInterval(t); it.a.classList.remove('strike'); it.bolt.classList.remove('strike'); }
   },80);
 }
+const priceBoard = document.querySelector('.board-frame');
+let boardHaloTimer;
+function pulseBoard(){
+  if(paused||document.hidden) return;
+  clearTimeout(boardHaloTimer);
+  priceBoard.classList.add('halo-lit');
+  boardHaloTimer = setTimeout(()=>priceBoard.classList.remove('halo-lit'),400);
+}
 let idle, introTimer;
 function startIdle(){
   clearInterval(idle);
   if(paused||document.hidden) return;
-  idle = setInterval(() => { if(!document.hidden) strike(items[Math.floor(Math.random()*items.length)]); }, 2300);
+  idle = setInterval(() => { if(!document.hidden){strike(items[Math.floor(Math.random()*items.length)]);pulseBoard();} }, 2300);
 }
 
 /* intro: once per session, replayable */
@@ -393,7 +405,7 @@ document.getElementById('motionToggle').addEventListener('click',()=>{
  suspendMotion();syncMotion();startIdle();
 });
 function suspendMotion(){
- clearInterval(idle);clearTimeout(introTimer);
+ clearInterval(idle);clearTimeout(introTimer);clearTimeout(boardHaloTimer);priceBoard.classList.remove('halo-lit');
  items.forEach(it=>{clearInterval(it.timer);it.timer=null;it.a.classList.remove('strike');it.bolt.classList.remove('strike');it.a.blur();});
  document.body.classList.remove('play');
 }
