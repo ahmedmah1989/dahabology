@@ -22,6 +22,10 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       const bar = await p.locator('.market-tabs').boundingBox();
       ok(bar.x >= 0 && bar.x + bar.width <= width + 1, 'tab bar within width');
       ok(bar.height >= 44, 'tab bar touch height');
+      const tabStyle = await p.evaluate(() => { const s = getComputedStyle(document.getElementById('tab-market')), u = getComputedStyle(document.getElementById('tab-analysis')); return { sel: s.backgroundImage, unsel: u.backgroundImage, selColor: s.color, unselColor: u.color }; });
+      ok(tabStyle.sel.includes('linear-gradient'), 'selected tab shows the gold gradient (' + width + 'px)');
+      ok(!tabStyle.unsel.includes('linear-gradient'), 'unselected tab is not gold (' + width + 'px)');
+      ok(tabStyle.selColor !== tabStyle.unselColor, 'selected and unselected tab colors differ (' + width + 'px)');
       await p.screenshot({ path: out + '/tab-market-' + width + '.png' });
 
       await p.click('#tab-analysis');
@@ -110,6 +114,8 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       await p2.waitForSelector('#pane-live:not([hidden])');
       ok(true, 'deep link /market/#live opens live pane at load');
       ok(!await p2.evaluate(() => document.scrollingElement.scrollWidth > innerWidth + 1), 'no overflow on deep link');
+      await p2.waitForFunction(() => { const r = document.querySelector('.market-tabs').getBoundingClientRect(); const h = document.querySelector('header.x-top').getBoundingClientRect(); return r.top >= h.bottom - 1 && r.top < 200 && r.bottom <= innerHeight; }, null, { timeout: 5000 });
+      ok(true, 'deep link lands with the tab strip visible below the sticky header (' + width + 'px)');
       await p2.close();
 
       const p3 = await c.newPage();
@@ -118,6 +124,8 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       await p3.waitForSelector('#pane-analysis:not([hidden])');
       ok(true, '/analysis/ redirects to the analysis tab');
       ok((await p3.locator('.x-top h1').textContent()).includes('تحليل الذهب'), 'redirected page shows analysis identity');
+      await p3.waitForFunction(() => { const r = document.querySelector('.market-tabs').getBoundingClientRect(); const h = document.querySelector('header.x-top').getBoundingClientRect(); return r.top >= h.bottom - 1 && r.top < 200 && r.bottom <= innerHeight; }, null, { timeout: 5000 });
+      ok(true, 'redirected entry also lands with the tab strip visible (' + width + 'px)');
       await p3.close();
 
       const p4 = await c.newPage();

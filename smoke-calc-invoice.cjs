@@ -17,6 +17,11 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
     ok(!await p.locator('#pane-invoice').isVisible(), 'invoice pane hidden at load');
     ok(!await p.evaluate(() => performance.getEntriesByType('resource').some(r => r.name.includes('tools.js'))), 'tools.js NOT loaded for plain calculator visit');
     ok((await p.locator('.x-top h1').textContent()).trim() === 'الحاسبة', 'h1 calculator');
+    const tabStyle = await p.evaluate(() => { const s = getComputedStyle(document.getElementById('tab-calculator')), u = getComputedStyle(document.getElementById('tab-invoice')); return { sel: s.backgroundImage, unsel: u.backgroundImage, selColor: s.color, unselColor: u.color }; });
+    ok(tabStyle.sel.includes('linear-gradient'), 'selected calculator tab shows the gold gradient');
+    ok(!tabStyle.unsel.includes('linear-gradient'), 'unselected invoice tab is not gold');
+    ok(tabStyle.selColor !== tabStyle.unselColor, 'selected and unselected tab colors differ');
+    await p.screenshot({ path: out + '/tab-calculator-390.png' });
     await p.fill('#cAmount', '100000');
     await p.click('#tab-invoice');
     ok(await p.locator('#pane-invoice').isVisible(), 'invoice pane opens');
@@ -26,6 +31,7 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
     await p.waitForFunction(() => performance.getEntriesByType('resource').some(r => r.name.includes('tools.js')), null, { timeout: 5000 });
     ok(true, 'tools.js lazy-loaded on first invoice activation');
     ok((await p.locator('#invVerdict').textContent()).includes('اكتب الوزن'), 'invoice verdict placeholder renders (lazy bundle live)');
+    await p.screenshot({ path: out + '/tab-invoice-390.png' });
     await p.fill('#invGrams', '8'); await p.fill('#invTotal', '49500');
     ok(await p.locator('#invDonut').isVisible(), 'invoice donut visible after input');
     await p.click('#tab-calculator');
@@ -36,6 +42,11 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
     await p2.goto(base + '/calculator/#invoice');
     await p2.waitForSelector('#pane-invoice:not([hidden])');
     ok(true, 'deep link /calculator/#invoice opens invoice pane at load');
+    await p2.waitForFunction(() => { const r = document.querySelector('.market-tabs').getBoundingClientRect(); const h = document.querySelector('header.x-top').getBoundingClientRect(); return r.top >= h.bottom - 1 && r.top < 200 && r.bottom <= innerHeight; }, null, { timeout: 5000 });
+    ok(true, 'deep link lands with the tab strip visible below the sticky header');
+    await p2.screenshot({ path: out + '/deeplink-invoice-390.png' });
+    await p2.click('#tab-calculator');
+    ok(await p2.locator('#pane-calculator').isVisible(), 'switching to الحاسبة works from a direct invoice entry');
 
     const p3 = await c.newPage();
     await p3.goto(base + '/invoice/');

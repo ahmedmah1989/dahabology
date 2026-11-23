@@ -567,3 +567,12 @@ body:has(.ivx) .x-dock::before{inset:-16px calc(50% - 50vw) calc(-12px - env(saf
 #heroChange .change-reference bdi{white-space:nowrap;display:inline-block}
 
 .x-livecalc b{direction:ltr;unicode-bidi:isolate;white-space:nowrap;overflow-wrap:normal}
+/* Shared tab strip (market: السوق/التحليل/الرسم الحي • calculator: الحاسبة/افحص الفاتورة).
+   Lives here, not in one page, so every tabbed page gets the same selected/unselected state. */
+.market-tabs{display:flex;gap:6px;margin:6px 0 4px;padding:5px;background:#0c192bf2;border:1px solid #344359;border-radius:16px}
+.market-tabs [role="tab"]{flex:1 1 0;min-height:44px;padding:10px 8px;border:1px solid transparent;border-radius:12px;background:transparent;color:#b4c4d8;font:inherit;font-weight:700;font-size:16px;cursor:pointer}
+.market-tabs [role="tab"][aria-selected="true"]{background:linear-gradient(120deg,#eac674,#d4a44a);color:#14243c;border-color:#f3d99f}
+.market-tabs [role="tab"]:hover:not([aria-selected="true"]),.market-tabs [role="tab"]:focus-visible:not([aria-selected="true"]){color:#f1ce86;border-color:#8c7447}
+.market-tabs [role="tab"]:focus-visible{outline:2px solid #9bd2ed;outline-offset:2px}
+@media(max-width:340px){.market-tabs [role="tab"]{font-size:14px;padding:8px 4px}}
+[role="tabpanel"][hidden]{display:none!important}

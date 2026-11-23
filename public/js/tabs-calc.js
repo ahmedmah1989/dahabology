@@ -87,7 +87,17 @@
       try { history.replaceState(null, '', '#' + name); } catch (_) {}
     });
   });
-  function fromHash() { const n = (location.hash || '').slice(1); if (panes[n]) activate(n); }
+  function fromHash() { const n = (location.hash || '').slice(1); if (panes[n]) { activate(n); return true; } return false; }
   window.addEventListener('hashchange', fromHash);
-  fromHash();
+  /* Deep-link landing: the panel's own section id makes the browser anchor-scroll past the
+     tab strip; bring the strip back into view (scroll-padding-top keeps it below the sticky
+     header) so the other tool stays discoverable from a direct entry. */
+  const revealTabs = () => { const bar = document.querySelector('.market-tabs'); if (bar) bar.scrollIntoView({ block: 'start', behavior: 'instant' }); };
+  if (fromHash()) {
+    revealTabs();
+    /* The browser's own fragment jump to the section id lands after module scripts run;
+       re-assert the tab strip position once loading settles. */
+    if (document.readyState !== 'complete') window.addEventListener('load', () => requestAnimationFrame(revealTabs));
+    else requestAnimationFrame(revealTabs);
+  }
 })();
