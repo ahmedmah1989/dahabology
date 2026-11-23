@@ -94,15 +94,28 @@
   function fromHash() { const n = (location.hash || '').slice(1); if (panes[n]) { activate(n); return true; } return false; }
   const revealTabs = () => { const bar = document.querySelector('.market-tabs'); if (bar) bar.scrollIntoView({ block: 'start', behavior: 'instant' }); };
   let stripSettleT = 0;
+  const cancelStripSettle = () => { clearTimeout(stripSettleT); stripSettleT = 0; };
   window.addEventListener('hashchange', () => {
+    cancelStripSettle();          /* any new fragment (including a cleared hash) supersedes a pending re-assert */
     if (!fromHash()) return;
     /* Same-document fragment navigation (dock/assistant links while already on this
        page) anchor-scrolls the pane, which slides the tab strip under the sticky
        header once the smooth scroll settles. Re-assert the strip immediately and
-       again after the UA's smooth fragment scroll finishes. */
+       again after the UA's smooth fragment scroll finishes - unless the user has
+       already taken over navigation, which the cancel paths below detect. */
     requestAnimationFrame(revealTabs);
-    clearTimeout(stripSettleT);
     stripSettleT = setTimeout(revealTabs, 700);
+  });
+  /* Explicit tab interaction takes over scrolling; a pending re-assert must not yank back. */
+  tabs.forEach(t => {
+    t.addEventListener('click', cancelStripSettle);
+    t.addEventListener('keydown', cancelStripSettle);
+  });
+  /* Deliberate user scroll input cancels a pending re-assert. UA smooth scrolling fires
+     none of these events, so the automatic fragment scroll is never confused with intent. */
+  ['wheel', 'touchstart'].forEach(k => window.addEventListener(k, cancelStripSettle, { passive: true }));
+  window.addEventListener('keydown', e => {
+    if (/^(ArrowUp|ArrowDown|PageUp|PageDown|Home|End| )$/.test(e.key)) cancelStripSettle();
   });
   /* Deep-link landing: the panel's own section id makes the browser anchor-scroll past the
      tab strip; bring the strip back into view (scroll-padding-top keeps it below the sticky

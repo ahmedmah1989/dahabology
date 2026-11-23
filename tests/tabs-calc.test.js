@@ -56,7 +56,7 @@ function setup(hash = '') {
       title: ''
     },
     window: {
-      addEventListener(k, f) { listeners[k] = f; },
+      addEventListener(k, f) { (listeners[k] = listeners[k] || []).push(f); },
       DHB_BASE: '/',
       _events: [],
       dispatchEvent(e) { this._events.push(e); }
@@ -146,21 +146,58 @@ test('RTL keyboard: left arrow moves to next tab with focus, End jumps to last',
 
 test('hashchange switches panes and re-asserts the tab strip after the smooth scroll settles', async () => {
   const s = setup();
-  assert.equal(typeof s.listeners.hashchange, 'function');
+  assert.ok(Array.isArray(s.listeners.hashchange) && s.listeners.hashchange.length === 1);
+  const fireHash = () => s.listeners.hashchange.forEach(f => f());
   s.context.location.hash = '#invoice';
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.panes['pane-invoice'].hidden, false);
   assert.equal(s.rafQueue.length, 1, 'immediate re-assert queued');
   s.rafQueue.forEach(f => f());
   await new Promise(r => setTimeout(r, 750));
   assert.ok(s.scrollCalls.length >= 2, 'strip re-asserted after the settle delay: ' + s.scrollCalls.length);
   s.context.location.hash = '#calculator';
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.panes['pane-calculator'].hidden, false);
   s.context.location.hash = '#nonsense';
   s.rafQueue.length = 0;
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.rafQueue.length, 0, 'unknown hash triggers no re-assert');
+});
+
+test('user takeover cancels a pending settle re-assert (hashchange, tab click, scroll input)', async () => {
+  const s = setup();
+  const fireHash = () => s.listeners.hashchange.forEach(f => f());
+  /* reviewer repro 2: #invoice then clear hash + scroll -> no yank back */
+  s.context.location.hash = '#invoice';
+  fireHash();
+  s.rafQueue.forEach(f => f());
+  s.context.location.hash = '';
+  fireHash();
+  s.listeners.wheel.forEach(f => f());
+  let n = s.scrollCalls.length;
+  await new Promise(r => setTimeout(r, 750));
+  assert.equal(s.scrollCalls.length, n, 'cleared hash + scroll cancelled the pending re-assert');
+  /* reviewer repro 1: #invoice then tab click + scroll -> no yank back */
+  s.context.location.hash = '#invoice';
+  fireHash();
+  s.rafQueue.forEach(f => f());
+  s.tabs[0].click();
+  n = s.scrollCalls.length;
+  await new Promise(r => setTimeout(r, 750));
+  assert.equal(s.scrollCalls.length, n, 'tab click cancelled the pending re-assert');
+  /* touchstart and scroll keys cancel too */
+  for (const fire of [
+    () => s.listeners.touchstart.forEach(f => f()),
+    () => s.listeners.keydown.forEach(f => f({ key: 'PageDown' }))
+  ]) {
+    s.context.location.hash = '#invoice';
+    fireHash();
+    s.rafQueue.forEach(f => f());
+    fire();
+    n = s.scrollCalls.length;
+    await new Promise(r => setTimeout(r, 750));
+    assert.equal(s.scrollCalls.length, n, 'scroll input cancelled the pending re-assert');
+  }
 });
 
 test('offline first activation: error shows honest note with retry, retry reloads, success hides note', () => {
@@ -190,14 +227,14 @@ test('online event self-heals an open invoice tab whose bundle failed', () => {
   s.tabs[1].click();
   flushError(s);
   assert.equal(s.scriptsAppended.length, 1);
-  assert.equal(typeof s.listeners.online, 'function');
-  s.listeners.online();
+  assert.ok(Array.isArray(s.listeners.online) && s.listeners.online.length === 1);
+  s.listeners.online.forEach(f => f());
   assert.equal(s.scriptsAppended.length, 2, 'retry attempted on reconnect');
 });
 
 test('online event does nothing when the invoice tab is not open', () => {
   const s = setup();
-  assert.equal(typeof s.listeners.online, 'function');
-  s.listeners.online();
+  assert.ok(Array.isArray(s.listeners.online) && s.listeners.online.length === 1);
+  s.listeners.online.forEach(f => f());
   assert.deepEqual(s.scriptsAppended, []);
 });

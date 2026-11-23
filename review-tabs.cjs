@@ -135,6 +135,26 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       if (width === 390) await ps.screenshot({ path: out + '/samedoc-live-390.png' });
       await ps.close();
 
+      if (width === 390) {
+        /* Same takeover hardening on /market/: #live, then user clicks السوق and wheels
+           down - a stale settle timer must NOT yank them back. */
+        const pr = await c.newPage();
+        await pr.goto(base + '/market/');
+        await pr.waitForSelector('.market-tabs');
+        await pr.mouse.move(195, 400);
+        const t0 = Date.now();
+        await pr.evaluate(() => { window.location.hash = 'live'; });
+        await pr.waitForTimeout(200);
+        await pr.click('#tab-market');
+        await pr.mouse.wheel(0, 600);
+        await pr.waitForTimeout(80);
+        const y1 = await pr.evaluate(() => scrollY);
+        await pr.waitForTimeout(Math.max(0, 1000 - (Date.now() - t0)));
+        const y2 = await pr.evaluate(() => scrollY);
+        ok(Math.abs(y2 - y1) <= 2, 'market: tab click + wheel after #live is not yanked back (y1=' + y1 + ' y2=' + y2 + ')');
+        await pr.close();
+      }
+
       const p3 = await c.newPage();
       await p3.goto(base + '/analysis/');
       await p3.waitForURL(u => u.pathname.endsWith('/market/') && u.hash === '#analysis', { timeout: 5000 });

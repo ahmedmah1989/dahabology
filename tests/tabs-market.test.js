@@ -35,7 +35,7 @@ function setup(hash = '') {
       title: ''
     },
     window: {
-      addEventListener(k, f) { listeners[k] = f; },
+      addEventListener(k, f) { (listeners[k] = listeners[k] || []).push(f); },
       DHB_BASE: '/',
       DHB_BOARD: { detail: () => ({ sources: { mock: true } }) },
       _events: [],
@@ -130,20 +130,63 @@ test('RTL keyboard: left arrow moves to next tab with focus, End jumps to last',
 
 test('hashchange switches panes and re-asserts the tab strip after the smooth scroll settles', async () => {
   const s = setup();
-  assert.equal(typeof s.listeners.hashchange, 'function');
+  assert.ok(Array.isArray(s.listeners.hashchange) && s.listeners.hashchange.length === 1);
+  const fireHash = () => s.listeners.hashchange.forEach(f => f());
   s.context.location.hash = '#live';
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.panes['pane-live'].hidden, false);
   assert.equal(s.rafQueue.length, 1, 'immediate re-assert queued');
   s.rafQueue.forEach(f => f());
   await new Promise(r => setTimeout(r, 750));
   assert.ok(s.scrollCalls.length >= 2, 'strip re-asserted after the settle delay: ' + s.scrollCalls.length);
   s.context.location.hash = '#market';
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.panes['pane-market'].hidden, false);
   s.context.location.hash = '#nonsense';
-  const before = s.scrollCalls.length;
   s.rafQueue.length = 0;
-  s.listeners.hashchange();
+  fireHash();
   assert.equal(s.rafQueue.length, 0, 'unknown hash triggers no re-assert');
+});
+
+test('user takeover cancels a pending settle re-assert (hashchange, tab click, scroll input)', async () => {
+  const s = setup();
+  const fireHash = () => s.listeners.hashchange.forEach(f => f());
+  /* 1: a later hashchange (incl. cleared hash) supersedes the pending timer */
+  s.context.location.hash = '#analysis';
+  fireHash();
+  s.rafQueue.forEach(f => f());
+  s.context.location.hash = '';       /* user clears the hash */
+  fireHash();
+  let n = s.scrollCalls.length;
+  await new Promise(r => setTimeout(r, 750));
+  assert.equal(s.scrollCalls.length, n, 'cleared hash cancelled the pending re-assert');
+  /* 2: explicit tab click cancels */
+  s.context.location.hash = '#analysis';
+  fireHash();
+  s.rafQueue.forEach(f => f());
+  s.tabs[0].click();
+  n = s.scrollCalls.length;
+  await new Promise(r => setTimeout(r, 750));
+  assert.equal(s.scrollCalls.length, n, 'tab click cancelled the pending re-assert');
+  /* 3: deliberate scroll input cancels (wheel, touchstart, scroll keys) */
+  for (const fire of [
+    () => s.listeners.wheel.forEach(f => f()),
+    () => s.listeners.touchstart.forEach(f => f()),
+    () => s.listeners.keydown.forEach(f => f({ key: 'ArrowDown' }))
+  ]) {
+    s.context.location.hash = '#live';
+    fireHash();
+    s.rafQueue.forEach(f => f());
+    fire();
+    n = s.scrollCalls.length;
+    await new Promise(r => setTimeout(r, 750));
+    assert.equal(s.scrollCalls.length, n, 'scroll input cancelled the pending re-assert');
+  }
+  /* 4: non-scroll keys do NOT cancel (typing in a field is not scroll intent) */
+  s.context.location.hash = '#analysis';
+  fireHash();
+  s.rafQueue.forEach(f => f());
+  s.listeners.keydown.forEach(f => f({ key: 'a' }));
+  await new Promise(r => setTimeout(r, 750));
+  assert.ok(s.scrollCalls.length > 0, 'letter key left the re-assert alone');
 });

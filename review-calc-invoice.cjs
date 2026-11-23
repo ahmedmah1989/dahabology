@@ -109,6 +109,42 @@ const server = http.createServer((req, res) => { let f = path.join(root, decodeU
       ok(st.ok, 'SETTLED strip below sticky header after same-doc #calculator nav back (' + width + 'px): stripTop=' + st.top.toFixed(1) + ' hdrBottom=' + st.hdr.toFixed(1));
       await p4.close();
 
+      if (width === 390) {
+        /* Reviewer repro 1: #invoice, then at ~200ms the user clicks الحاسبة and scrolls
+           down 600 - a stale settle timer must NOT yank them back. */
+        const pr = await c.newPage();
+        await pr.goto(base + '/calculator/');
+        await pr.waitForSelector('.market-tabs');
+        await pr.mouse.move(195, 400);
+        let t0 = Date.now();
+        await pr.evaluate(() => { window.location.hash = 'invoice'; });
+        await pr.waitForTimeout(200);
+        await pr.click('#tab-calculator');
+        await pr.mouse.wheel(0, 600);
+        await pr.waitForTimeout(80);
+        let y1 = await pr.evaluate(() => scrollY);
+        await pr.waitForTimeout(Math.max(0, 1000 - (Date.now() - t0)));
+        let y2 = await pr.evaluate(() => scrollY);
+        ok(Math.abs(y2 - y1) <= 2, 'repro1: tab click + wheel after #invoice is not yanked back (y1=' + y1 + ' y2=' + y2 + ')');
+        /* Reviewer repro 2: #invoice, then user clears the hash and scrolls - no yank. */
+        t0 = Date.now();
+        await pr.evaluate(() => { window.location.hash = 'invoice'; });
+        await pr.waitForTimeout(150);
+        await pr.evaluate(() => { window.location.hash = ''; });
+        await pr.mouse.wheel(0, 700);
+        await pr.waitForTimeout(80);
+        y1 = await pr.evaluate(() => scrollY);
+        await pr.waitForTimeout(Math.max(0, 1000 - (Date.now() - t0)));
+        y2 = await pr.evaluate(() => scrollY);
+        ok(Math.abs(y2 - y1) <= 2, 'repro2: cleared hash + wheel is not yanked back (y1=' + y1 + ' y2=' + y2 + ')');
+        /* Positive control on the same page: an untouched same-doc nav still re-asserts. */
+        await pr.evaluate(() => { window.location.hash = 'invoice'; });
+        await pr.waitForTimeout(2600);
+        const stc = await pr.evaluate(settledStrip);
+        ok(stc.ok, 'control: untouched same-doc nav still settles with the strip visible');
+        await pr.close();
+      }
+
       const p3 = await c.newPage();
       await p3.goto(base + '/invoice/');
       await p3.waitForURL(u => u.pathname.endsWith('/calculator/') && u.hash === '#invoice', { timeout: 5000 });
