@@ -29,12 +29,47 @@ LOGCAT_PID=$!
 # Watchdog: kill the script if it overruns, leaving the job time for evidence upload.
 ( sleep "$DEADLINE_SECONDS"; echo "[watchdog] deadline hit, killing harness" >> "$EV/stages.log"; kill -9 $$ 2>/dev/null ) &
 WATCHDOG_PID=$!
-trap 'kill $LOGCAT_PID $WATCHDOG_PID 2>/dev/null' EXIT
+trap 'kill $LOGCAT_PID $WATCHDOG_PID $POLLER_PID 2>/dev/null' EXIT
+
+# Host-side telemetry (one-time diagnostic instrumentation; approval trail in the PR). The run-3/4 wedge
+# silenced logcat, UI dumps and screencaps together, so evidence must also come from
+# OUTSIDE the device. All of this is best-effort and never fails the harness.
+host_snapshot() { # tag -> $EV/host-<tag>.txt
+  local tag="$1"
+  {
+    echo "== $tag @ $(date -u '+%H:%M:%S') utc, uptime $(cut -d' ' -f1 /proc/uptime)s"
+    echo "-- free -m"; free -m
+    echo "-- loadavg"; cat /proc/loadavg
+    echo "-- adb get-state"; timeout 5 adb get-state 2>&1; echo "rc=$?"
+    echo "-- adb devices -l"; timeout 5 adb devices -l 2>&1
+    echo "-- emulator/qemu processes (pid rss_kB etime cmd)"
+    ps -eo pid,rss,etime,cmd | grep -E 'emulator|qemu' | grep -v grep || echo "none found"
+    echo "-- top 8 by rss"; ps -eo pid,rss,cmd --sort=-rss | head -9
+    echo "-- dmesg tail"; (sudo -n dmesg 2>/dev/null || dmesg 2>/dev/null || echo 'dmesg unavailable') | tail -30
+  } > "$EV/host-$tag.txt" 2>&1 || true
+  log "host snapshot $tag"
+}
+
+# Background poller: transport state + memory + emulator RSS every 5s, so a wedge
+# has a before/during trail instead of a single after-the-fact snapshot.
+(
+  while :; do
+    st=$(timeout 5 adb get-state 2>&1 || echo timeout)
+    ma=$(awk '/MemAvailable/{print $2}' /proc/meminfo)
+    ep=$(pgrep -f 'qemu|emulator' | head -1)
+    er=""
+    [ -n "$ep" ] && er=$(awk '/VmRSS/{print $2}' "/proc/$ep/status" 2>/dev/null)
+    echo "[t+$(date +%s)] state=$st memavail_kB=$ma emu_pid=$ep emu_rss_kB=$er load=$(cut -d' ' -f1 /proc/loadavg)"
+    sleep 5
+  done
+) >> "$EV/host-poll.log" 2>&1 &
+POLLER_PID=$!
 
 # fail <code> <message>: bounded best-effort evidence, then exit.
 fail() {
   local code="$1"; shift
   log "FAIL($code): $*"
+  host_snapshot "fail-$code"
   shot "fail-$code" || true
   exit "$code"
 }
@@ -163,13 +198,16 @@ dump_retry 01-seed
 shot 01-seed || true
 if grep -q 'SEEDED' "$EV/01-seed.xml"; then
   log "seed page confirmed"
+  host_snapshot stage1-seeded
 else
   fail 9 "seed page text not found in a valid dump - seed unconfirmed"
 fi
 
 log "stage 2: open candidate home in chrome (service worker registers)"
 adb_run "open candidate" shell am start -a android.intent.action.VIEW -d "$BASE/" com.android.chrome >> "$EV/stages.log" 2>&1 || fail 13 "could not open candidate"
+host_snapshot stage2-open
 sleep 18
+host_snapshot stage2-loaded
 shot 02-home || true
 
 log "stage 3: open chrome menu and install the app"
