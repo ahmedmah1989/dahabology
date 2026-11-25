@@ -75,6 +75,23 @@ jobs:
           echo "TUNNEL_URL=$URL" >> "$GITHUB_ENV"
           echo "temporary candidate URL: $URL"
           curl -fsS "$URL/manifest.webmanifest" | head -c 80
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Verify KVM usable (fail fast before emulator launch)
+        run: |
+          if [ ! -e /dev/kvm ]; then
+            echo '::error title=KVM unavailable::/dev/kvm missing on this runner; aborting before emulator launch so no boot-timeout wait is spent.'
+            exit 1
+          fi
+          ls -l /dev/kvm
+          if [ ! -w /dev/kvm ]; then
+            echo '::error title=KVM not writable::/dev/kvm exists but is not writable by this user.'
+            exit 1
+          fi
+          echo 'KVM verified usable; proceeding to emulator launch.'
       - name: "Emulator - install WebAPK and verify export"
         uses: reactivecircus/android-emulator-runner@v2
         with:
