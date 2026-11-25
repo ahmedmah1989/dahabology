@@ -41,3 +41,10 @@
 <div class="x-actions"><a class="x-btn ghost" href="#products">استكشف كل المنتجات</a></div></section>
 
 <details class="x-more"><summary>متابعة تغيرات السعر على هذا الجهاز</summary><p id="alertStatus" class="x-note">انتظار بيانات حديثة ومتزامنة لتقييم شروط التنبيه.</p><ul id="localAlerts" class="plain" aria-live="polite"></ul><p class="x-note">القائمة محفوظة في متصفحك فقط.</p></details>
+
+<section id="targetAlertBox" class="x-card"><h2>نبّهني عند سعر معين</h2>
+<p class="x-sub">اختار السعر المستهدف لجرام عيار 21 (بيع)، وهنبّهك أول ما سعر محدّث يوصله أو يعدّيه. المتابعة على هذا الجهاز: أثناء فتح البرنامج أو عند فتحه، ولا تعمل والبرنامج مغلق.</p>
+<div class="x-actions"><input id="targetAlertValue" inputmode="decimal" type="text" placeholder="مثال: 6000" style="max-width:9rem"><button type="button" class="x-btn" id="targetAlertSet">فعّل التنبيه</button><button type="button" class="x-btn ghost" id="targetAlertClear">امسح</button></div>
+<p id="targetAlertStatus" class="x-note" role="status">اختار السعر المستهدف، وهنبّهك على هذا الجهاز.</p>
+<ul id="targetAlertNotices" class="plain" aria-live="polite"></ul>
+<p class="x-note">يتفعل مرة واحدة عند وصول سعر محدّث (أحدث من 15 دقيقة) لهدفك أو تجاوزه، ولا يتفعل على سعر قديم. الهدف محفوظ في متصفحك فقط.</p></section>
