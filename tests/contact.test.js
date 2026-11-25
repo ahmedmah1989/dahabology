@@ -26,8 +26,8 @@ test('classifyAck: wrong origin ignored, wrong id ignored, ok maps to sent, fail
   assert.equal(C.classifyAck({ id: 'm-1', ok: false, reason: 'cap' }, 'm-1', REAL), 'failed');
 });
 
-test('unconfigured by default: ENDPOINT and MAILTO empty, configured() false', () => {
-  assert.equal(C.CONFIG.ENDPOINT, '');
-  assert.equal(C.CONFIG.MAILTO, '');
-  assert.equal(C.configured(), false);
+test('release configuration: live ENDPOINT set, MAILTO stays empty forever, configured() true', () => {
+  assert.match(C.CONFIG.ENDPOINT, /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]+\/exec$/);
+  assert.equal(C.CONFIG.MAILTO, ''); // owner's address never ships client-side (voice 2026-11-25 12:13)
+  assert.equal(C.configured(), true);
 });
