@@ -398,6 +398,8 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
  #calculator>.x-lead{order:0}#calculator>.x-seg{order:1}#calculator>.x-karats{order:2}#calculator>.x-card:has(#cAmount){order:3}#calculator>#cQuoteStatus{order:4}#calculator>.x-hero.sm{order:5}#calculator>.x-card:has(#cExplain){order:6}
  .x-hero.sm .x-ring .val.fit{font-size:clamp(24px,17cqi,34px)}
  main.wrap{padding-bottom:calc(112px + env(safe-area-inset-bottom))}
+/* Small screens: let every field scroll fully clear of the floating مساعد launcher zone (bottom 108px + 74px height + margin). */
+@media(max-width:600px){main.wrap{padding-bottom:calc(196px + env(safe-area-inset-bottom))}}
  /* The fixed Tut launcher reaches ~182px up from the viewport bottom on the left; lift the
     footer's last line fully above it at full scroll so its links stay readable and tappable. */
  footer{padding-bottom:calc(90px + env(safe-area-inset-bottom))}
@@ -423,6 +425,7 @@ html[data-motion="paused"] *,html[data-motion="paused"] *::before,html[data-moti
 .x-grp.yr{background:#16263f;border:1px solid #2c3a52}
 .x-grp.dy{background:#101c30;border-inline-start:3px solid #e7bf67}
 html{scroll-padding-bottom:150px}
+@media(max-width:600px){html{scroll-padding-bottom:200px}}
 
 /* invoice entry and purchases list (scoped) */
 .ivx .panel{background:var(--x-glass);border:1px solid var(--x-line);border-radius:18px;padding:12px;margin-top:12px}

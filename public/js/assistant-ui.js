@@ -16,6 +16,12 @@ function welcome(){add('assistant','أهلاً بيك! أقدر أشرح أقس�
 function open(){if(dialog.open)return;viewport();dialog.showModal();launcher.setAttribute('aria-expanded','true');input.focus({preventScroll:true});}
 function close(){if(dialog.open)dialog.close();}
 dialog.addEventListener('close',()=>{launcher.setAttribute('aria-expanded','false');launcher.focus({preventScroll:true});});
+const fieldSel='input,select,textarea';
+document.addEventListener('focusin',e=>{if(e.target.closest('#helpDialog'))return;if(e.target.matches(fieldSel))launcher.classList.add('field-focus');});
+document.addEventListener('focusout',e=>{if(e.target.closest('#helpDialog'))return;if(e.target.matches(fieldSel))launcher.classList.remove('field-focus');});
+let lastY=scrollY;
+const zoneClear=()=>{const r=launcher.getBoundingClientRect();for(const f of[[.5,.5],[.15,.25],[.85,.75]]){const el=document.elementFromPoint(r.x+r.width*f[0],r.y+r.height*f[1]);if(el&&!/^(HTML|BODY|MAIN)$/.test(el.tagName)&&el.closest('main'))return false;}return true;};
+addEventListener('scroll',()=>{const y=scrollY;if(dialog.open){lastY=y;return;}if(y>24&&y>lastY+4)launcher.classList.add('scroll-away');else if(y<lastY-4||y<=24){if(y<=24||zoneClear())launcher.classList.remove('scroll-away');}lastY=y;},{passive:true});
 launcher.addEventListener('click',open);document.getElementById('helpClose').addEventListener('click',close);
 dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();});
 document.querySelectorAll('[data-open-help]').forEach(b=>b.addEventListener('click',open));
