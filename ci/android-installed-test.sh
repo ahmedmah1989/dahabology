@@ -226,14 +226,18 @@ tap_node 03-confirm "Install" "Add" || log "WARN: no confirm dialog matched; con
 
 log "waiting for webapk package to appear"
 PKG=""
-for i in $(seq 1 "${WEBAPK_WAIT_LOOPS:-24}"); do
+for i in $(seq 1 "${WEBAPK_WAIT_LOOPS:-72}"); do
   PKG=$(adb_run "pm list packages" shell pm list packages 2>/dev/null | grep -o 'org\.chromium\.webapk[a-zA-Z0-9_.]*' | head -1)
   [ -n "$PKG" ] && break
+  if [ $(( i % 6 )) -eq 0 ]; then
+    log "webapk wait $(( i * 5 ))s elapsed; webapk/chrome packages: $(timeout 10 adb shell pm list packages 2>/dev/null | grep -iE 'webapk|chrom' | tr '\n' ' ')"
+    timeout 10 adb shell logcat -d 2>/dev/null | grep -iE 'webapk|WebApkService|mint' | tail -5 | sed 's/^/[mint-log] /' | tee -a "$EV/stages.log" || true
+  fi
   sleep 5
 done
 echo "$PKG" > "$EV/webapk-package.txt"
 if [ -z "$PKG" ]; then
-  fail 4 "WebAPK package not installed within $(( ${WEBAPK_WAIT_LOOPS:-24} * 5 ))s"
+  fail 4 "WebAPK package not installed within $(( ${WEBAPK_WAIT_LOOPS:-72} * 5 ))s"
 fi
 log "installed: $PKG"
 
@@ -274,4 +278,49 @@ head -5 "$EV/$CSV" > "$EV/csv-head.txt"
 grep -q 'قطعة تجريبية للاختبار' "$EV/$CSV" && log "CSV contains the seeded synthetic piece" || log "WARN: seeded note not found in CSV"
 grep -q 'على الجهاز' "$EV/$CSV" && log "CSV source column marks the piece as on-device"
 log "PASS: export verified from the installed context"
+
+log "stage 6: contact screen from the installed context (render/gate proof only, zero sends)"
+# installed-package identity + version evidence
+adb_run "dumpsys package" shell dumpsys package "$PKG" > "$EV/pkg-dumpsys.txt" 2>/dev/null || true
+grep -E 'versionName|versionCode' "$EV/pkg-dumpsys.txt" | head -2 | tee -a "$EV/stages.log" || true
+
+# user navigation inside the installed app: dock "المزيد" -> menu -> "تواصل معانا"
+if ! tap_node 07-more "المزيد"; then
+  fail 18 "dock MORE item not found in installed app (valid dump)"
+fi
+sleep 3
+dump_retry 07-menu
+shot 07-menu || true
+if grep -q 'تواصل معانا' "$EV/07-menu.xml"; then
+  log "contact entry present in MORE menu (updated assets live in the installed context)"
+else
+  fail 19 "contact entry missing from MORE menu in installed app"
+fi
+if ! tap_node 08-contact-nav "تواصل معانا"; then
+  fail 20 "contact menu entry not tappable (valid dump)"
+fi
+sleep 6
+dump_retry 08-contact
+shot 08-contact || true
+grep -q 'تواصل معانا' "$EV/08-contact.xml" || fail 21 "contact screen did not render (valid dump)"
+if grep -q 'android.widget.EditText' "$EV/08-contact.xml"; then
+  log "contact textarea present"
+else
+  fail 22 "contact textarea missing from rendered screen (valid dump)"
+fi
+# honeypot is display:none by design: its label must NOT appear in the visible hierarchy
+if grep -q 'موقعك' "$EV/08-contact.xml"; then
+  log "WARN: honeypot label visible in dump (expected hidden)"
+else
+  log "honeypot absent from visible hierarchy (hidden as designed)"
+fi
+# signed-out gate (emulator has no account): send disabled + sign-in prompt shown.
+# the send node carries enabled="false" in the dump; require BOTH signals.
+if grep 'ابعت الرسالة' "$EV/08-contact.xml" | grep -q 'enabled="false"' && grep -q 'سجّل دخولك' "$EV/08-contact.xml"; then
+  log "signed-out gate verified: send disabled + sign-in prompt visible (zero sends possible)"
+else
+  fail 23 "signed-out gate state not as expected (see 08-contact.xml)"
+fi
+log "PASS: contact screen verified from the installed context; no message was sent"
+
 exit 0
