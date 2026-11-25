@@ -136,6 +136,9 @@ export async function sendPasswordReset(email) {
   catch (e) { if (e.code !== "EMAIL_NOT_FOUND") throw e; }
 }
 export function signOut() { save(null); }
+// Fresh ID token for attaching the verified identity to a same-app request (e.g. the contact channel).
+// The token is handed to our own backend only; it is never rendered, logged, or put in a URL.
+export async function idToken() { return freshToken(); }
 
 function requireVerified() {
   const s = load();

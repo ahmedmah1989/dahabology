@@ -1,0 +1,17 @@
+<section id="contactBox" class="x-card">
+<h2>تواصل معانا</h2>
+<p class="x-sub">عندك ملاحظة، تصحيح لسعر أو مصدر، أو اقتراح؟ ابعتهولنا من هنا.</p>
+<form id="contactForm" method="post" action="" target="contactFrame" enctype="text/plain">
+<input type="hidden" name="id" id="contactId" value="">
+<input type="hidden" name="token" id="contactToken" value="">
+<div class="hp-field" aria-hidden="true"><label>موقعك <input type="text" name="website" id="contactWebsite" tabindex="-1" autocomplete="off"></label></div>
+<label class="x-field" for="contactMsg">رسالتك
+<textarea id="contactMsg" name="message" rows="6" maxlength="4000" required></textarea></label>
+<p id="contactBadge" class="x-note" hidden></p>
+<div class="x-actions"><button type="submit" class="x-btn" id="contactSend">ابعت الرسالة</button>
+<a id="contactLogin" class="x-btn ghost" href="../account-preview/" hidden>سجّل دخولك</a></div>
+<p id="contactStatus" class="x-note" role="status"></p>
+</form>
+<iframe name="contactFrame" title="" hidden></iframe>
+<p class="x-note">رسالتك بتوصلنا كإيميل بالنص اللي كتبته زي ما هو، ومبنخزنهاش في أي مكان تاني غير البريد ده. لو الإرسال ما اتأكدش، الكلام بيفضل في الخانة طول ما الصفحة مفتوحة - انسخه لو حابب تحتفظ بيه.</p>
+</section>

@@ -1,0 +1,10 @@
+---
+import Base from '../layouts/Base.astro';
+import contactHtml from '../panels/contact.html?raw';
+import { panel } from '../lib/site.js';
+---
+<Base page="contact" informational heading="تواصل معانا" scripts={['contact']}
+  title="تواصل معانا | دهبولوجي"
+  description="راسل فريق دهبولوجي: ملاحظة، تصحيح لسعر أو مصدر، أو اقتراح لتحسين المنصة.">
+  <Fragment set:html={panel(contactHtml, 'contact')} />
+</Base>
