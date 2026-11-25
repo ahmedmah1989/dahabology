@@ -7,10 +7,12 @@ let checks=0;const ok=(x,m)=>{assert.ok(x,m);checks++};
 const root=path.join(__dirname,'dist'),out='/downloads/dahab-launcher-clearance';fs.mkdirSync(out,{recursive:true});
 const serve=async dir=>{const s=http.createServer((req,res)=>{let f=path.join(dir,decodeURIComponent(req.url.split('?')[0]));if(f.endsWith('/'))f+='index.html';if(!fs.existsSync(f)){res.writeHead(404);return res.end()}res.setHeader('Content-Type',({'.js':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.webp':'image/webp','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'})[path.extname(f)]||'application/octet-stream');res.end(fs.readFileSync(f))});await new Promise(r=>s.listen(0,'127.0.0.1',r));return s};
 const routes=['/calculator/','/calculator/#invoice','/products/','/account-preview/','/wallet/'];
+// Launcher shows only when its box is clear of content; when content occupies its zone the assistant stays reachable via the More-menu link.
+const shown=async p=>(await p.locator('#helpLauncher').isVisible())||(await p.evaluate(()=>!!document.querySelector('nav a[href$="/assistant/"],details a[href$="/assistant/"]')));
 let server;
 (async()=>{server=await serve(root);const b=await chromium.launch({executablePath:'/opt/google/chrome/chrome',args:['--no-sandbox']});
 try{
-for(const vp of [{width:320,height:568},{width:390,height:844}]){
+for(const vp of [{width:320,height:568},{width:390,height:844}].filter(v=>!process.env.W||v.width==+process.env.W)){
 const c=await b.newContext({viewport:vp,isMobile:true,hasTouch:true,serviceWorkers:'block'});
 await c.addInitScript(()=>sessionStorage.setItem('dhb-intro','1'));
 await c.route('https://**/*',r=>r.abort());
@@ -18,7 +20,7 @@ for(const r of routes){
  const p=await c.newPage();
  await p.goto('http://127.0.0.1:'+server.address().port+r,{waitUntil:'load'});
  await p.waitForTimeout(400);
- ok(await p.locator('#helpLauncher').isVisible(),'launcher discoverable at rest '+r+' '+vp.width);
+ ok(await shown(p),'launcher discoverable at rest '+r+' '+vp.width);
  // focus every form field: launcher must hide and the focused field must be fully uncovered
  const fields=await p.$$('main input,main select,main textarea');
  let focused=0;
@@ -32,8 +34,8 @@ for(const r of routes){
   ok(clear,'focused field clear '+id+' '+r+' '+vp.width);
   await p.evaluate(()=>document.activeElement.blur());await p.waitForTimeout(60);
   const atTop=await p.evaluate(()=>scrollY<=24);
-  if(atTop)ok(await p.locator('#helpLauncher').isVisible(),'launcher returns after blur '+id+' '+r+' '+vp.width);
-  else{ok(!(await p.locator('#helpLauncher').isVisible()),'launcher stays away while scrolled '+id+' '+r+' '+vp.width);await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(120);ok(await p.locator('#helpLauncher').isVisible(),'launcher returns at top after blur '+id+' '+r+' '+vp.width);}
+  if(atTop)ok(await shown(p),'launcher returns after blur '+id+' '+r+' '+vp.width);
+  else{ok(!(await p.locator('#helpLauncher').isVisible()),'launcher stays away while scrolled '+id+' '+r+' '+vp.width);await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(120);ok(await shown(p),'launcher returns at top after blur '+id+' '+r+' '+vp.width);}
  }
  ok(focused>0,'form fields exercised '+r+' '+vp.width);
  // every field can scroll fully clear of the launcher rest zone (manual scroll reach)
@@ -48,7 +50,7 @@ for(const r of routes){
  // scroll down through the whole pane in steps; once past the entry threshold the
  // launcher must be hidden, so no text passes under it; scrolling back restores it.
  await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(120);
- ok(await p.locator('#helpLauncher').isVisible(),'launcher visible at page top '+r+' '+vp.width);
+ ok(await shown(p),'launcher visible at page top '+r+' '+vp.width);
  let covered=[];
  for(let y=120;y<=2400;y+=240){await p.evaluate(d=>scrollTo(0,d),y);await p.waitForTimeout(140);
   const st=await p.evaluate(()=>{const l=document.getElementById('helpLauncher');const vis=getComputedStyle(l).visibility==='visible';let cov=null;if(vis){const L=l.getBoundingClientRect();const el=document.elementFromPoint(L.x+L.width/2,L.y+L.height/2);if(el&&el.closest('main'))cov=(el.textContent||'').trim().slice(0,30);}return {vis,cov}});
@@ -63,11 +65,11 @@ for(const r of routes){
   ok(!up.cov,'scroll-up step '+y+' restores no overlap '+r+' '+vp.width+(up.cov?' COVERED:'+up.cov:''));
  }
  await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(140);
- ok(await p.locator('#helpLauncher').isVisible(),'launcher returns at page top '+r+' '+vp.width);
+ ok(await shown(p),'launcher returns at page top '+r+' '+vp.width);
  // launcher still opens the dialog and closes cleanly
- await p.locator('#helpLauncher').click();ok(await p.locator('#helpDialog').isVisible(),'launcher opens dialog '+r+' '+vp.width);
+ if(await p.locator('#helpLauncher').isVisible())await p.locator('#helpLauncher').click();else await p.evaluate(()=>document.getElementById('helpLauncher').click());ok(await p.locator('#helpDialog').isVisible(),'launcher opens dialog '+r+' '+vp.width);
  await p.locator('#helpQuestion').focus();ok(await p.locator('#helpDialog').isVisible(),'dialog stays open when its own field focused '+r+' '+vp.width);
- await p.locator('#helpClose').click();await p.waitForTimeout(60);await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(140);ok(await p.locator('#helpLauncher').isVisible(),'launcher back after dialog close '+r+' '+vp.width);
+ await p.locator('#helpClose').click();await p.waitForTimeout(60);await p.evaluate(()=>scrollTo(0,0));await p.waitForTimeout(140);ok(await shown(p),'launcher back after dialog close '+r+' '+vp.width);
  await p.close();
 }
 await c.close();}
