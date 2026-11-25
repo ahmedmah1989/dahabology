@@ -1,0 +1,95 @@
+name: Android installed-context calibration (manual, one-time)
+# Manual-only calibration approved by the owner for ONE execution (25 Nov 2026).
+# Builds a candidate branch, serves it over a temporary Cloudflare quick-tunnel URL,
+# installs the PWA as a WebAPK on an emulator and verifies wallet CSV export from the
+# installed context. Synthetic data only; no accounts, no secrets; the live site is
+# untouched (candidate branch never merges). Do not re-run without fresh approval.
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_branch:
+        description: Branch to build and install-test
+        required: true
+        default: feat/wallet-export
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-installed-calibration
+  cancel-in-progress: false
+
+jobs:
+  installed-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout main (test script)
+        uses: actions/checkout@v4
+        with:
+          path: ci-src
+      - name: Checkout candidate
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.candidate_branch }}
+          path: candidate
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: candidate/package-lock.json
+      - name: Build candidate
+        working-directory: candidate
+        run: |
+          npm ci
+          npm run build
+      - name: Serve candidate + same-origin synthetic seed harness
+        run: |
+          cat > candidate/dist/__seed.html <<'HTML'
+          <!doctype html><meta charset="utf-8"><title>seed</title><script>localStorage.setItem('dhb-wallet-v1', JSON.stringify([{id:'dev-seed-1',k:'21',g:4.25,paid:15000,note:'قطعة تجريبية للاختبار'}]));document.addEventListener('DOMContentLoaded',function(){document.body.textContent='SEEDED '+Date.now();});</script><body>seeding</body>
+          HTML
+          cd candidate/dist
+          nohup python3 -m http.server 8099 > ../../server.log 2>&1 &
+          cd ../..
+          ok=""
+          for i in $(seq 1 20); do
+            curl -fsS http://127.0.0.1:8099/__seed.html -o /dev/null && ok=1 && break
+            sleep 1
+          done
+          [ -n "$ok" ] || { echo "local server did not come up"; cat server.log; exit 1; }
+          curl -fsS http://127.0.0.1:8099/manifest.webmanifest | head -c 80
+          echo
+      - name: Start Cloudflare quick tunnel (temporary HTTPS)
+        run: |
+          curl -fsSL -o cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x cloudflared
+          nohup ./cloudflared tunnel --url http://127.0.0.1:8099 --no-autoupdate > tunnel.log 2>&1 &
+          URL=""
+          for i in $(seq 1 30); do
+            URL=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' tunnel.log | head -1 || true)
+            [ -n "$URL" ] && break
+            sleep 2
+          done
+          [ -n "$URL" ] || { echo "quick tunnel failed"; cat tunnel.log; exit 1; }
+          echo "TUNNEL_URL=$URL" >> "$GITHUB_ENV"
+          echo "temporary candidate URL: $URL"
+          curl -fsS "$URL/manifest.webmanifest" | head -c 80
+      - name: "Emulator - install WebAPK and verify export"
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          disable-animations: true
+          script: bash ci-src/ci/android-installed-test.sh "$TUNNEL_URL"
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: installed-context-evidence
+          if-no-files-found: warn
+          path: |
+            evidence/
+            tunnel.log
+            server.log
