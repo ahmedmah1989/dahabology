@@ -20,8 +20,22 @@ const fieldSel='input,select,textarea';
 document.addEventListener('focusin',e=>{if(e.target.closest('#helpDialog'))return;if(e.target.matches(fieldSel))launcher.classList.add('field-focus');});
 document.addEventListener('focusout',e=>{if(e.target.closest('#helpDialog'))return;if(e.target.matches(fieldSel))launcher.classList.remove('field-focus');});
 let lastY=scrollY;
-const zoneClear=()=>{const r=launcher.getBoundingClientRect();for(const f of[[.5,.5],[.15,.25],[.85,.75]]){const el=document.elementFromPoint(r.x+r.width*f[0],r.y+r.height*f[1]);if(el&&!/^(HTML|BODY|MAIN)$/.test(el.tagName)&&el.closest('main'))return false;}return true;};
-addEventListener('scroll',()=>{const y=scrollY;if(dialog.open){lastY=y;return;}if(y>24&&y>lastY+4)launcher.classList.add('scroll-away');else if(y<lastY-4||y<=24){if(y<=24||zoneClear())launcher.classList.remove('scroll-away');}lastY=y;},{passive:true});
+const zoneClear=()=>{const r=launcher.getBoundingClientRect(),m=4,L=r.left-m,R=r.right+m,T=r.top-m,B=r.bottom+m;if(r.width<1)return true;
+ const hit=q=>q.width>0&&q.height>0&&Math.min(q.right,R)-Math.max(q.left,L)>0&&Math.min(q.bottom,B)-Math.max(q.top,T)>0;
+ const rg=document.createRange();
+ for(const e of document.querySelectorAll('main *')){if(e.closest('#helpDialog'))continue;const c=getComputedStyle(e);if(c.display==='none'||c.visibility==='hidden'||+c.opacity===0)continue;
+  if(e.matches('input,select,textarea,button,a,img,svg,canvas,[role=radio],[role=tab],[class*=chip]')&&hit(e.getBoundingClientRect()))return false;
+  for(const n of e.childNodes){if(n.nodeType===3&&n.textContent.trim()){rg.selectNodeContents(n);for(const q of rg.getClientRects())if(hit(q))return false;}}}
+ return true;};
+let away=false,raf=0;
+const sync=()=>{raf=0;if(dialog.open)return;const y=scrollY;if(y>24&&y>lastY+4)away=true;else if(y<lastY-4||y<=24)away=false;lastY=y;launcher.classList.toggle('scroll-away',away||!zoneClear());};
+const queue=()=>{if(!raf)raf=requestAnimationFrame(sync);};
+addEventListener('scroll',queue,{passive:true});addEventListener('resize',queue);addEventListener('load',queue);document.addEventListener('click',()=>setTimeout(queue,60));document.addEventListener('input',queue);
+const mainEl=document.querySelector('main');
+if(mainEl){if(window.ResizeObserver)new ResizeObserver(queue).observe(mainEl);
+ // layout changes after async quote/content updates: coalesced into one check per frame, no polling
+ new MutationObserver(m=>{if(m.some(x=>x.type==='childList'||x.attributeName==='hidden'||x.attributeName==='class'||x.attributeName==='style'))queue();}).observe(mainEl,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class','style']});}
+document.addEventListener('visibilitychange',queue);queue();
 launcher.addEventListener('click',open);document.getElementById('helpClose').addEventListener('click',close);
 dialog.addEventListener('click',e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();});
 document.querySelectorAll('[data-open-help]').forEach(b=>b.addEventListener('click',open));
