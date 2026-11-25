@@ -608,3 +608,8 @@ body.app-shell main :is(h2,h3){color:var(--x-gold-hot)!important;font-weight:800
 body.app-shell main h2{font-size:clamp(23px,5.7vw,28px)!important}
 body.app-shell main h3{font-size:clamp(18px,4.6vw,21px)!important}
 body.app-shell main #faq>details>summary,body.app-shell main #method>details>summary{color:var(--x-gold-hot);font-size:clamp(18px,4.6vw,20px);font-weight:800;line-height:1.7}
+
+/* Contact page fields: match .x-field input styling; textarea was unstyled browser default. */
+#contactBox textarea{display:block;width:100%;margin-top:8px;padding:14px;font:inherit;font-size:16px;line-height:1.9;text-align:start;background:#0a1628;border:1px solid var(--x-line);border-radius:16px;color:#e8eef7;resize:vertical}
+#contactBox textarea:focus{border-color:var(--x-gold);box-shadow:0 0 0 3px #efc66c26;outline:none}
+#contactBox .hp-field{position:absolute;left:-9999px}
