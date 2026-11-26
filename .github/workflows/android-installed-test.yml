@@ -96,7 +96,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 33
-          target: google_apis
+          target: google_apis_playstore
           arch: x86_64
           disable-animations: true
           script: bash ci-src/ci/android-installed-test.sh "$TUNNEL_URL"
