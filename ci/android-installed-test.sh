@@ -109,7 +109,7 @@ dump_retry() {
 }
 
 cat > "$EV/tap.py" <<'PY'
-import re, sys
+import re, sys, html
 xml_path = sys.argv[1]
 pats = sys.argv[2:]
 xml = open(xml_path, encoding='utf-8', errors='ignore').read()
@@ -127,6 +127,7 @@ for tag in nodes:
         for h in hay:
             if not h:
                 continue
+            h = html.unescape(h)  # dump stores '&' as '&amp;' etc; candidates are plain text
             if (needle in h) if sub else (h.strip() == needle):
                 b = re.findall(r'\[(\d+),(\d+)\]', a.get('bounds', ''))
                 if len(b) == 2:
@@ -137,6 +138,13 @@ for tag in nodes:
 print("NO-MATCH")
 sys.exit(1)
 PY
+
+cat > "$EV/top-texts.py" <<'TOPY'
+import re, sys, html
+xml = open(sys.argv[1], encoding='utf-8', errors='ignore').read()
+texts = [html.unescape(t)[:50] for t in re.findall(r'text="([^"]{2,80})"', xml)]
+print(' | '.join(texts[:6]) if texts else '(no visible text)')
+TOPY
 
 # tap_node <name> <candidates...>: fresh dump, find, ACTUALLY tap. Returns 1 on no match.
 tap_node() {
@@ -194,13 +202,21 @@ sleep 12
 if ! tap_until_gone 01-fre "Use without an account" "Accept & continue" "Get started" "No thanks"; then
   fail 8 "Chrome first-run modal not dismissed after 3 attempts"
 fi
-dump_retry 01-seed
-shot 01-seed || true
-if grep -q 'SEEDED' "$EV/01-seed.xml"; then
+# bounded wait for the seed page to render: heavier images (e.g. Play Store)
+# start Chrome slowly, so a single immediate check races the page load (run-8 FAIL(9)).
+SEED_OK=""
+for i in $(seq 1 "${SEED_WAIT_LOOPS:-9}"); do
+  dump_retry 01-seed
+  shot 01-seed || true
+  if grep -q 'SEEDED' "$EV/01-seed.xml"; then SEED_OK=1; break; fi
+  log "seed page not confirmed yet (~$(( i * 10 ))s); visible: $(python3 "$EV/top-texts.py" "$EV/01-seed.xml" 2>/dev/null || echo unreadable)"
+  sleep 10
+done
+if [ -n "$SEED_OK" ]; then
   log "seed page confirmed"
   host_snapshot stage1-seeded
 else
-  fail 9 "seed page text not found in a valid dump - seed unconfirmed"
+  fail 9 "seed page text not found after $(( ${SEED_WAIT_LOOPS:-9} * 10 ))s of polling - seed unconfirmed"
 fi
 
 log "stage 2: open candidate home in chrome (service worker registers)"
