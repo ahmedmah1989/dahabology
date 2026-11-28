@@ -24,7 +24,7 @@
     const w = wOf(r), q = qOf(r);
     if (w.keep) return 'الوزن المحفوظ: <span dir="ltr">' + esc(r.keepWeight) + '</span> جرام (كما هو)';
     if (w.blank) return '<span class="ph">مثال: جرام 6 والكسر 28 يبقى <span dir="ltr">6.28</span> جرام</span>';
-    if (w.error) return w.error === 'zero' ? 'الوزن لازم يكون أكبر من صفر.' : 'اكتب أرقام بس. الكسر لحد ٣ أرقام.';
+    if (w.error) return w.error === 'zero' ? 'الوزن لازم يكون أكبر من صفر.' : 'خانة الجرامات للأرقام الصحيحة بس (لحد ٥ أرقام)، من غير نقطة أو فاصلة. اكتب الجزء اللي بعد النقطة في الخانة اللي جنبها (لحد ٣ أرقام).';
     if (q.error) return 'العدد لازم يكون رقم من 1 لـ 999.';
     const u = fg(LG.gramsOfMg(w.mg));
     return q.value > 1 ? 'وزن القطعة: <span dir="ltr">' + u + '</span> جرام<br>الوزن الكلي: <span dir="ltr">' + q.value + ' × ' + u + ' = ' + fg(LG.gramsOfMg(LG.totalMg(w.mg, q.value))) + '</span> جرام' : 'الوزن النهائي: <span dir="ltr">' + u + '</span> جرام';
@@ -40,7 +40,7 @@
       (bar && !r.legacyKarat ? '<div><span class="lab">العيار</span><div class="in fixk" aria-label="عيار السبيكة ثابت 24">24 (ثابت)</div></div>' : '<div><span class="lab">العيار</span><select class="in" data-f="k"><option value="">اختر</option>' + ['21', '24', '18'].map(v => '<option' + (r.k === v ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>') +
       ((bar || r.type === 'coin') ? '<div class="wgt"><span class="cl" style="margin-top:0">' + (bar ? 'حجم السبيكة الواحدة (جرام)' : 'حجم الجنيه الذهب') + '، أو اكتب الوزن تحت</span>' + chipsHTML(bar ? sizes.bars.map(v => ({ w: v, t: v })) : sizes.coins.map(c => ({ w: c.w, t: c.name + ' (' + c.w + ')' })), bar ? 'حجم السبيكة بالجرام' : 'حجم الجنيه الذهب') + (r.sizeWarn ? '<p class="hint" role="alert">أحجام الكتالوج دي لعيار ' + r.sizeWarn + '. العيار المختار عندك مختلف، فما اتطبقش حجم. غيّر العيار أو اكتب الوزن بنفسك.</p>' : '') + sizeNote() + '</div>' : '') +
       '<div class="qty"><span class="lab">العدد</span><div class="qs"><button type="button" class="qb" data-q="-1" aria-label="قلّل العدد">−</button><input class="in" data-f="qty" inputmode="numeric" maxlength="3" value="' + esc(r.qty) + '" aria-label="عدد القطع المتطابقة، القطعة ' + (i + 1) + '"><button type="button" class="qb" data-q="1" aria-label="زوّد العدد">+</button></div><p class="hint" style="margin:4px 0 0">' + (mq ? 'نفس النوع والعيار والوزن. اللي بتكتبه تحت للـ ' + q.value + ' كلهم مع بعض.' : 'لو اشتريت أكتر من واحدة بنفس الوزن، زوّد العدد.') + '</p></div>' +
-      '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" maxlength="5" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" maxlength="3" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
+      '<div class="wgt"><span class="lab">' + (mq ? 'وزن القطعة الواحدة' : 'الوزن') + '</span><div class="wg"><div><input class="in" data-f="gw" inputmode="numeric" placeholder="0" value="' + esc(r.gw) + '" aria-label="الجرامات الصحيحة، قطعة ' + (i + 1) + '"><span class="u">جرام</span></div><b class="dot">.</b><div><input class="in" data-f="gf" inputmode="numeric" placeholder="0" value="' + esc(r.gf) + '" aria-label="الكسر بعد الفاصلة، قطعة ' + (i + 1) + '"><span class="u">الكسر (بعد الفاصلة)</span></div></div><p class="fin" data-fin>' + fin(r) + '</p>' +
 '</div>' +
       '<div class="paidb"><span class="lab">' + (mq ? 'دفعت في الـ ' + q.value + ' كلهم (جنيه)' : 'دفعت فيها (جنيه)') + '</span><input class="in" data-f="p" inputmode="decimal" placeholder="0" value="' + esc(r.p) + '" aria-label="المبلغ المدفوع، قطعة ' + (i + 1) + '"></div></div>' +
       (r.type ? '<div class="sg" role="group" aria-label="غرض الاقتناء"><button type="button" data-pp="adornment" aria-pressed="' + (r.pp === 'adornment') + '">زينة</button><button type="button" data-pp="saving" aria-pressed="' + (r.pp === 'saving') + '">ادخار / استثمار</button></div>' : '') +
@@ -58,7 +58,7 @@
     const z = j && LG.sizesFromCatalog(j.catalog);
     if (z) { sizes = { bars: z.bars, coins: z.coins.length ? z.coins : LG.CATALOG_SNAPSHOT.coins, live: true }; paintRows(); }
   }).catch(() => {});
-  const paintFin = rowEl => { const r = rows[rowEl.dataset.i]; rowEl.querySelector('[data-fin]').innerHTML = fin(r); const w = wOf(r); rowEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(!w.error && !w.blank && !w.keep && w.mg === Math.round(+c.dataset.w * 1000)))); };
+  const paintFin = rowEl => { const r = rows[rowEl.dataset.i]; rowEl.querySelector('[data-fin]').innerHTML = fin(r); const w = wOf(r); rowEl.querySelectorAll('[data-f=gw],[data-f=gf]').forEach(x => x.setAttribute('aria-invalid', String(w.error === 'format'))); rowEl.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', String(!w.error && !w.blank && !w.keep && w.mg === Math.round(+c.dataset.w * 1000)))); };
 
   // ---- invoice-level tax: with two figures given, the third is a real calculated value, tagged ----
   function taxFigures() {
@@ -149,7 +149,8 @@
     // Arabic-Indic and Persian digits are converted to ASCII first, so typing them is kept, not erased.
     const lat = s => s.replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0));
     if (f === 'qty') { e.target.value = r.qty = lat(r.qty).replace(/\D/g, ''); }
-    if (f === 'gw' || f === 'gf') { e.target.value = r[f] = lat(r[f]).replace(/\D/g, ''); }
+    // Weight boxes keep what was typed or pasted (after Arabic digit conversion). A point, comma or extra digit is shown and flagged, never stripped or cut, so a wrong weight cannot be built silently.
+    if (f === 'gw' || f === 'gf') { e.target.value = r[f] = lat(r[f]); }
     if (f === 'mk' || f === 'st') { const b = rowEl.querySelector('.msb'); b.querySelectorAll('b')[0].textContent = feeText(r, 'mk'); b.querySelectorAll('b')[1].textContent = feeText(r, 'st'); }
     if (f === 'qty' || f === 'gw' || f === 'gf') paintFin(rowEl);
     touch(); update();
