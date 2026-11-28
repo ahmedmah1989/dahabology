@@ -36,7 +36,11 @@
     });
     return { priced, unpriced };
   }
-  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num };
+  // Text for one account piece that has no purchase price. It is listed, never valued and never counted as paid.
+  const unpricedLine = u => (u.note ? u.note + ' • ' : '') + 'عيار ' + u.k + ' • ' + u.g + ' جم • بدون سعر شراء';
+  // The edit form can open a priced or an unpriced account piece.
+  const findCloudPiece = (priced, unpriced, id) => (Array.isArray(priced) ? priced : []).concat(Array.isArray(unpriced) ? unpriced : []).find(x => x && x.id === id);
+  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, unpricedLine, findCloudPiece, num };
   if (typeof document === 'undefined' || !document.getElementById('walForm')) return;
 
   const $ = id => document.getElementById(id);
@@ -52,11 +56,20 @@
   function setCloud(items) {
     const w = toWalletItems(items);
     window.DHB_CLOUD_ITEMS = w.priced;
-    const n = $('walUnpriced'); n.hidden = w.unpriced.length === 0;
-    n.textContent = w.unpriced.length ? 'في حسابك ' + w.unpriced.length + ' قطعة من غير سعر شراء، ما اتحسبتش في القيمة هنا.' : '';
+    window.DHB_CLOUD_UNPRICED = w.unpriced;
+    const n = $('walUnpriced'); n.hidden = w.unpriced.length === 0; n.replaceChildren();
+    if (w.unpriced.length) {
+      const h = document.createElement('b'); h.textContent = 'في حسابك ' + w.unpriced.length + ' قطعة من غير سعر شراء. موجودة، لكن ما اتحسبتش في القيمة ولا في المدفوع.'; n.append(h);
+      w.unpriced.forEach(u => {
+        const row = document.createElement('div'), b = document.createElement('button'); b.type = 'button'; b.textContent = 'أضف سعر الشراء'; b.style.cssText = 'width:auto;min-height:36px;padding:4px 12px;font-size:13px;flex:none';
+        row.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px;text-align:right';
+        b.addEventListener('click', () => window.DHB_CLOUD_EDIT(u.id));
+        const tx = document.createElement('span'); tx.textContent = unpricedLine(u); row.append(tx, b); n.append(row);
+      });
+    }
     paint();
   }
-  function clearCloud() { gen++; owner = null; window.DHB_CLOUD_ITEMS = []; window.DHB_CLOUD_INVOICES = []; $('walUnpriced').hidden = true; paint(); }
+  function clearCloud() { gen++; owner = null; window.DHB_CLOUD_ITEMS = []; window.DHB_CLOUD_UNPRICED = []; window.DHB_CLOUD_INVOICES = []; $('walUnpriced').hidden = true; $('walUnpriced').replaceChildren(); paint(); }
   async function refresh() {
     const g = ++gen;
     if (!localStorage.getItem(SESSION)) { if (owner) clearCloud(); return; }
@@ -100,7 +113,7 @@
   $('walCancel').addEventListener('click', () => { resetForm(); say('walMsg', ''); });
   // Fill the form from a saved row (edit). Shown values are exactly what is saved; blank means not recorded.
   window.DHB_CLOUD_EDIT = id => {
-    const r = (window.DHB_CLOUD_ITEMS || []).find(x => x.id === id), rec = r && r.rec; if (!rec) return;
+    const r = findCloudPiece(window.DHB_CLOUD_ITEMS, window.DHB_CLOUD_UNPRICED, id), rec = r && r.rec; if (!rec) return;
     resetForm(); editingId = id; editBase = JSON.parse(JSON.stringify(rec)); FM().loadRow(rec);
     $('walAdd').textContent = 'احفظ التعديل'; $('walCancel').hidden = false;
     say('walMsg', Number.isFinite(rec.additions) && rec.additions > 0 ? 'القطعة دي فيها مبلغ "إضافات" قديم محفوظ زي ما هو. التعديل ما بيغيّرهوش.' : '');
