@@ -8,3 +8,7 @@
 .help-launcher{transition:opacity .15s ease}
 .help-launcher.field-focus,.help-launcher.scroll-away{opacity:0}
 @media(prefers-reduced-motion:reduce){.help-launcher{transition:none}}
+
+/* PR-B tap targets: the help-hint close button keeps its size; an invisible extension toward the pill makes the hit width 40px */
+.help-hint-compact #helpHintDismiss{position:relative}
+.help-hint-compact #helpHintDismiss::after{content:'';position:absolute;top:0;bottom:0;left:-16px;right:0}
