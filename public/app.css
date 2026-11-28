@@ -118,7 +118,7 @@ h2{font-size:24px}
 .x-card{background:var(--x-glass);border:1px solid var(--x-line);border-radius:22px;padding:22px 18px;box-shadow:0 8px 26px #0005;backdrop-filter:blur(6px);text-align:center}
 .x-card h2{font-size:22px;margin:0;justify-content:center}
 .x-sub{margin:2px 0 0;font-size:15px;color:var(--x-muted)}
-.x-note{margin:12px 0 0;text-align:center;font-size:14px;line-height:1.8;color:#a9b8d0}
+.x-note{overflow-wrap:anywhere;margin:12px 0 0;text-align:center;font-size:14px;line-height:1.8;color:#a9b8d0}
 .x-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
 .x-chip{background:var(--x-glass);border:1px solid var(--x-line);border-radius:18px;padding:12px 10px;text-align:center;min-width:0}
 .x-chip span{display:block;font-size:14px;font-weight:600;color:var(--x-muted);line-height:1.6}
