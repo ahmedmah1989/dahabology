@@ -52,3 +52,15 @@ test2('wallet notes name what each total covers', () => {
   assert.equal(walletNotes({ count: 1, valued: 1, covered: 1, paidCovered: 1, paidAll: 1, partial: false, netCount: 1, netGrams: 4 }, egp).weight, '');
   assert.deepEqual(walletNotes({ count: 0 }, egp), { weight: '', diffScope: '', cover: '' });
 });
+
+// headline gain keeps its scope on its own line, outside the number-fit element
+{
+  const fs = require('node:fs');
+  const html = fs.readFileSync(require('node:path').join(__dirname, '../src/panels/wallet.html'), 'utf8');
+  assert.match(html, /id="walDiff"><\/span><span class="chg-scope" id="walScope"><\/span>/);
+  const js = fs.readFileSync(require('node:path').join(__dirname, '../public/js/tools.js'), 'utf8');
+  assert.ok(!/signed\(agg\.diff\)[^;]*N\.diffScope;/.test(js), 'scope must not be appended to the fitted amount');
+  assert.match(js, /walScope/);
+  const fit = fs.readFileSync(require('node:path').join(__dirname, '../public/js/number-fit.js'), 'utf8');
+  assert.ok(!/walScope/.test(fit), 'scope line must not be shrunk by number-fit');
+}
