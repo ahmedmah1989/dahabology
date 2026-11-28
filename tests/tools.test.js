@@ -93,7 +93,7 @@ test2('wallet notes name what each total covers', () => {
   assert.match(js, /set\('invExtra', r\.belowGold \? '—'/);
   assert.match(js, /set\('invPerGram', r\.belowGold \? '—'/);
   assert.match(js, /set\('invLoss', r\.loss === null \|\| r\.belowGold \? '—'/);
-  assert.match(js, /مش فاتورة متحقق منها/);
+  assert.match(js, /الأرقام تحت تقدير من اللي كتبته، مش فاتورة متحقق منها/);
   assert.match(js, /vatBad = vatTxt !== '' && !\(num\(\$\('invVat'\)\.value\) >= 0\)/);
   assert.match(js, /نسبة الضريبة لازم تكون صفر أو رقم أكبر/);
   const b = inspect({ sell: 5810, buy: 5750, grams: 10, total: 1000, vat: 14 });
