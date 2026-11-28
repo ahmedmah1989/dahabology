@@ -86,3 +86,16 @@ test2('wallet notes name what each total covers', () => {
   const z = inspect({ sell: 5810, buy: 5750, grams: 10, total: 62000, vat: 0 }); // explicit 0 still computes (all extra is making)
   assert.equal(z.makingPerGram, 390); assert.equal(z.taxPerGram, 0);
 }
+
+{ // total below the gold value: no paid-above or gain figures from the rejected input; invalid VAT gets its own message
+  const fsx = require('node:fs'), px = require('node:path');
+  const js = fsx.readFileSync(px.join(__dirname, '..', 'public', 'js', 'tools.js'), 'utf8');
+  assert.match(js, /set\('invExtra', r\.belowGold \? '—'/);
+  assert.match(js, /set\('invPerGram', r\.belowGold \? '—'/);
+  assert.match(js, /set\('invLoss', r\.loss === null \|\| r\.belowGold \? '—'/);
+  assert.match(js, /مش فاتورة متحقق منها/);
+  assert.match(js, /vatBad = vatTxt !== '' && !\(num\(\$\('invVat'\)\.value\) >= 0\)/);
+  assert.match(js, /نسبة الضريبة لازم تكون صفر أو رقم أكبر/);
+  const b = inspect({ sell: 5810, buy: 5750, grams: 10, total: 1000, vat: 14 });
+  assert.equal(b.belowGold, true); assert.ok(b.extra < 0); // the model flags it; the view must not render extra or loss
+}
