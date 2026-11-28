@@ -48,3 +48,9 @@ test('notes wrap long unbroken text such as the contact address', () => {
   const css = fs.readFileSync(require('node:path').join(__dirname, '..', 'public', 'app.css'), 'utf8');
   assert.match(css, /\.x-note\{overflow-wrap:anywhere;/);
 });
+
+test('analysis indicator cards stay inside their section on narrow phones', () => {
+  const css = fs.readFileSync(require('node:path').join(__dirname, '..', 'public', 'app.css'), 'utf8');
+  assert.match(css, /\.analytics \.ind\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
+  assert.match(css, /@media\(max-width:340px\)\{\.analytics \.ind\{grid-template-columns:minmax\(0,1fr\)\}\}/);
+});
