@@ -113,3 +113,26 @@ test('clear removes the alert; load returns null', () => {
   T.clear(s);
   assert.equal(T.load(s), null);
 });
+
+test('an invalid target shows the number message instead of the default prompt', () => {
+  const path = require.resolve('../public/js/target-alert.js');
+  const els = {};
+  const mk = id => els[id] = { id, textContent: '', value: '', children: [], listeners: {}, addEventListener(e, f) { this.listeners[e] = f; } };
+  ['targetAlertBox', 'targetAlertStatus', 'targetAlertValue', 'targetAlertSet', 'targetAlertClear', 'targetAlertNotices'].forEach(mk);
+  const store = {};
+  global.document = { getElementById: id => els[id] || null, activeElement: null };
+  global.window = { addEventListener() {} };
+  global.localStorage = { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = v; }, removeItem: k => { delete store[k]; } };
+  delete require.cache[path];
+  try {
+    require(path);
+    els.targetAlertValue.value = 'abc';
+    els.targetAlertSet.listeners.click();
+    assert.match(els.targetAlertStatus.textContent, /رقمًا صحيحًا/);
+    els.targetAlertValue.value = '0';
+    els.targetAlertSet.listeners.click();
+    assert.match(els.targetAlertStatus.textContent, /رقمًا صحيحًا/);
+  } finally {
+    delete global.document; delete global.window; delete global.localStorage; delete require.cache[path];
+  }
+});
