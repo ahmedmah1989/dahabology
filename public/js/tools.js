@@ -181,7 +181,8 @@
     });
     const N = walletNotes(agg, egp), showNow = agg.valued > 0;
     set('walNow', walletNowText(items.length, 0, showNow, showNow ? egp(agg.now) : ''));
-    set('walPaid', items.length && agg.pricedCount ? egp(agg.paidAll) + (agg.unpriced ? ' (+ ' + agg.unpriced + ' بدون سعر)' : '') : '—');
+    set('walPaid', items.length && agg.pricedCount ? egp(agg.paidAll) : '—');
+    const pn = $('walPaidNote'); if (pn) pn.textContent = items.length && agg.pricedCount && agg.unpriced ? '(+ ' + agg.unpriced + ' بدون سعر)' : ''; // the unpriced count on its own line so the amount never wraps mid-phrase
     set('walWeight', items.length ? (agg.approx ? '≈ ' : '') + nf(agg.grams, 3) + ' جم' + (agg.approx ? ' (تقريبي)' : '') : '—');
     const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)); d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');
     const sc = $('walScope'); if (sc) sc.textContent = agg.diff === null ? '' : N.diffScope.replace(/^ \(|\)$/g, ''); // which pieces the gain covers: its own readable line, so the number fit never shrinks it
