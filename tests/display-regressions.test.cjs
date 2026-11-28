@@ -38,3 +38,8 @@ test('market headline price shows the source time and the 24h freshness gate is 
   assert.match(src,/آخر تحديث للسعر في المصدر: ' \+ when\(a\.sourceTime\)/);
   assert.match(src,/Date\.now\(\) - t <= 86400000/);
 });
+
+test('narrow-phone top bar keeps the title to two lines', () => {
+  const css = fs.readFileSync(require('node:path').join(__dirname, '..', 'public', 'app.css'), 'utf8');
+  assert.match(css, /@media\(max-width:340px\)\{header\.x-top \.dhb-brand-en\{display:none\}/);
+});
