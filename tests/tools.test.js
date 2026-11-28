@@ -73,3 +73,16 @@ test2('wallet notes name what each total covers', () => {
   assert.match(js, /walPaidNote/);
   assert.ok(!/egp\(agg\.paidAll\) \+ \(agg\.unpriced/.test(js));
 }
+
+{ // blank VAT stays unknown and unsplit; a typed percentage (including 0) is a stated assumption
+  const fsx = require('node:fs'), px = require('node:path');
+  const js = fsx.readFileSync(px.join(__dirname, '..', 'public', 'js', 'tools.js'), 'utf8');
+  const html = fsx.readFileSync(px.join(__dirname, '..', 'src', 'panels', 'invoice.html'), 'utf8');
+  assert.match(js, /vatBlank \? 'غير مفصول'/);
+  assert.match(js, /vatBlank \? 'غير محدد'/);
+  assert.match(js, /هذا التقسيم افتراض/);
+  assert.match(html, /id="invSplitNote"/);
+  assert.ok(!/id="invVat" inputmode="decimal" placeholder="0"/.test(html));
+  const z = inspect({ sell: 5810, buy: 5750, grams: 10, total: 62000, vat: 0 }); // explicit 0 still computes (all extra is making)
+  assert.equal(z.makingPerGram, 390); assert.equal(z.taxPerGram, 0);
+}
