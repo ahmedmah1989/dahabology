@@ -14,9 +14,23 @@
     if (o.mode === 'sell') return { mode: 'sell', grams: amount, gold: amount * price, total: amount * price };
     const making = o.making > 0 ? o.making : 0, stamp = o.stamp > 0 ? o.stamp : 0, vat = o.vat > 0 ? o.vat : 0;
     const tax = making * vat / 100, perGram = price + making + stamp + tax;
-    const grams = o.by === 'grams' ? amount : amount / perGram;
+    // By amount: the weight you can actually buy is rounded DOWN to the supported milligram step (3 decimals), so the cost
+    // never exceeds the amount entered. Every figure below is computed from that same weight; the entered amount is kept
+    // as `budget` and what is left over as `remaining` (never silently counted as spent).
+    let grams = amount, budget, remaining;
+    if (o.by !== 'grams') {
+      budget = amount;
+      if (!Number.isFinite(budget / perGram)) return null;
+      let milli = Math.floor(budget / perGram * 1000 + 1e-7);
+      while (milli > 0 && (milli / 1000) * perGram > budget * (1 + 1e-12)) milli--;
+      grams = milli / 1000;
+      remaining = Math.max(0, budget - grams * perGram);
+      if (remaining < 1e-9) remaining = 0;
+    }
     if(!Number.isFinite(grams*perGram))return null;
-    return { mode: 'buy', grams, perGram, gold: grams * price, making: grams * making, stamp: grams * stamp, tax: grams * tax, total: grams * perGram, extra: grams * (making + stamp + tax) };
+    const r = { mode: 'buy', grams, perGram, gold: grams * price, making: grams * making, stamp: grams * stamp, tax: grams * tax, total: grams * perGram, extra: grams * (making + stamp + tax) };
+    if (budget !== undefined) { r.budget = budget; r.remaining = remaining; }
+    return r;
   }
   if (typeof module !== 'undefined') module.exports = { quote };
   if (typeof document === 'undefined' || !document.getElementById('cResult')) return;
@@ -46,7 +60,7 @@
     $('cAmount').placeholder = by === 'money' ? 'مثال: 100000' : 'مثال: 10';
     const q = quote({ mode: state.mode, by, price: num($('cPrice').value), amount: num($('cAmount').value), making: $('cMaking').value.trim()?num($('cMaking').value):0, stamp: $('cStamp').value.trim()?num($('cStamp').value):0, vat: $('cVat').value.trim()?num($('cVat').value):0 });
     const dl = $('cBreak'); dl.replaceChildren();
-    $('cExplain').textContent=!q?'اكتب المبلغ أو الوزن وسعر الجرام. الرسوم الاختيارية يجب أن تكون أرقامًا صفر أو أكبر.':q.mode==='sell'?'هذا تقدير لقيمة الذهب بسعر شراء التاجر، قبل أي خصومات عند الفحص.':'الإجمالي = قيمة الذهب + المصنعية + الدمغة والرسوم + الضريبة التي أدخلتها.';
+    $('cExplain').textContent=!q?'اكتب المبلغ أو الوزن وسعر الجرام. الرسوم الاختيارية يجب أن تكون أرقامًا صفر أو أكبر.':q.mode==='sell'?'هذا تقدير لقيمة الذهب بسعر شراء التاجر، قبل أي خصومات عند الفحص.':(by==='money'?'التكلفة الفعلية':'الإجمالي')+' = قيمة الذهب + المصنعية + الدمغة والرسوم + الضريبة التي أدخلتها.';
     $('cPriceNote').textContent = state.edited ? 'الحساب بالسعر الذي أدخلته.' : state.prices ? 'الحساب بسعر الجرام المعروض' + ($('cKarat').value === '18' ? '، وعيار 18 محسوب من عيار 24.' : '.') : 'في انتظار السعر؛ تقدر تكتب السعر بنفسك.';
     if (!q) { $('cResultLabel').textContent = buy ? (by === 'money' ? 'تشتري تقريبًا' : 'التكلفة التقريبية') : 'تستلم تقريبًا'; $('cResult').textContent = '—'; return; }
     if (!buy) {
@@ -55,16 +69,18 @@
       return;
     }
     $('cResultLabel').textContent = by === 'money' ? 'تشتري تقريبًا' : 'التكلفة التقريبية';
-    $('cResult').textContent = by === 'money' ? nf(Math.floor(q.grams*1000)/1000, 3) + ' جرام' : egp(q.total);
+    $('cResult').textContent = by === 'money' ? nf(q.grams, 3) + ' جرام' : egp(q.total);
+    if (by === 'money') line(dl, 'المبلغ الذي معك', egp(q.budget));
     line(dl, 'الوزن', nf(q.grams, 3) + ' جرام');
     line(dl, 'قيمة الذهب نفسه', egp(q.gold));
     if (q.making) line(dl, 'المصنعية', egp(q.making));
     if (q.tax) line(dl, 'ضريبة على المصنعية', egp(q.tax));
     if (q.stamp) line(dl, 'دمغة ورسوم أخرى', egp(q.stamp));
     line(dl, 'تكلفة الجرام النهائية', nf(q.perGram) + ' جنيه');
-    line(dl, 'الإجمالي', egp(q.total), 'total');
+    line(dl, by === 'money' ? 'التكلفة الفعلية' : 'الإجمالي', egp(q.total), 'total');
+    if (by === 'money') line(dl, 'المتبقي معك', egp(q.remaining));
     if (q.extra) line(dl, 'رسوم فوق قيمة الذهب', egp(q.extra) + ' (' + nf(q.extra / q.total * 100, 1) + '%)');
-    line(dl,'سعر شراء التاجر اللازم لتغطية التكلفة',nf(q.total/q.grams)+' جنيه / جرام');
+    if (q.grams > 0) line(dl,'سعر شراء التاجر اللازم لتغطية التكلفة',nf(q.total/q.grams)+' جنيه / جرام');
   }
 
   document.querySelectorAll('[data-mode]').forEach(b => b.addEventListener('click', () => { if(state.mode===b.dataset.mode)return;state.mode = b.dataset.mode; $('cAmount').value='';state.edited = false; fillPrice(); render(); }));
