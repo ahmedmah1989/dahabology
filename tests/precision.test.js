@@ -32,3 +32,16 @@ test('calculations reject nonfinite values and negative fees instead of inventin
  near(quote({...buy,making:100,stamp:10,vat:14}).total,51240);
  near(quote({...buy,making:0,stamp:0,vat:0}).total,50000);
 });
+
+test('comparison never shows a positive weight as zero grams',()=>{
+ const {gramsText}=require('../public/js/comparison.js');
+ assert.equal(gramsText(0.0001),'أقل من 0.001 جرام');
+ assert.equal(gramsText(0.00049),'أقل من 0.001 جرام');
+ assert.equal(gramsText(0.0005),'0.001 جرام');
+ assert.equal(gramsText(10),'10 جرام');
+ assert.equal(gramsText(8.125),'8.125 جرام');
+ assert.equal(gramsText(0),'0 جرام');
+ assert.equal(gramsText(NaN),'—');
+ const m=metrics({weight:0.0001,karat:18,total:1});
+ assert.equal(gramsText(m.pure),'أقل من 0.001 جرام'); // pure weight also tiny, still not zero
+});
