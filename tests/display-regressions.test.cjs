@@ -43,3 +43,8 @@ test('narrow-phone top bar keeps the title to two lines', () => {
   const css = fs.readFileSync(require('node:path').join(__dirname, '..', 'public', 'app.css'), 'utf8');
   assert.match(css, /@media\(max-width:340px\)\{header\.x-top \.dhb-brand-en\{display:none\}/);
 });
+
+test('notes wrap long unbroken text such as the contact address', () => {
+  const css = fs.readFileSync(require('node:path').join(__dirname, '..', 'public', 'app.css'), 'utf8');
+  assert.match(css, /\.x-note\{overflow-wrap:anywhere;/);
+});
