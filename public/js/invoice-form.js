@@ -112,9 +112,10 @@
     }
     $('sum').innerHTML = '<b><span class="l1">' + unitsAll + ' ' + (unitsAll === 1 ? 'قطعة' : 'قطع') + ' · ' + fg(gMg / 1000) + ' جرام</span><span class="l1">دفعت في القطع ' + fm(okP / 100) + ' جنيه</span></b>' + det + lines.map(l => '<p>' + l + '</p>').join('');
     if (!keepRev) $('walRev').checked = false;
-    const ok = rows.every((r, i) => !q[i].error && (w[i].keep || w[i].mg) && ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))) && r.type && ['18', '21', '24'].includes(r.k) && Number.isFinite(paids[i]) && r.s && r.pp);
+    const miss = rows.map((r, i) => LG.rowMissing({ type: r.type, karat: r.k, weight: !q[i].error && !!(w[i].keep || w[i].mg), paid: Number.isFinite(paids[i]), extras: ['mk', 'st'].every(k => r[k + 'N'] || r[k].trim() === '' || Number.isFinite(money(r[k]))), stones: r.s, purpose: r.pp }));
+    const ok = miss.every(m => !m.length);
     const okAll = ok && !bad; root.dataset.complete = okAll ? '1' : '';
-    $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? '' : 'كمّل النوع والعيار والوزن والمبلغ وغرض الاقتناء واختيار الفصوص لكل قطعة.');
+    $('invErr').textContent = bad ? 'أرقام الضريبة مش متطابقة. صحّحها أو امسح خانة واحدة قبل الحفظ.' : (ok ? ($('walRev').checked ? '' : LG.REVIEW_HINT) : LG.missingHint(miss));
     $('walAdd').disabled = !(okAll && $('walRev').checked) || root.dataset.busy === '1';
     root.dispatchEvent(new CustomEvent('invform:update'));
   }

@@ -297,6 +297,26 @@
   // Display helpers for rows (old rows have no qty and read exactly as before).
   const qtyOf = r => (Number.isInteger(r && r.qty) && r.qty > 1 ? r.qty : 1);
   const unitGramsOf = r => (qtyOf(r) > 1 && finite(r.unitGrams) ? r.unitGrams : (r && r.grams));
-  const api = { readQty, composeWeight, gramsOfMg, totalMg, CATALOG_SNAPSHOT, sizesFromCatalog, invoiceFigures, reconcile, buildInvoice, buildInvoiceMeta, applyInvoiceEdit, pruneInvoices, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
+  // One predicate for "this invoice line can be saved". The save button and the hint beside it both read it, so they cannot drift.
+  // f: {type, karat, weight:boolean, paid:boolean, extras:boolean, stones, purpose}. Returns the Arabic labels of what is missing ([] = complete).
+  // Purpose is required for jewelry only. For any other type it is optional, an existing one is kept, and none is ever set or inferred.
+  function rowMissing(f) {
+    const m = [];
+    if (!f.type) m.push('النوع');
+    if (!['18', '21', '24'].includes(String(f.karat))) m.push('العيار');
+    if (!f.weight) m.push('الوزن');
+    if (!f.paid) m.push('المبلغ المدفوع');
+    if (!f.extras) m.push('رقم المصنعية أو الدمغة');
+    if (!f.stones) m.push('الفصوص (بفصوص أو بدون)');
+    if (f.type === 'jewelry' && !f.purpose) m.push('غرض الاقتناء (زينة أو ادخار)');
+    return m;
+  }
+  function missingHint(rowsMissing) {
+    const bad = rowsMissing.map((m, i) => ({ i, m })).filter(x => x.m.length);
+    if (!bad.length) return '';
+    return bad.map(x => (rowsMissing.length > 1 ? 'سطر ' + (x.i + 1) + ': ' : '') + 'ناقص ' + x.m.join('، ')).join(' | ') + '.';
+  }
+  const REVIEW_HINT = 'كل البيانات كاملة. علّم «راجعت الأرقام» علشان زر الحفظ يشتغل.';
+  const api = { rowMissing, missingHint, REVIEW_HINT, readQty, composeWeight, gramsOfMg, totalMg, CATALOG_SNAPSHOT, sizesFromCatalog, invoiceFigures, reconcile, buildInvoice, buildInvoiceMeta, applyInvoiceEdit, pruneInvoices, mergeInvoice, qtyOf, unitGramsOf, piastres, parseNumber, sameRow, CHANGED_AR, GONE_AR, parseDMY, dmy, group, netGrams, goldPart, valuation, aggregate, readDetails, editItem, deleteItem, feesKnown, hasLegacyAdditions, KARATS };
   if (typeof module !== 'undefined') module.exports = api; else window.DHB_LEDGER = api;
 })();
