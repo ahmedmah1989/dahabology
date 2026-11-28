@@ -35,7 +35,8 @@
   if (typeof module !== 'undefined') module.exports = { buildCsv, filename, cell, snapshot };
   if (typeof document === 'undefined' || !document.getElementById('walExport')) return;
   const btn = document.getElementById('walExport');
-  const say = t => { const m = document.getElementById('walMsg'); if (m) { m.textContent = t || ''; m.className = 'x-msg' + (t ? ' err' : ''); } };
+  // Messages sit right under the two buttons (walExportMsg); walMsg under the form is only a fallback.
+  const say = (t, info) => { const m = document.getElementById('walExportMsg') || document.getElementById('walMsg'); if (m) { m.textContent = t || ''; m.className = 'x-msg' + (t && !info ? ' err' : ''); } };
   const deviceItems = () => {
     try {
       const v = JSON.parse(localStorage.getItem('dhb-wallet-v1'));
@@ -61,6 +62,8 @@
     a.href = url; a.download = filename(day); a.rel = 'noopener';
     document.body.append(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 4000);
+    // The click only requests the download; the browser gives no completion signal here, so do not say it finished.
+    say('اتطلب تنزيل الملف. لو ما ظهرش، شوف ملفات التنزيل في جهازك.', true);
   });
   // Optional share: shown only if this browser can share a CSV file. Never runs without a tap.
   const sbtn = document.getElementById('walShare');
@@ -75,7 +78,7 @@
       const day = today();
       const file = new File([buildCsv(items, day)], filename(day), { type: 'text/csv' });
       if (window.DHB_CLOUD_ITEMS !== cloudRef) { say('الحساب اتغيّر أثناء التصدير. ما اتشاركش أي ملف؛ جرّب تاني.'); return; }
-      try { await navigator.share({ files: [file], title: 'نسخة من دهبي' }); say(''); }
+      try { await navigator.share({ files: [file], title: 'نسخة من دهبي' }); say(''); } // cancel and success stay silent
       catch (e) { if (!e || e.name !== 'AbortError') say('ما اتشاركش الملف. استخدم زر التنزيل.'); else say(''); }
     });
   }
