@@ -341,3 +341,19 @@ test('restored legacy record (no stones choice, no fees, additions) is kept and 
   const a = L.aggregate([legacy], PP);
   assert.equal(a.valued, 0); assert.equal(a.paidAll, 20000); assert.equal(a.grams, 5); assert.equal(a.diff, null);
 });
+
+// ---- save predicate and hint: purpose is required for jewelry only; hint and button share one predicate ----
+test('save predicate and hint share one rule; purpose required for jewelry only', () => {
+  const full = { type: 'bar', karat: '24', weight: true, paid: true, extras: true, stones: 'without', purpose: '' };
+  assert.deepEqual(L.rowMissing(full), [], 'legacy bar without purpose is complete');
+  assert.deepEqual(L.rowMissing({ ...full, type: 'coin', karat: '21' }), [], 'coin without purpose is complete');
+  assert.deepEqual(L.rowMissing({ ...full, type: 'scrap', karat: '18' }), [], 'scrap without purpose is complete');
+  assert.deepEqual(L.rowMissing({ ...full, type: 'bar', purpose: 'saving' }), [], 'an existing purpose is fine and kept');
+  assert.deepEqual(L.rowMissing({ ...full, type: 'jewelry', karat: '21' }), ['غرض الاقتناء (زينة أو ادخار)'], 'jewelry without purpose stays blocked, named precisely');
+  assert.deepEqual(L.rowMissing({ ...full, type: 'jewelry', karat: '21', purpose: 'adornment' }), []);
+  assert.deepEqual(L.rowMissing({ type: '', karat: '', weight: false, paid: false, extras: false, stones: '', purpose: '' }), ['النوع', 'العيار', 'الوزن', 'المبلغ المدفوع', 'رقم المصنعية أو الدمغة', 'الفصوص (بفصوص أو بدون)']);
+  assert.equal(L.missingHint([[]]), '');
+  assert.equal(L.missingHint([['الوزن']]), 'ناقص الوزن.');
+  assert.equal(L.missingHint([[], ['الوزن', 'الفصوص (بفصوص أو بدون)']]), 'سطر 2: ناقص الوزن، الفصوص (بفصوص أو بدون).');
+  assert.ok(/راجعت الأرقام/.test(L.REVIEW_HINT));
+});
