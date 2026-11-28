@@ -52,8 +52,8 @@
   function render(state, extra) {
     const status = $('targetAlertStatus'), input = $('targetAlertValue');
     if (!status) return;
-    if (!state) { status.textContent = 'اختار السعر المستهدف، وهنبّهك على هذا الجهاز.'; return; }
     if (extra) { status.textContent = extra; return; }
+    if (!state) { status.textContent = 'اختار السعر المستهدف، وهنبّهك على هذا الجهاز.'; return; }
     const dist = state.lastSeen ? Math.abs(state.target - state.lastSeen.price) : null;
     status.textContent = state.state === 'fired'
       ? 'اتفعل التنبيه عند هدفك ' + state.target + '. امسحه أو حدّد هدفًا جديدًا.'
