@@ -46,7 +46,9 @@
   function percentageSuffix(value, format) {
     return Number.isFinite(value) ? ' (' + format(value) + '%)' : ' (النسبة غير متاحة)';
   }
-  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet, percentageSuffix };
+  // Headline value of the wallet. With no valued pieces it is 0 only when the account has nothing; unpriced pieces make it unknown, never 0.
+  const walletNowText = (items, unpriced, showNow, text) => (items ? (showNow ? text : '—') : (unpriced ? '—' : '0 جنيه'));
+  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet, percentageSuffix, walletNowText };
   if (typeof document === 'undefined') return;
 
   const $ = id => document.getElementById(id);
@@ -105,7 +107,7 @@
     const recOf = it => it.rec || { id: it.id, karat: Number(it.k), grams: it.g, paid: it.paid, label: it.note }; // device rows have no stones choice: not counted
     const recs = items.map(recOf), agg = L.aggregate(recs, pm);
     body.replaceChildren();
-    $('walEmpty').hidden = items.length > 0; $('walTable').hidden = items.length === 0;
+    const unp = (window.DHB_CLOUD_UNPRICED || []).length; $('walEmpty').hidden = items.length > 0 || unp > 0; $('walTable').hidden = items.length === 0;
     const WHY = { 'stones-unset': 'لسه ما حددتش بفصوص ولا بدون، فمش داخلة في القيمة', 'gold-weight-unknown': 'وزن الذهب الصافي غير معروف، فمش داخلة في القيمة', 'stones-cost-unknown': 'تكلفة الفصوص غير معروفة', 'legacy-additions': 'فيها مبلغ "إضافات" قديم محفوظ، فالمقارنة بسعر الذهب فقط مش متاحة', 'fees-missing': 'مصنعية أو ضريبة أو دمغة غير مسجلة', 'no-market-price': 'في انتظار السعر', 'no-price': 'سعر الشراء غير مسجل', 'non-positive-gold': 'الأرقام المسجلة مش منطقية، راجعها' };
     const dateOf = ix => (/^\d{4}-\d{2}-\d{2}$/.test(recs[ix].purchaseDate || '') ? recs[ix].purchaseDate : '');
     const invs = {}; (Array.isArray(window.DHB_CLOUD_INVOICES) ? window.DHB_CLOUD_INVOICES : []).forEach(v => { if (v && v.id) invs[v.id] = v; });
@@ -166,7 +168,7 @@
       body.append(card);
     });
     const showNow = agg.covered > 0;
-    set('walNow', items.length ? (showNow ? egp(agg.now) : '—') : '0 جنيه');
+    set('walNow', walletNowText(items.length, (window.DHB_CLOUD_UNPRICED || []).length, showNow, showNow ? egp(agg.now) : ''));
     set('walPaid', items.length ? egp(agg.paidAll) : '—');
     set('walWeight', items.length ? (agg.approx ? '≈ ' : '') + nf(agg.grams, 3) + ' جم' + (agg.approx ? ' (تقريبي)' : '') : '—');
     const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)); d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');

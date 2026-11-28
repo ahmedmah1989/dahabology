@@ -37,7 +37,8 @@
     return { priced, unpriced };
   }
   // Text for one account piece that has no purchase price. It is listed, never valued and never counted as paid.
-  const unpricedLine = u => (u.note ? u.note + ' • ' : '') + 'عيار ' + u.k + ' • ' + u.g + ' جم • بدون سعر شراء';
+  const unpricedHead = u => (u.note ? u.note + ' • ' : '') + 'عيار ' + u.k + ' • ' + u.g + ' جم', UNPRICED_TAG = 'بدون سعر شراء';
+  const unpricedLine = u => unpricedHead(u) + ' • ' + UNPRICED_TAG;
   // The edit form can open a priced or an unpriced account piece.
   const findCloudPiece = (priced, unpriced, id) => (Array.isArray(priced) ? priced : []).concat(Array.isArray(unpriced) ? unpriced : []).find(x => x && x.id === id);
   if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, unpricedLine, findCloudPiece, num };
@@ -64,7 +65,7 @@
         const row = document.createElement('div'), b = document.createElement('button'); b.type = 'button'; b.textContent = 'أضف سعر الشراء'; b.style.cssText = 'width:auto;min-height:36px;padding:4px 12px;font-size:13px;flex:none';
         row.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px;text-align:right';
         b.addEventListener('click', () => window.DHB_CLOUD_EDIT(u.id));
-        const tx = document.createElement('span'); tx.textContent = unpricedLine(u); row.append(tx, b); n.append(row);
+        const tx = document.createElement('span'), tg = document.createElement('span'); tx.textContent = unpricedHead(u) + ' • '; tg.textContent = UNPRICED_TAG; tg.style.whiteSpace = 'nowrap'; tx.append(tg); row.append(tx, b); n.append(row);
       });
     }
     paint();

@@ -43,7 +43,7 @@ test('numbers accept Arabic digits and a comma', () => { assert.equal(num('٤٩�
 
 test('unpriced account pieces are listed with a readable line, not just counted', () => {
   const w = toWalletItems([{ id: 'p', karat: 21, grams: 5, paid: 100 }, { id: 'u', label: 'سلسلة', karat: 18, grams: 3.5, stones: 'without' }]);
-  assert.equal(unpricedLine(w.unpriced[0]), 'سلسلة • عيار 18 • 3.5 جم • بدون سعر شراء');
+  assert.equal(unpricedLine(w.unpriced[0]), 'سلسلة • عيار 18 • 3.5 جم • بدون سعر شراء'); // the tag is rendered as its own non-wrapping span so it never splits across lines
   assert.equal(unpricedLine({ k: '24', g: 2, note: '' }), 'عيار 24 • 2 جم • بدون سعر شراء');
 });
 test('the edit form can find a priced or an unpriced account piece, and nothing else', () => {
