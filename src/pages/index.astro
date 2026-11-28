@@ -179,6 +179,8 @@ body::after{
 .home-market .mini{border:1px solid #efc66c44;border-radius:16px;background:#10213bcc;text-align:center;padding:12px 8px;color:#fff;text-decoration:none;min-width:0;overflow-wrap:anywhere}
 .home-market .mini>span{display:block;color:var(--gold-hot);font-size:14px;font-weight:700}.home-market b{display:block;direction:ltr;font-size:24px;line-height:1.5;font-variant-numeric:tabular-nums}.home-market small{display:block;color:var(--muted);font-size:11px;line-height:1.65}.home-market .silver-mini{grid-column:1/-1}.silver-mini>div{display:grid;grid-template-columns:1fr 1fr;gap:8px}.silver-mini section+section{border-inline-start:1px solid #efc66c33}.silver-mini b{font-size:21px}.home-market a:focus-visible{outline:2px solid var(--gold-hot);outline-offset:3px}
 .home-controls{display:flex;justify-content:center;flex-wrap:wrap;gap:6px 18px;z-index:2;padding-bottom:8px}
+/* PR-C tap targets: the two home links keep their look; the touch area becomes 40px tall */
+.home-controls .replay{min-height:40px;padding:0 10px}
 body.motion-paused *,body.motion-paused *::before,body.motion-paused *::after{animation:none!important;transition:none!important}
 body.motion-paused .bolt,body.motion-paused .orb .zap{opacity:.25}
 body.page-away *,body.page-away *::before,body.page-away *::after{animation-play-state:paused!important}
