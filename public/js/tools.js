@@ -48,7 +48,18 @@
   }
   // Headline value of the wallet. With no valued pieces it is 0 only when the account has nothing; unpriced pieces make it unknown, never 0.
   const walletNowText = (items, unpriced, showNow, text) => (items ? (showNow ? text : '—') : (unpriced ? '—' : '0 جنيه'));
-  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet, percentageSuffix, walletNowText };
+  // Plain-language notes for the wallet totals. Gross recorded weight, net resale weight, market value and gain/loss are kept apart, and each says which pieces it covers.
+  function walletNotes(a, egp) {
+    const weight = !a.count || a.netCount === a.count ? '' : 'الوزن المعروض هو الوزن المسجّل للقطع كلها. ' + (a.netCount ? 'وزن الذهب الصافي المعروف: ' + a.netGrams + ' جم (' + a.netCount + ' من ' + a.count + ' قطعة).' : 'وزن الذهب الصافي لسه غير معروف: محتاج تحدد بفصوص ولا بدون فصوص.');
+    const diffScope = a.diff !== null && a.covered < a.count ? ' (على ' + a.covered + ' من ' + a.count + ' قطعة)' : '';
+    let cover = '';
+    if (a.count) {
+      if (!a.valued) cover = 'القيمة لسه ما اتحسبتش: لازم نعرف القطع بفصوص ولا بدون فصوص. قطعك محفوظة زي ما هي، ومفيش ذهب ضاع ولا قيمته صفر.';
+      else cover = 'القيمة تشمل ' + a.valued + ' من ' + a.count + ' قطعة معروف وزنها الصافي. ' + (a.covered ? 'الربح أو الخسارة محسوب على ' + a.covered + ' قطعة معروف سعر شرائها وقيمتها بس (' + egp(a.paidCovered) + ' من ' + egp(a.paidAll) + ' مدفوع).' : 'الربح أو الخسارة غير متاح: مفيش قطعة معروف سعر شرائها وقيمتها.') + (a.partial ? ' ⚠ الإجمالي جزئي، والباقي بيدخل بعد ما تحدد بفصوص ولا بدون.' : '');
+    }
+    return { weight, diffScope, cover };
+  }
+  if (typeof module !== 'undefined') module.exports = { prices, inspect, wallet, percentageSuffix, walletNowText, walletNotes };
   if (typeof document === 'undefined') return;
 
   const $ = id => document.getElementById(id);
@@ -115,7 +126,7 @@
     const groups = []; const gm = {};
     items.forEach((_, ix) => { const k = keyOf(ix); if (!gm[k]) { gm[k] = { k, date: dateOf(ix), ix: [] }; groups.push(gm[k]); } gm[k].ix.push(ix); });
     groups.sort((a, b) => (a.date === b.date ? 0 : !a.date ? 1 : !b.date ? -1 : a.date < b.date ? 1 : -1));
-    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return (a.approx ? '≈ ' : '') + nf(a.grams, 3) + ' جم' + (a.approx ? ' (تقريبي)' : '') + ' • دفعت ' + egp(a.paidAll); };
+    const sumLine = (sel) => { const a = L.aggregate(sel.map(ix => recs[ix]), pm); return (a.approx ? '≈ ' : '') + nf(a.grams, 3) + ' جم' + (a.approx ? ' (تقريبي)' : '') + ' • ' + (a.pricedCount ? 'دفعت ' + egp(a.paidAll) + (a.unpriced ? ' (+ ' + a.unpriced + ' بدون سعر)' : '') : 'سعر الشراء غير معروف'); };
     const heading = (title, sel) => { const h = document.createElement('div'); h.className = 'yr'; h.append(piece('b', '', title), piece('span', '', ' • ' + sumLine(sel))); body.append(h); };
     const imgUse = {}; recs.forEach(x => { if (x && x.invoiceImage) imgUse[x.invoiceImage.id] = (imgUse[x.invoiceImage.id] || 0) + 1; });
     const TN = { bar: 'سبيكة', coin: 'جنيه', jewelry: 'مصوغات', scrap: 'كسر' };
@@ -135,7 +146,7 @@
         const r = items[ix], rec = recs[ix], v = L.valuation(rec, pm), q = L.qtyOf(rec), key = g.k + '|' + r.id, isOpen = openKey === key;
         const row = document.createElement('button'); row.type = 'button'; row.className = 'pr'; row.setAttribute('aria-expanded', String(isOpen));
         const gs = piece('span', 'g', ''); if (q > 1) { gs.append(q + ' × ' + nf(L.unitGramsOf(rec), 3)); const sm = piece('small', '', '= ' + nf(r.g, 3)); sm.style.cssText = 'display:block;font-size:12px;color:#a9b8d0'; gs.append(sm); } else gs.textContent = nf(r.g, 3);
-        row.append(piece('span', 'n', TN[rec.type] || (r.note || 'ذهب')), piece('span', 'k', String(r.k)), gs, piece('span', 'p', f2(r.paid)));
+        row.append(piece('span', 'n', TN[rec.type] || (r.note || 'ذهب')), piece('span', 'k', String(r.k)), gs, (Number.isFinite(r.paid) ? piece('span', 'p', f2(r.paid)) : piece('span', 'p u0', 'غير معروف')));
         row.addEventListener('click', () => { openKey = isOpen ? '' : key; walletRender(); });
         card.append(row);
         if (!isOpen) return;
@@ -143,7 +154,7 @@
         tags.append(piece('span', 'tg', rec.stones === 'with' ? 'بفصوص' : rec.stones === 'without' ? 'بدون فصوص' : 'الفصوص غير محددة'), feeTag('المصنعية' + (q > 1 ? ' (للـ ' + q + ' كلهم)' : ''), rec.making), feeTag('الدمغة' + (q > 1 ? ' (للـ ' + q + ' كلهم)' : ''), rec.stamp)); more.append(tags);
         if (r.note) more.append(piece('div', '', r.note));
         more.append(piece('div', '', (cloud ? 'في حسابك' : 'على جهازك') + (Math.abs(r.g * 1000 - Math.round(r.g * 1000)) > 1e-6 ? ' • المحفوظ بالظبط: \u2066' + r.g + '\u2069 جرام' : '')));
-        more.append(piece('div', '', v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + egp(v.B.value) + ' (' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) + ')' : WHY[v.whyNoB] || ''));
+        more.append(piece('div', '', v.B ? 'قيمة الذهب بسعر شراء التاجر: ' + egp(v.B.value) + (v.B.diff === null ? ' • الربح أو الخسارة غير متاح: سعر الشراء غير معروف' : ' (' + signed(v.B.diff) + percentageSuffix(v.B.percent, x => signed(x, 1)) + ')') : WHY[v.whyNoB] || ''));
         if (v.A) more.append(piece('div', '', 'سعر جرام الذهب وقت الشراء ' + egp(v.A.perGram, 0) + '، بسعر البيع الآن تغيّر ' + signed(v.A.percent, 1) + '%'));
         if (v.promise) more.append(piece('div', '', 'لو البائع التزم بوعده: ' + egp(v.promise.value) + ' (وعد البائع مش مضمون، وما اتحسبش في الإجمالي)'));
         if (rec.invoiceImage && imgUse[rec.invoiceImage.id] > 1) more.append(piece('div', '', 'من نفس صورة الفاتورة: ' + imgUse[rec.invoiceImage.id] + ' قطع'));
@@ -151,6 +162,7 @@
         if (cloud && rec.stones === undefined && window.DHB_CLOUD_CLASSIFY) acts.append(mkBtn('بدون فصوص', 'القطعة بدون فصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'without')), mkBtn('بفصوص', 'القطعة بفصوص', () => window.DHB_CLOUD_CLASSIFY(r.id, 'with')));
         if (cloud && rec.invoiceImage && window.DHB_INV_VIEW) acts.append(mkBtn('عرض الفاتورة', 'عرض صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, false)), mkBtn('تنزيل الفاتورة', 'تنزيل صورة الفاتورة', () => window.DHB_INV_VIEW(rec.invoiceImage.id, true, 'invoice-' + (rec.purchaseDate || ''))),
           mkBtn('حذف الصورة', 'حذف صورة الفاتورة من السطر', () => { if (confirm('حذف صورة الفاتورة من السطر؟ القطعة نفسها هتفضل.')) window.DHB_INV_DELETE(r.id, JSON.parse(JSON.stringify(r.rec))); }));
+        if (cloud && r.rec && !Number.isFinite(r.paid) && window.DHB_CLOUD_EDIT) acts.append(mkBtn('أضف سعر الشراء', 'إضافة سعر الشراء لهذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
         if (cloud && r.rec && window.DHB_CLOUD_EDIT) acts.append(mkBtn('تعديل', 'تعديل هذه القطعة', () => window.DHB_CLOUD_EDIT(r.id)));
         acts.append(mkBtn('حذف', 'حذف هذه القطعة', () => {
           if (!confirm(cloud ? 'حذف هذه القطعة من حسابك؟' : 'حذف هذه القطعة من دهبي؟')) return;
@@ -167,14 +179,13 @@
       if (cloud && g.k.startsWith('i:') && window.DHB_CLOUD_EDIT_INVOICE) { const ea = document.createElement('div'); ea.className = 'more acts'; ea.append(mkBtn('تعديل بيانات الفاتورة', 'تعديل تاريخ الفاتورة وضريبتها', () => window.DHB_CLOUD_EDIT_INVOICE(g.k.slice(2)))); card.append(ea); }
       body.append(card);
     });
-    const showNow = agg.covered > 0;
-    set('walNow', walletNowText(items.length, (window.DHB_CLOUD_UNPRICED || []).length, showNow, showNow ? egp(agg.now) : ''));
-    set('walPaid', items.length ? egp(agg.paidAll) : '—');
+    const N = walletNotes(agg, egp), showNow = agg.valued > 0;
+    set('walNow', walletNowText(items.length, 0, showNow, showNow ? egp(agg.now) : ''));
+    set('walPaid', items.length && agg.pricedCount ? egp(agg.paidAll) + (agg.unpriced ? ' (+ ' + agg.unpriced + ' بدون سعر)' : '') : '—');
     set('walWeight', items.length ? (agg.approx ? '≈ ' : '') + nf(agg.grams, 3) + ' جم' + (agg.approx ? ' (تقريبي)' : '') : '—');
-    const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)); d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');
-    set('walGrams', items.length && !Object.keys(pm).length ? 'في انتظار السعر.' : '');
-    set('walCover', !items.length ? '' : agg.covered === 0 ? 'القيمة لسه ما اتحسبتش: محتاجين نعرف القطع بفصوص ولا بدون فصوص. قطعك وأسعار شرائها محفوظة زي ما هي، ومفيش ذهب ضاع ولا قيمته صفر.'
-      : 'دخل ' + agg.covered + ' من ' + agg.count + ' قطعة في القيمة، والفرق محسوب على اللي دفعته فيهم بس (' + egp(agg.paidCovered) + ' من ' + egp(agg.paidAll) + '). باقي القطع محفوظة بأسعارها، وبتدخل بعد ما تحدد بفصوص ولا بدون.' + (agg.partial ? ' ⚠ الإجمالي جزئي.' : ''));
+    const d = $('walDiff'); d.textContent = agg.diff === null ? '' : signed(agg.diff) + percentageSuffix(agg.percent, x => signed(x, 1)) + N.diffScope; d.className = 'chg' + (agg.diff === null ? '' : agg.diff >= 0 ? ' up' : ' dn');
+    set('walGrams', items.length && !Object.keys(pm).length ? 'في انتظار السعر.' : N.weight);
+    set('walCover', items.length ? N.cover : '');
   }
   if ($('walRows')) {
     window.DHB_WALLET_RENDER = walletRender; // the add form is handled by wallet-account.js: saving needs an account

@@ -305,3 +305,39 @@ test('silver rows under their own key survive a write by an older page that only
   await commitWithRetry({ load: async () => ({ data: doc, version: 2 }), save: async (d) => { saved = d; }, mutate: (it, _i, sv) => ({ items: it, silver: sv.map(r => ({ ...r, grams: 40 })) }) });
   assert.equal(saved.silver[0].grams, 40); assert.equal(saved.silver[0].extra, 'keep'); assert.deepEqual(saved.items, doc.items);
 });
+
+// ---- partial valuation: market value needs net weight and a quote, not the price paid; gain/loss needs a price above zero
+const PP = { 21: { buy: 5750, sell: 5810 } };
+test('aggregate: all unpriced, stones known: value and weight known, paid and gain/loss unknown', () => {
+  const a = L.aggregate([{ id: 'u', karat: 21, grams: 4.321, stones: 'without' }], PP);
+  assert.equal(a.valued, 1); assert.ok(Math.abs(a.now - 4.321 * 5750) < 1e-6); assert.equal(a.grams, 4.321);
+  assert.equal(a.pricedCount, 0); assert.equal(a.unpriced, 1); assert.equal(a.covered, 0); assert.equal(a.diff, null); assert.equal(a.percent, null);
+});
+test('aggregate: all priced matches the old result', () => {
+  const a = L.aggregate([{ ...base }], P);
+  assert.equal(a.covered, 1); assert.equal(a.valued, 1); assert.ok(Math.abs(a.now - 27840) < 1e-9); assert.ok(Math.abs(a.diff - (27840 - 19304)) < 1e-9); assert.equal(a.unpriced, 0);
+});
+test('aggregate: stones unknown is not valued and not zero; weight stays recorded', () => {
+  const a = L.aggregate([{ id: 'x', karat: 21, grams: 6, paid: 30000 }, { id: 'y', karat: 21, grams: 2, stones: 'with' }], PP);
+  assert.equal(a.valued, 0); assert.equal(a.now, 0); assert.equal(a.diff, null); assert.equal(a.grams, 8); assert.equal(a.netCount, 0); assert.equal(a.noGoldWeight, 2); assert.equal(a.partial, true);
+});
+test('aggregate: missing market quote values nothing and invents no gain', () => {
+  const a = L.aggregate([{ id: 'x', karat: 24, grams: 6, paid: 30000, stones: 'without' }], PP);
+  assert.equal(a.valued, 0); assert.equal(a.diff, null); assert.equal(a.percent, null); assert.equal(a.paidAll, 30000);
+  assert.equal(L.valuation({ karat: 24, grams: 6, stones: 'without' }, PP).B, null);
+});
+test('aggregate and valuation: zero paid never makes a gain or a percent', () => {
+  const r = { id: 'z', karat: 21, grams: 2, paid: 0, stones: 'without' };
+  const a = L.aggregate([r], PP);
+  assert.equal(a.valued, 1); assert.equal(a.covered, 0); assert.equal(a.diff, null); assert.equal(a.percent, null); assert.ok(a.now > 0);
+  const v = L.valuation(r, PP).B; assert.equal(v.diff, null); assert.equal(v.percent, null); assert.equal(v.value, 2 * 5750);
+});
+test('aggregate: gross and net weight stay apart; milligram rounding survives', () => {
+  const a = L.aggregate([{ id: 'a', karat: 21, grams: 4.321, stones: 'with', basis: 'total', stoneG: 0.5, paid: 1000 }, { id: 'b', karat: 21, grams: 3.1, stones: 'with' }], PP);
+  assert.equal(a.grams, 7.421); assert.equal(a.netGrams, 3.821); assert.equal(a.netCount, 1); assert.equal(a.valued, 1); assert.equal(a.approx, false);
+});
+test('restored legacy record (no stones choice, no fees, additions) is kept and not valued', () => {
+  const legacy = { id: 'l', label: 'خاتم', type: 'jewelry', karat: 21, grams: 5, purchaseDate: '2025-01-01', paid: 20000, additions: 1800 };
+  const a = L.aggregate([legacy], PP);
+  assert.equal(a.valued, 0); assert.equal(a.paidAll, 20000); assert.equal(a.grams, 5); assert.equal(a.diff, null);
+});

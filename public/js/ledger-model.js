@@ -46,28 +46,34 @@
       const perGram = gold / net;
       out.A = { perGram, percent: (p.sell - perGram) / perGram * 100 };
     } else out.whyNoA = whyNoA(r);
-    if (finite(r.paid) && r.paid > 0 && net !== null) {
-      const value = net * p.buy;
-      out.B = { value, diff: value - r.paid, percent: (value - r.paid) / r.paid * 100 };
-    } else out.whyNoB = !finite(r.paid) ? 'no-price' : r.stones === undefined ? 'stones-unset' : 'gold-weight-unknown';
+    // Market value needs the net resale weight, never the price paid. Gain/loss needs a price paid above zero: with none it stays unknown.
+    if (net !== null) {
+      const value = net * p.buy, pnl = finite(r.paid) && r.paid > 0;
+      out.B = { value, diff: pnl ? value - r.paid : null, percent: pnl ? (value - r.paid) / r.paid * 100 : null };
+    } else out.whyNoB = r.stones === undefined ? 'stones-unset' : 'gold-weight-unknown';
     // Separate, never included in totals.
     if (r.stones === 'with' && r.promise === 'full' && finite(r.paid)) out.promise = { value: r.grams * p.buy, paid: r.paid, guaranteed: false };
     return out;
   }
-  // Totals: the difference is computed only on pieces whose resale weight is known, against the paid amount of those same pieces.
+  // Totals. `now` is the market value of every piece whose net resale weight and market price are known; the price paid is not needed for it.
+  // Gain/loss (`diff`, `percent`) is computed only on the narrower set of pieces that have BOTH a value and a price paid above zero, against the paid amount of those same pieces.
   function aggregate(recs, prices) {
     const list = Array.isArray(recs) ? recs : [];
+    const valued = list.filter(r => netGrams(r) !== null && prices && prices[r.karat]);
+    const matched = valued.filter(r => finite(r.paid) && r.paid > 0);
     const priced = list.filter(r => finite(r.paid));
-    const covered = priced.filter(r => netGrams(r) !== null && prices && prices[r.karat]);
     const paidAll = priced.reduce((s, r) => s + r.paid, 0);
-    const paidCovered = covered.reduce((s, r) => s + r.paid, 0);
-    const now = covered.reduce((s, r) => s + netGrams(r) * prices[r.karat].buy, 0);
+    const paidCovered = matched.reduce((s, r) => s + r.paid, 0);
+    const now = valued.reduce((s, r) => s + netGrams(r) * prices[r.karat].buy, 0);
+    const nowMatched = matched.reduce((s, r) => s + netGrams(r) * prices[r.karat].buy, 0);
+    const netKnown = list.filter(r => netGrams(r) !== null);
     return {
       count: list.length, grams: Math.round(list.reduce((s, r) => s + (r.grams || 0), 0) * 1000) / 1000,
-      paidAll, paidCovered, now, diff: covered.length ? now - paidCovered : null, percent: paidCovered > 0 ? (now - paidCovered) / paidCovered * 100 : null,
+      netGrams: Math.round(netKnown.reduce((s, r) => s + netGrams(r), 0) * 1000) / 1000, netCount: netKnown.length,
+      paidAll, paidCovered, now, diff: matched.length ? nowMatched - paidCovered : null, percent: paidCovered > 0 ? (nowMatched - paidCovered) / paidCovered * 100 : null,
       approx: list.some(r => finite(r.grams) && Math.abs(r.grams * 1000 - Math.round(r.grams * 1000)) > 1e-6),
-      covered: covered.length, unpriced: list.length - priced.length, noGoldWeight: priced.length - covered.length,
-      partial: covered.length < list.length,
+      valued: valued.length, covered: matched.length, pricedCount: priced.length, unpriced: list.length - priced.length, noGoldWeight: list.length - valued.length,
+      partial: valued.length < list.length,
     };
   }
 

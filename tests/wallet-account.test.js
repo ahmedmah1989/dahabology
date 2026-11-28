@@ -41,24 +41,21 @@ test('account items map to wallet items; items with no price paid are never valu
 });
 test('numbers accept Arabic digits and a comma', () => { assert.equal(num('٤٩٥٠٠'), 49500); assert.equal(num('8,5'), 8.5); assert.ok(Number.isNaN(num(''))) ; });
 
-test('unpriced account pieces are listed with a readable line, not just counted', () => {
-  const w = toWalletItems([{ id: 'p', karat: 21, grams: 5, paid: 100 }, { id: 'u', label: 'سلسلة', karat: 18, grams: 3.5, stones: 'without' }]);
-  assert.equal(unpricedLine(w.unpriced[0]), 'سلسلة • عيار 18 • 3.5 جم • بدون سعر شراء'); // the tag is rendered as its own non-wrapping span so it never splits across lines
-  assert.equal(unpricedLine({ k: '24', g: 2, note: '' }), 'عيار 24 • 2 جم • بدون سعر شراء');
+test('unpriced account pieces stay in the one list, with price paid unknown and the record untouched', () => {
+  const cloud = [{ id: 'p', karat: 21, grams: 5, paid: 100 }, { id: 'u', label: 'سلسلة', karat: 18, grams: 3.5, stones: 'without' }, { id: 'z', karat: 24, grams: 1, paid: 0 }];
+  const w = toWalletItems(cloud);
+  assert.deepEqual(w.all.map(x => x.id), ['p', 'u', 'z'], 'original order, nothing dropped');
+  assert.equal(w.unpriced.length, 1); assert.equal(w.all[1].paid, undefined); assert.equal(w.all[1].rec, cloud[1]);
+  assert.equal(w.all[2].paid, 0, 'an explicit zero paid is a recorded price, not unknown');
 });
-test('the edit form can find a priced or an unpriced account piece, and nothing else', () => {
-  const w = toWalletItems([{ id: 'p', karat: 21, grams: 5, paid: 100 }, { id: 'u', karat: 18, grams: 3.5 }]);
-  assert.equal(findCloudPiece(w.priced, w.unpriced, 'u').id, 'u'); assert.equal(findCloudPiece(w.priced, w.unpriced, 'p').id, 'p');
-  assert.equal(findCloudPiece(w.priced, w.unpriced, 'zz'), undefined); assert.equal(findCloudPiece(null, undefined, 'u'), undefined);
-  assert.ok(findCloudPiece(w.priced, w.unpriced, 'u').rec.paid === undefined); // the original record is untouched, price stays unknown
-});
-test('mixed priced and unpriced: totals count only the priced piece; completing the price adds it exactly', () => {
+test('mixed priced and unpriced: market value includes both, paid and gain/loss only the priced; completing the price changes only those', () => {
   const P = { 21: { buy: 5750, sell: 5810 }, 18: { buy: 4900, sell: 4950 }, 24: { buy: 6571, sell: 6660 } };
   const cloud = [{ id: 'p', karat: 21, grams: 5, paid: 30000, stones: 'without' }, { id: 'u', karat: 21, grams: 4.321, stones: 'without' }];
-  const w = toWalletItems(cloud), recs = w => w.priced.map(i => i.rec);
-  const a = L.aggregate(recs(w), P);
-  assert.equal(w.unpriced.length, 1); assert.equal(a.count, 1); assert.equal(a.paidAll, 30000); assert.ok(Math.abs(a.grams - 5) < 1e-9);
-  const done = toWalletItems(cloud.map(i => (i.id === 'u' ? Object.assign({}, i, { paid: 27000 }) : i)));
-  const b = L.aggregate(recs(done), P);
-  assert.equal(done.unpriced.length, 0); assert.equal(b.count, 2); assert.equal(b.paidAll, 57000); assert.ok(Math.abs(b.grams - 9.321) < 1e-9);
+  const recs = w => w.all.map(i => i.rec);
+  const a = L.aggregate(recs(toWalletItems(cloud)), P);
+  assert.equal(a.count, 2); assert.equal(a.valued, 2); assert.equal(a.unpriced, 1); assert.equal(a.paidAll, 30000);
+  assert.ok(Math.abs(a.now - (5 + 4.321) * 5750) < 1e-6); assert.ok(Math.abs(a.grams - 9.321) < 1e-9);
+  assert.equal(a.covered, 1); assert.ok(Math.abs(a.diff - (5 * 5750 - 30000)) < 1e-6, 'gain/loss only on the matched piece');
+  const b = L.aggregate(recs(toWalletItems(cloud.map(i => (i.id === 'u' ? Object.assign({}, i, { paid: 27000 }) : i)))), P);
+  assert.equal(b.unpriced, 0); assert.equal(b.paidAll, 57000); assert.equal(b.covered, 2); assert.ok(Math.abs(b.now - a.now) < 1e-9, 'market value does not change when a price is added');
 });
