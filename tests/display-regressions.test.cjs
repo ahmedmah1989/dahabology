@@ -32,3 +32,9 @@ test('current observation is drawn as a labelled price level, not a fabricated i
  assert.ok(source.includes("setAttribute('data-series','today-label')"));
  assert.ok(!source.includes('var extension='));
 });
+
+test('market headline price shows the source time and the 24h freshness gate is unchanged',()=>{
+  const src=fs.readFileSync('public/js/market-view.js','utf8');
+  assert.match(src,/آخر تحديث للسعر في المصدر: ' \+ when\(a\.sourceTime\)/);
+  assert.match(src,/Date\.now\(\) - t <= 86400000/);
+});
