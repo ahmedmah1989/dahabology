@@ -85,15 +85,17 @@
     const share = r && !r.belowGold ? Math.min(100, Math.max(0, r.extraPercent)) : 0, donut = $('invDonut');
     if (donut) { donut.style.strokeDasharray = share + ' ' + (100 - share); set('invDonutPct', r && !r.belowGold ? nf(r.extraPercent, 1) + '%' : '—'); }
     const v = $('invVerdict');
+    const vatTxt = $('invVat').value.trim(), vatBad = vatTxt !== '' && !(num($('invVat').value) >= 0);
+    if (vatBad) { v.textContent = 'نسبة الضريبة لازم تكون صفر أو رقم أكبر. سيبها فاضية لو مش عارفها.'; v.className = 'x-verdict warn'; ['invGold', 'invExtra', 'invPerGram', 'invMaking', 'invTax', 'invResale', 'invLoss'].forEach(id => set(id, '—')); set('invSplitNote', ''); return; }
     if (!r) { v.textContent = 'اكتب الوزن والمبلغ لتظهر النتيجة'; v.className = 'x-verdict'; ['invGold', 'invExtra', 'invPerGram', 'invMaking', 'invTax', 'invResale', 'invLoss'].forEach(id => set(id, '—')); set('invSplitNote', ''); return; }
     if (r.belowGold) { v.textContent = 'المبلغ أقل من قيمة الذهب بهذا السعر. راجع الوزن أو العيار أو سعر الجرام.'; v.className = 'x-verdict warn'; }
     else { v.textContent = 'دفعت ' + egp(r.extra) + ' فوق قيمة الذهب'; v.className = 'x-verdict'; }
-    set('invGold', egp(r.gold)); set('invExtra', egp(r.extra) + ' (' + nf(r.extraPercent, 1) + '%)'); set('invPerGram', egp(r.extraPerGram, 2));
+    set('invGold', egp(r.gold)); set('invExtra', r.belowGold ? '—' : egp(r.extra) + ' (' + nf(r.extraPercent, 1) + '%)'); set('invPerGram', r.belowGold ? '—' : egp(r.extraPerGram, 2));
     const vatBlank = $('invVat').value.trim() === '', vatPct = num($('invVat').value);
     // Blank VAT stays unknown: the split is not shown. A typed percentage (including 0) gives a conditional split, stated next to it.
     set('invMaking', r.belowGold ? '—' : vatBlank ? 'غير مفصول' : egp(r.makingPerGram, 2)); set('invTax', r.belowGold ? '—' : vatBlank ? 'غير محدد' : egp(r.taxPerGram, 2));
-    set('invSplitNote', r.belowGold ? '' : vatBlank ? 'المؤكد من الأرقام هو الزيادة الكلية فقط. لم تكتب نسبة ضريبة، فلا نعرف كم منها مصنعية أو ضريبة أو رسوم أخرى.' : 'هذا التقسيم افتراض: يحسب كل الزيادة على أنها مصنعية مضافًا إليها ضريبة بنسبة ' + nf(vatPct, vatPct % 1 ? 2 : 0) + '% على المصنعية فقط، من غير أي رسوم أخرى. لو الفاتورة فيها بنود غير ذلك، تتغير الأرقام.');
-    set('invResale', r.resale === null ? 'غير متاح' : egp(r.resale)); set('invLoss', r.loss === null ? '—' : (r.loss<0?'زيادة ':'نقص ')+egp(Math.abs(r.loss))+' ('+nf(Math.abs(r.lossPercent),1)+'%)');
+    set('invSplitNote', r.belowGold ? 'الأرقام هنا تقدير من الوزن والسعر اللي كتبتهم، مش فاتورة متحقق منها. قيمة الذهب وقيمة إعادة البيع حساب بسيط، ولا يظهر ما دفعته زيادة أو نقصًا لحد ما يتصحح المبلغ.' : vatBlank ? 'المؤكد من الأرقام هو الزيادة الكلية فقط. لم تكتب نسبة ضريبة، فلا نعرف كم منها مصنعية أو ضريبة أو رسوم أخرى.' : 'هذا التقسيم افتراض: يحسب كل الزيادة على أنها مصنعية مضافًا إليها ضريبة بنسبة ' + nf(vatPct, vatPct % 1 ? 2 : 0) + '% على المصنعية فقط، من غير أي رسوم أخرى. لو الفاتورة فيها بنود غير ذلك، تتغير الأرقام.');
+    set('invResale', r.resale === null ? 'غير متاح' : egp(r.resale)); set('invLoss', r.loss === null || r.belowGold ? '—' : (r.loss<0?'زيادة ':'نقص ')+egp(Math.abs(r.loss))+' ('+nf(Math.abs(r.lossPercent),1)+'%)');
   }
   if ($('invOut')) {
     ['invKarat', 'invGrams', 'invTotal', 'invVat'].forEach(id => $(id).addEventListener('input', () => { if (id === 'invKarat') delete $('invPrice').dataset.edited; invoice(); }));
