@@ -41,7 +41,7 @@
     $('heroBuy').textContent = q ? nf(q.buy) : '—';
     $('heroSpread').textContent = q ? nf(q.sell - q.buy) + ' (' + nf((q.sell - q.buy) / q.sell * 100) + '%)' : '—';
     $('heroTime').textContent = !last ? 'تحميل السعر…' : !q ? 'السعر غير متاح الآن.' :
-      'بدون مصنعية • آخر تحديث للسعر في المصدر: ' + when(a.sourceTime) + (karat === '18' ? ' • عيار 18 محسوب من عيار 24' : '');
+      'بدون مصنعية • آخر تحديث للسعر في المصدر: ' + when(a.sourceTime) + ' بتوقيت القاهرة' + (karat === '18' ? ' • عيار 18 محسوب من عيار 24' : '');
     const c = $('heroChange'), base = karat === '18' ? '24' : karat;
     const ch = q && history ? D.change(history, base, a[base].sell, new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' })) : null;
     c.className = 'chg' + (ch ? (ch.diff > 0 ? ' up' : ch.diff < 0 ? ' dn' : '') : '');
