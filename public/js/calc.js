@@ -32,7 +32,14 @@
     if (budget !== undefined) { r.budget = budget; r.remaining = remaining; }
     return r;
   }
-  if (typeof module !== 'undefined') module.exports = { quote };
+  // A positive weight that rounds to zero at 3 decimals must not read as "0 جرام".
+  function gramsText(g) {
+    if (!Number.isFinite(g)) return '—';
+    const shown = Number(g.toFixed(3));
+    if (g > 0 && shown === 0) return 'أقل من 0.001 جرام';
+    return g.toLocaleString('ar-EG-u-nu-latn', { maximumFractionDigits: 3 }) + ' جرام';
+  }
+  if (typeof module !== 'undefined') module.exports = { quote, gramsText };
   if (typeof document === 'undefined' || !document.getElementById('cResult')) return;
 
   const $ = id => document.getElementById(id);
@@ -65,13 +72,13 @@
     if (!q) { $('cResultLabel').textContent = buy ? (by === 'money' ? 'تشتري تقريبًا' : 'التكلفة التقريبية') : 'تستلم تقريبًا'; $('cResult').textContent = '—'; return; }
     if (!buy) {
       $('cResultLabel').textContent = 'تستلم تقريبًا'; $('cResult').textContent = egp(q.total);
-      line(dl, 'الوزن', nf(q.grams, 3) + ' جرام'); line(dl, 'سعر شراء التاجر للجرام', nf(num($('cPrice').value)) + ' جنيه');
+      line(dl, 'الوزن', gramsText(q.grams)); line(dl, 'سعر شراء التاجر للجرام', nf(num($('cPrice').value)) + ' جنيه');
       return;
     }
     $('cResultLabel').textContent = by === 'money' ? 'تشتري تقريبًا' : 'التكلفة التقريبية';
-    $('cResult').textContent = by === 'money' ? nf(q.grams, 3) + ' جرام' : egp(q.total);
+    $('cResult').textContent = by === 'money' ? gramsText(q.grams) : egp(q.total);
     if (by === 'money') line(dl, 'المبلغ الذي معك', egp(q.budget));
-    line(dl, 'الوزن', nf(q.grams, 3) + ' جرام');
+    line(dl, 'الوزن', gramsText(q.grams));
     line(dl, 'قيمة الذهب نفسه', egp(q.gold));
     if (q.making) line(dl, 'المصنعية', egp(q.making));
     if (q.tax) line(dl, 'ضريبة على المصنعية', egp(q.tax));
