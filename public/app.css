@@ -620,3 +620,4 @@ body.app-shell main #faq>details>summary,body.app-shell main #method>details>sum
 
 /* Very narrow phones (320px): keep the page title to two lines in the top bar. */
 @media(max-width:340px){header.x-top .dhb-brand-en{display:none}header.x-top .dhb-brand-name{font-size:17px}body.app-shell header.x-top h1{font-size:16px;line-height:1.35}}
+.x-chip .x-chip-note{display:block;margin-top:2px;font-size:12px;line-height:1.5;color:#a9b8d0;overflow-wrap:anywhere}.x-chip .x-chip-note:empty{display:none}
