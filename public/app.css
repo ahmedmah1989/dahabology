@@ -617,3 +617,6 @@ body.app-shell main #faq>details>summary,body.app-shell main #method>details>sum
 /* Which pieces the headline gain covers: a readable second line under the amount, never shrunk by number-fit. */
 .x-ring .chg-scope{display:block;max-width:74%;margin-top:2px;font-size:13px;line-height:1.4;font-weight:600;text-align:center;white-space:normal;overflow-wrap:anywhere;opacity:.9}
 .x-ring .chg-scope:empty{display:none}
+
+/* Very narrow phones (320px): keep the page title to two lines in the top bar. */
+@media(max-width:340px){header.x-top .dhb-brand-en{display:none}header.x-top .dhb-brand-name{font-size:17px}body.app-shell header.x-top h1{font-size:16px;line-height:1.35}}
