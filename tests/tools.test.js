@@ -64,3 +64,12 @@ test2('wallet notes name what each total covers', () => {
   const fit = fs.readFileSync(require('node:path').join(__dirname, '../public/js/number-fit.js'), 'utf8');
   assert.ok(!/walScope/.test(fit), 'scope line must not be shrunk by number-fit');
 }
+
+{ // unpriced count sits in its own note under the paid amount
+  const fsx = require('node:fs'), px = require('node:path');
+  const html = fsx.readFileSync(px.join(__dirname, '..', 'src', 'panels', 'wallet.html'), 'utf8');
+  const js = fsx.readFileSync(px.join(__dirname, '..', 'public', 'js', 'tools.js'), 'utf8');
+  assert.match(html, /id="walPaid">—<\/b><small class="x-chip-note" id="walPaidNote"><\/small>/);
+  assert.match(js, /walPaidNote/);
+  assert.ok(!/egp\(agg\.paidAll\) \+ \(agg\.unpriced/.test(js));
+}
