@@ -44,3 +44,19 @@ q = quote({ mode: 'buy', by: 'grams', price: 5810, amount: 3.1257, making: 100 }
 assert.equal(q.grams, 3.1257); assert.equal(q.budget, undefined); assert.equal(q.remaining, undefined);
 q = quote({ mode: 'sell', price: 5750, amount: 10 }); near(q.total, 57500); assert.equal(q.budget, undefined);
 console.log('Calculator by-amount floor, remaining and budget invariants passed.');
+
+{ // a positive weight that rounds to zero is never shown as zero grams
+  const { gramsText, quote } = require('../public/js/calc.js');
+  assert.equal(gramsText(0), '0 جرام');
+  assert.equal(gramsText(0.0001), 'أقل من 0.001 جرام');
+  assert.equal(gramsText(0.00049999), 'أقل من 0.001 جرام');
+  assert.equal(gramsText(0.0005), '0.001 جرام');
+  assert.equal(gramsText(0.58), '0.58 جرام');
+  assert.equal(gramsText(17.211), '17.211 جرام');
+  assert.equal(gramsText(NaN), '—');
+  const q = quote({ mode: 'buy', by: 'grams', amount: 0.0001, price: 5810, making: 0, stamp: 0, vat: 0 });
+  assert.ok(q && q.grams > 0 && q.grams < 0.0005); // the tiny-weight case from the live sweep (by amount, the floor makes it a true 0)
+  const z = quote({ mode: 'buy', by: 'money', amount: 0.001, price: 5810, making: 0, stamp: 0, vat: 0 });
+  assert.equal(gramsText(z.grams), '0 جرام'); // a genuine zero stays zero
+  assert.equal(gramsText(q.grams), 'أقل من 0.001 جرام');
+}
