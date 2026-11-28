@@ -246,7 +246,8 @@ details.x-fold .table-wrap{background:none;border:0}
 .analytics details.x-more p{font-size:16px;line-height:1.9;color:var(--x-muted)}
 .analytics .x-card{margin-top:22px}
 .analytics .chart{background:none;border:0;box-shadow:none;backdrop-filter:none;padding:6px 0 0}
-.analytics .ind{grid-template-columns:1fr 1fr;gap:10px;margin:14px 0 0}
+.analytics .ind{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0 0}
+@media(max-width:340px){.analytics .ind{grid-template-columns:minmax(0,1fr)}}  /* 320px: two columns pushed the cards out of their section */
 .analytics .ind li{padding:12px;text-align:center;background:#ffffff08;box-shadow:none}
 .analytics .ind b{font-size:17px}
 .analytics .ind span{font-size:13px}
