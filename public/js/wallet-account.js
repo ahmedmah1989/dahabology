@@ -29,19 +29,15 @@
   const removeItem = (existing, id) => (Array.isArray(existing) ? existing : []).filter(i => i && i.id !== id);
   // Wallet valuation needs a price paid. Items saved elsewhere without one are listed as unpriced, never valued as zero.
   function toWalletItems(cloud) {
-    const priced = [], unpriced = [];
+    const priced = [], unpriced = [], all = [];
     (Array.isArray(cloud) ? cloud : []).forEach(i => {
       if (!i || !(Number(i.grams) > 0) || ![18, 21, 24].includes(Number(i.karat))) return;
-      (Number.isFinite(i.paid) && i.paid >= 0 ? priced : unpriced).push({ id: i.id, k: String(i.karat), g: Number(i.grams), paid: i.paid, note: i.label || '', rec: i });
+      const isPriced = Number.isFinite(i.paid) && i.paid >= 0, w = { id: i.id, k: String(i.karat), g: Number(i.grams), paid: isPriced ? i.paid : undefined, note: i.label || '', rec: i };
+      (isPriced ? priced : unpriced).push(w); all.push(w);
     });
-    return { priced, unpriced };
+    return { priced, unpriced, all };
   }
-  // Text for one account piece that has no purchase price. It is listed, never valued and never counted as paid.
-  const unpricedHead = u => (u.note ? u.note + ' • ' : '') + 'عيار ' + u.k + ' • ' + u.g + ' جم', UNPRICED_TAG = 'بدون سعر شراء';
-  const unpricedLine = u => unpricedHead(u) + ' • ' + UNPRICED_TAG;
-  // The edit form can open a priced or an unpriced account piece.
-  const findCloudPiece = (priced, unpriced, id) => (Array.isArray(priced) ? priced : []).concat(Array.isArray(unpriced) ? unpriced : []).find(x => x && x.id === id);
-  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, unpricedLine, findCloudPiece, num };
+  if (typeof module !== 'undefined') module.exports = { buildRecord, mergeItem, removeItem, toWalletItems, num };
   if (typeof document === 'undefined' || !document.getElementById('walForm')) return;
 
   const $ = id => document.getElementById(id);
@@ -56,18 +52,10 @@
 
   function setCloud(items) {
     const w = toWalletItems(items);
-    window.DHB_CLOUD_ITEMS = w.priced;
-    window.DHB_CLOUD_UNPRICED = w.unpriced;
+    window.DHB_CLOUD_ITEMS = w.all; window.DHB_CLOUD_UNPRICED = w.unpriced;
+    // Every account piece is listed in the main list. Unpriced ones are in it too, with the price paid shown as unknown; this note only explains what that means.
     const n = $('walUnpriced'); n.hidden = w.unpriced.length === 0; n.replaceChildren();
-    if (w.unpriced.length) {
-      const h = document.createElement('b'); h.textContent = 'في حسابك ' + w.unpriced.length + ' قطعة من غير سعر شراء. موجودة، لكن ما اتحسبتش في القيمة ولا في المدفوع.'; n.append(h);
-      w.unpriced.forEach(u => {
-        const row = document.createElement('div'), b = document.createElement('button'); b.type = 'button'; b.textContent = 'أضف سعر الشراء'; b.style.cssText = 'width:auto;min-height:36px;padding:4px 12px;font-size:13px;flex:none';
-        row.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;gap:6px;margin-top:10px;text-align:right';
-        b.addEventListener('click', () => window.DHB_CLOUD_EDIT(u.id));
-        const tx = document.createElement('span'), tg = document.createElement('span'); tx.textContent = unpricedHead(u) + ' • '; tg.textContent = UNPRICED_TAG; tg.style.whiteSpace = 'nowrap'; tx.append(tg); row.append(tx, b); n.append(row);
-      });
-    }
+    if (w.unpriced.length) n.textContent = w.unpriced.length + ' قطعة في القائمة من غير سعر شراء. وزنها محفوظ وبتدخل في قيمة السوق لو الفصوص معروفة، لكن مش في «ما دفعته» ولا في الربح أو الخسارة. افتح القطعة واضغط «أضف سعر الشراء».';
     paint();
   }
   function clearCloud() { gen++; owner = null; window.DHB_CLOUD_ITEMS = []; window.DHB_CLOUD_UNPRICED = []; window.DHB_CLOUD_INVOICES = []; $('walUnpriced').hidden = true; $('walUnpriced').replaceChildren(); paint(); }
@@ -114,7 +102,7 @@
   $('walCancel').addEventListener('click', () => { resetForm(); say('walMsg', ''); });
   // Fill the form from a saved row (edit). Shown values are exactly what is saved; blank means not recorded.
   window.DHB_CLOUD_EDIT = id => {
-    const r = findCloudPiece(window.DHB_CLOUD_ITEMS, window.DHB_CLOUD_UNPRICED, id), rec = r && r.rec; if (!rec) return;
+    const r = (window.DHB_CLOUD_ITEMS || []).find(x => x.id === id), rec = r && r.rec; if (!rec) return;
     resetForm(); editingId = id; editBase = JSON.parse(JSON.stringify(rec)); FM().loadRow(rec);
     $('walAdd').textContent = 'احفظ التعديل'; $('walCancel').hidden = false;
     say('walMsg', Number.isFinite(rec.additions) && rec.additions > 0 ? 'القطعة دي فيها مبلغ "إضافات" قديم محفوظ زي ما هو. التعديل ما بيغيّرهوش.' : '');
