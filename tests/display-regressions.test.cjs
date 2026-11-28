@@ -54,3 +54,8 @@ test('analysis indicator cards stay inside their section on narrow phones', () =
   assert.match(css, /\.analytics \.ind\{grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
   assert.match(css, /@media\(max-width:340px\)\{\.analytics \.ind\{grid-template-columns:minmax\(0,1fr\)\}\}/);
 });
+
+test('volatility tile says it is annualised from the last 60 daily readings', () => {
+  const html = fs.readFileSync(require('node:path').join(__dirname, '..', 'src', 'panels', 'analysis.html'), 'utf8');
+  assert.match(html, /id="iVol">—<\/b><span>التذبذب محسوبًا لسنة، من آخر 60 قراءة يومية<\/span>/);
+});
