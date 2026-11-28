@@ -146,8 +146,10 @@
   $('invRows').addEventListener('input', e => {
     const f = e.target.dataset.f; if (!f) return; const rowEl = e.target.closest('.row'), r = rows[rowEl.dataset.i];
     if (f === 'promise') r.promise = e.target.checked; else r[f] = e.target.value;
-    if (f === 'qty') { e.target.value = r.qty = r.qty.replace(/\D/g, ''); }
-    if (f === 'gw' || f === 'gf') { e.target.value = r[f] = r[f].replace(/\D/g, ''); }
+    // Arabic-Indic and Persian digits are converted to ASCII first, so typing them is kept, not erased.
+    const lat = s => s.replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x660)).replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x6f0));
+    if (f === 'qty') { e.target.value = r.qty = lat(r.qty).replace(/\D/g, ''); }
+    if (f === 'gw' || f === 'gf') { e.target.value = r[f] = lat(r[f]).replace(/\D/g, ''); }
     if (f === 'mk' || f === 'st') { const b = rowEl.querySelector('.msb'); b.querySelectorAll('b')[0].textContent = feeText(r, 'mk'); b.querySelectorAll('b')[1].textContent = feeText(r, 'st'); }
     if (f === 'qty' || f === 'gw' || f === 'gf') paintFin(rowEl);
     touch(); update();
