@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { prices, inspect, wallet, walletNowText } = require('../public/js/tools.js');
+const { prices, inspect, wallet, walletNowText, walletNotes } = require('../public/js/tools.js');
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, a + ' != ' + b);
 const a = { '24': { sell: 6800, buy: 6740 }, '21': { sell: 5950, buy: 5900 } };
 
@@ -39,4 +39,16 @@ test2('wallet headline: 0 only for an empty account; unpriced pieces make it unk
   assert.equal(walletNowText(0, 2, false, ''), '—');
   assert.equal(walletNowText(1, 2, true, '24,846 جنيه'), '24,846 جنيه');
   assert.equal(walletNowText(1, 0, false, ''), '—');
+});
+
+test2('wallet notes name what each total covers', () => {
+  const egp = v => String(v);
+  const mixed = { count: 3, valued: 2, covered: 1, paidCovered: 100, paidAll: 150, partial: true, netCount: 2, netGrams: 9 };
+  const n = walletNotes(mixed, egp);
+  assert.match(n.cover, /2 من 3/); assert.match(n.cover, /1 قطعة معروف سعر شرائها/); assert.match(n.weight, /9 جم/); assert.equal(n.diffScope, ' (على 1 من 3 قطعة)');
+  assert.match(walletNotes({ count: 1, valued: 0, covered: 0, netCount: 0, netGrams: 0 }, egp).cover, /لسه ما اتحسبتش/);
+  assert.match(walletNotes({ count: 1, valued: 1, covered: 0, paidCovered: 0, paidAll: 0, partial: false, netCount: 1, netGrams: 4 }, egp).cover, /غير متاح/);
+  assert.match(walletNotes({ count: 1, valued: 0, covered: 0, netCount: 0, netGrams: 0 }, egp).weight, /غير معروف/);
+  assert.equal(walletNotes({ count: 1, valued: 1, covered: 1, paidCovered: 1, paidAll: 1, partial: false, netCount: 1, netGrams: 4 }, egp).weight, '');
+  assert.deepEqual(walletNotes({ count: 0 }, egp), { weight: '', diffScope: '', cover: '' });
 });
