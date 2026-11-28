@@ -25,7 +25,7 @@ function run({ canShare, shareImpl, cloud, local }) {
   delete require.cache[require.resolve(path)];
   const handlers = {}, els = {}, log = { downloads: [], shares: [], revoked: 0, msg: '' };
   const el = id => (els[id] = els[id] || { id, hidden: true, textContent: '', className: '', addEventListener: (t, f) => { handlers[id] = f; } });
-  ['walExport', 'walShare', 'walMsg'].forEach(el);
+  ['walExport', 'walShare', 'walMsg', 'walExportMsg'].forEach(el);
   els.walExport.hidden = false;
   global.document = { getElementById: id => els[id] || null, body: { append: a => log.downloads.push({ name: a.download, href: a.href }) }, createElement: () => ({ click() {}, remove() {} }) };
   global.localStorage = { getItem: () => JSON.stringify(local || []) };
@@ -42,15 +42,18 @@ function run({ canShare, shareImpl, cloud, local }) {
   assert.equal(r.els.walShare.hidden, true, 'no share button when the browser cannot share files');
   r.handlers.walExport();
   assert.match(r.log.downloads[0].name, /^dahabology-wallet-\d{4}-\d{2}-\d{2}\.csv$/);
+  assert.ok(r.els.walExportMsg.textContent.includes('اتطلب تنزيل') && !/نزل بنجاح|اتنزل/.test(r.els.walExportMsg.textContent), 'says requested, never claims completed');
+  assert.equal(r.els.walExportMsg.className, 'x-msg', 'info, not error styling');
+  assert.equal(r.els.walMsg.textContent, '', 'nothing goes to the far-away form message line');
   const txt = Buffer.from(await r.log.blob.arrayBuffer()).toString('utf8');
   assert.ok(txt.charCodeAt(0) === 0xFEFF && txt.includes('سبيكة جهاز') && txt.includes('على الجهاز'));
   // empty wallet: no file
   r = run({ canShare: false, cloud: [], local: [] }); r.handlers.walExport();
-  assert.equal(r.log.downloads.length, 0); assert.ok(r.els.walMsg.textContent.includes('مفيش قطع'));
+  assert.equal(r.log.downloads.length, 0); assert.ok(r.els.walExportMsg.textContent.includes('مفيش قطع'));
   // account identity changes while the file is built: no file
   r = run({ canShare: false, cloud: [{ id: 'a9', k: '24', g: 2, paid: 13000 }], local: dev });
   URL.createObjectURL = b => { r.win.DHB_CLOUD_ITEMS = []; return 'blob:fake'; };
-  r.handlers.walExport(); assert.equal(r.log.downloads.length, 0); assert.ok(r.els.walMsg.textContent.includes('ما نزلش أي ملف'));
+  r.handlers.walExport(); assert.equal(r.log.downloads.length, 0); assert.ok(r.els.walExportMsg.textContent.includes('ما نزلش أي ملف'));
   // share: visible only with canShare, runs only on tap, sends one csv File, no upload
   r = run({ canShare: true, cloud: [], local: dev });
   assert.equal(r.els.walShare.hidden, false); assert.equal(r.log.shares.length, 0, 'nothing shared before a tap');
@@ -59,10 +62,10 @@ function run({ canShare, shareImpl, cloud, local }) {
   assert.match(f.name, /\.csv$/); assert.ok((await f.text()).includes('سبيكة جهاز')); assert.equal(Object.keys(r.log.shares[0]).sort().join(), 'files,title');
   // cancel: silent
   r = run({ canShare: true, cloud: [], local: dev, shareImpl: async () => { const e = new Error('x'); e.name = 'AbortError'; throw e; } });
-  await r.handlers.walShare(); assert.equal(r.els.walMsg.textContent, '');
+  await r.handlers.walShare(); assert.equal(r.els.walExportMsg.textContent, '');
   // failure: message points to the download button
   r = run({ canShare: true, cloud: [], local: dev, shareImpl: async () => { throw new Error('boom'); } });
-  await r.handlers.walShare(); assert.ok(r.els.walMsg.textContent.includes('استخدم زر التنزيل'));
+  await r.handlers.walShare(); assert.ok(r.els.walExportMsg.textContent.includes('استخدم زر التنزيل'));
   // empty wallet via share: nothing shared
   r = run({ canShare: true, cloud: [], local: [] }); await r.handlers.walShare(); assert.equal(r.log.shares.length, 0);
   console.log('Wallet export CSV, download, share, cancel, failure and race checks passed.');
