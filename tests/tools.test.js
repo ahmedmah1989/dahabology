@@ -1,5 +1,5 @@
 const assert = require('node:assert/strict');
-const { prices, inspect, wallet } = require('../public/js/tools.js');
+const { prices, inspect, wallet, walletNowText } = require('../public/js/tools.js');
 const near = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, a + ' != ' + b);
 const a = { '24': { sell: 6800, buy: 6740 }, '21': { sell: 5950, buy: 5900 } };
 
@@ -32,3 +32,11 @@ assert.equal(percentageSuffix(w.percent,String),' (النسبة غير متاح�
 assert.equal(percentageSuffix(null,String),' (النسبة غير متاحة)');
 assert.equal(percentageSuffix(0,String),' (0%)');
 assert.equal(percentageSuffix(-5,String),' (-5%)');
+
+const test2 = require('node:test');
+test2('wallet headline: 0 only for an empty account; unpriced pieces make it unknown; valued pieces show the value', () => {
+  assert.equal(walletNowText(0, 0, false, ''), '0 جنيه');
+  assert.equal(walletNowText(0, 2, false, ''), '—');
+  assert.equal(walletNowText(1, 2, true, '24,846 جنيه'), '24,846 جنيه');
+  assert.equal(walletNowText(1, 0, false, ''), '—');
+});
